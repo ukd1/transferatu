@@ -3,6 +3,7 @@
 # 1. open a pg_dump to SOURCE_URL, writing to stdout
 # 2. open a gof3r writing to s3, feeding stdin from pg_dump stdout
 
+require 'open3'
 require 'thread'
 
 def log(msg)

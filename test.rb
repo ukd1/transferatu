@@ -82,6 +82,7 @@ class PgDump
     @stderr_thr.join
     @stdout.close
 
+    log "pg_dump done; exited with #{status}"
     status
   end
 end
@@ -158,6 +159,7 @@ class S3Upload
     @stdout_thr.join
     @stderr_thr.join
 
+    log "upload done; exited with #{status}"
     status
   end
 end

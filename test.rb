@@ -49,7 +49,7 @@ class PgDump
   end
 
   def run_async(logger)
-    cmd = ['pg_dump', '--file', to_file]
+    cmd = ['pg_dump']
     # TODO: only take whitelisted opts
     @opts.each do |k,v|
       cmd << "--#{k.gsub(/_/, '-')}"

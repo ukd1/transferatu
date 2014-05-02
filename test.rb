@@ -112,7 +112,7 @@ class S3Upload
       copied, total = 0, 0
 
       begin
-        loop do
+        until @source.closed
           copied += IO.copy_stream(@source, stdin, chunk_size)
           if copied >= chunk_size
             total += copied
@@ -120,11 +120,13 @@ class S3Upload
             lock.synchronize { logger.call("Uploaded #{total / (1024 * 1024)}MB") }
           end
         end
+        lock.synchronize { logger.call("Done; uploaded #{total / (1024 * 1024)}MB total") }
       rescue IOError => e
         if e.message =~ /closed stream/
-          lock.synchronize { logger.call("Done; uploaded #{total / (1024 * 1024)}MB total") }
           # TODO: this *probably* means we're fine because the other
-          # side closed the pipe? maybe?
+          # side closed the pipe? maybe? in testing, i get:
+          # 2014-05-02T13:07:33.928817+00:00 app[worker.1]: ./test.rb:116:in `copy_stream': Bad file descriptor - fstat (Errno::EBADF)
+
         end
       ensure
         stdin.close

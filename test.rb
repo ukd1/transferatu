@@ -73,11 +73,15 @@ class PgDump
       end
     end
     @stdout
+  rescue StandardError => e
+    log "pg_dump failed: #{e.inspect}"
+    raise
   ensure
     stdin.close unless stdin.nil?
   end
 
   def wait
+    log "waiting for pg_dump to complete"
     # Process::Status object returned; return the actual exit status
     status = @wait_thr.value.exitstatus
 
@@ -151,9 +155,13 @@ class S3Upload
         stderr.close
       end
     end
+  rescue StandardError => e
+    log "upload failed: #{e.inspect}"
+    raise
   end
 
   def wait
+    log "waiting for upload to complete"
     # Process::Status object returned; return the actual exit status
     status = @wait_thr.value.exitstatus
 

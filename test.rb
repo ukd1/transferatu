@@ -52,7 +52,7 @@ class PgDump
     cmd = ['pg_dump']
     # TODO: only take whitelisted opts
     @opts.each do |k,v|
-      cmd << "--#{k.gsub(/_/, '-')}"
+      cmd << "--#{k.to_s.gsub(/_/, '-')}"
       unless v == true
         cmd << v
       end
@@ -94,7 +94,7 @@ class S3Upload
     # ./gof3r put -b $bucket -k $key
     cmd = %W(gof3r put -b #{@bucket} -k #{@key})
     @opts.each do |k,v|
-      cmd << "--#{k.gsub(/_/, '-')}"
+      cmd << "--#{k.to_s.gsub(/_/, '-')}"
       unless v == true
         cmd << v
       end

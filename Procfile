@@ -1,1 +1,1 @@
-worker: bundle exec test.rb
+worker: bundle exec ./test.rb

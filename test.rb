@@ -22,13 +22,13 @@ def transfer(from_url, bucket, key)
   })
   log "starting dump"
   dump_stream = pg_dump.run_async(logger)
-  log "started"
+  log "started async dump"
 
   uploader = S3Upload.new(dump_stream, bucket, key)
 
   log "starting upload"
   uploader.run_async(logger)
-  log "started"
+  log "started async upload"
 
   dump_status = pg_dump.wait
   upload_status = uploader.wait
@@ -37,7 +37,7 @@ def transfer(from_url, bucket, key)
     raise FailedTransfer, "Oh snap: pg_dump exited with #{dump_status}"
   end
   unless upload_status.zero?
-    raise FailedTransfer, "Oh snap: uploaded exited with #{upload_status}"
+    raise FailedTransfer, "Oh snap: uploader exited with #{upload_status}"
   end
   log "completed successfully"
 end
@@ -58,6 +58,7 @@ class PgDump
       end
     end
     cmd << @from_url
+    log "Running #{cmd.join(' ').sub(@from_url, 'postgres://...')}"
     stdin, @stdout, stderr, @wait_thr = Open3.popen3(*cmd)
     @stderr_thr = Thread.new do
       begin
@@ -101,6 +102,7 @@ class S3Upload
     end
 
     lock = Mutex.new
+    log "Running #{cmd.join(' ')}"
     stdin, stdout, stderr, @wait_thr = Open3.popen3(*cmd)
     @stdin_thr = Thread.new do
       chunk_size = 8 * 1024 * 1024

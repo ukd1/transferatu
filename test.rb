@@ -6,6 +6,8 @@
 require 'open3'
 require 'thread'
 
+$stdout.sync = $stderr.sync = true
+
 def log(msg)
   puts msg
 end

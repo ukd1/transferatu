@@ -137,6 +137,7 @@ class S3Upload
         end
       ensure
         stdin.close
+        @source.close unless @source.closed
       end
     end
 

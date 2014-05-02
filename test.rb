@@ -43,6 +43,8 @@ def transfer(from_url, bucket, key)
     raise FailedTransfer, "Oh snap: uploader exited with #{upload_status}"
   end
   log "completed successfully"
+rescue StandardError => e
+  puts "transfer failed: #{e.inspect}"
 end
 
 class PgDump

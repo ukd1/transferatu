@@ -9,6 +9,8 @@ def log(msg)
   puts msg
 end
 
+class FailedTransfer < StandardError; end
+
 def transfer(from_url, bucket, key)
   logger = ->(line) { puts line }
 

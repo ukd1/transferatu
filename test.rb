@@ -20,6 +20,7 @@ def transfer(from_url, bucket, key)
   pg_dump = PgDump.new(from_url, {
     no_owner: true,
     no_privileges: true,
+    verbose: true,
     format: 'custom'
   })
   log "starting dump"

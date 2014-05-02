@@ -68,7 +68,7 @@ class PgDump
     end
     @stdout
   ensure
-    stdin.close
+    stdin.close unless stdin.nil?
   end
 
   def wait

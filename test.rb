@@ -119,7 +119,7 @@ class S3Upload
       copied, total = 0, 0
 
       begin
-        until @source.closed
+        until @source.eof?
           copied += IO.copy_stream(@source, stdin, chunk_size)
           if copied >= chunk_size
             total += copied

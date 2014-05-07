@@ -44,7 +44,7 @@ def transfer(from_url, bucket, key)
   end
   log "completed successfully"
 rescue StandardError => e
-  puts "transfer failed: #{e.inspect}"
+  puts "transfer failed: #{e.inspect}\n#{e.backtrace.join("\n")}"
 end
 
 class PgDump

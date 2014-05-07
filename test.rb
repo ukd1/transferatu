@@ -129,15 +129,11 @@ class S3Upload
         end
         lock.synchronize { logger.call("Done; uploaded #{total / (1024 * 1024)}MB total") }
       rescue IOError => e
-        if e.message =~ /closed stream/
-          # TODO: this *probably* means we're fine because the other
-          # side closed the pipe? maybe? in testing, i get:
-          # 2014-05-02T13:07:33.928817+00:00 app[worker.1]: ./test.rb:116:in `copy_stream': Bad file descriptor - fstat (Errno::EBADF)
-
-        end
+        puts "Failed to process incoming upload data: #{e.inspect}"
+        raise
       ensure
         stdin.close
-        @source.close unless @source.closed
+        @source.close unless @source.closed?
       end
     end
 

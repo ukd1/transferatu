@@ -16,10 +16,13 @@ const (
 )
 
 func main() {
+	fmt.Println("running transfer")
 	backupKey := fmt.Sprintf("test/fake-%v.backup", time.Now().Unix())
 	err := transfer(os.Getenv("FROM_URL"), os.Getenv("S3_BUCKET"), backupKey)
-	if err != nil {
-		fmt.Print("transfer failed: ", err)
+	if err == nil {
+		fmt.Println("transfer completed")
+	} else {
+		fmt.Printf("transfer failed: %v\n", err)
 	}
 }
 

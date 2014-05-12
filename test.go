@@ -70,7 +70,7 @@ func (pgd *PGDump) Log() (io.ReadCloser, error) {
 
 func NewPGDump(source string) (*PGDump, error) {
 	cmd := exec.Command("pg_dump", "--verbose", "--no-owner",
-		"--no-privilges", "--format", "custom", source)
+		"--no-privileges", "--format", "custom", source)
 	err := cmd.Start()
 	if err != nil {
 		return nil, err

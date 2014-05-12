@@ -27,10 +27,7 @@ func main() {
 }
 
 func transfer(from, bucket, key string) error {
-	dump, err := NewPGDump(from)
-	if err != nil {
-		return err
-	}
+	dump := NewPGDump(from)
 	data, err := dump.Data()
 	if err != nil {
 		return err
@@ -49,6 +46,7 @@ func transfer(from, bucket, key string) error {
 			fmt.Print("pg_dump failed reading output: ", err)
 		}
 	}()
+	dump.Start()
 	err = Upload(bucket, key, data)
 	if err != nil {
 		fmt.Print("upload failed: ", err)
@@ -60,6 +58,10 @@ type PGDump struct {
 	cmd *exec.Cmd
 }
 
+func (pgd *PGDump) Start() error {
+	return pgd.cmd.Start()
+}
+
 func (pgd *PGDump) Data() (io.ReadCloser, error) {
 	return pgd.cmd.StdoutPipe()
 }
@@ -68,14 +70,10 @@ func (pgd *PGDump) Log() (io.ReadCloser, error) {
 	return pgd.cmd.StderrPipe()
 }
 
-func NewPGDump(source string) (*PGDump, error) {
+func NewPGDump(source string) *PGDump {
 	cmd := exec.Command("pg_dump", "--verbose", "--no-owner",
 		"--no-privileges", "--format", "custom", source)
-	err := cmd.Start()
-	if err != nil {
-		return nil, err
-	}
-	return &PGDump{cmd}, nil
+	return &PGDump{cmd}
 }
 
 func (pgd *PGDump) Wait() error {

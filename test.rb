@@ -36,7 +36,7 @@ class Transfer < Sequel::Model
     bucket = ENV['S3_BUCKET']
     from = self.from_url
     key = self.s3_key
-    cmd = ['bash', '-o', 'pipefail', '-c', "pg_dump --verbose --no-owner --no-privileges --format custom #{from} | pv --name 'upload progress' --bytes --force | gof3r put -b #{bucket} -k #{key}"]
+    cmd = ['bash', '-o', 'pipefail', '-c', "pg_dump --verbose --no-owner --no-privileges --format custom #{from} | pv --name $'\nupload progress' --bytes --force | gof3r put -b #{bucket} -k #{key}"]
     result = nil
     self.log "running upload pipeline"
     Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thr|

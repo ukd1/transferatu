@@ -15,7 +15,7 @@ end
 class FailedTransfer < StandardError; end
 
 def transfer_pipe(from, bucket, key)
-  cmd = %W(bash -o pipefail -c "pg_dump --verbose --no-owner --no-privileges --format custom #{from} | pv --name 'upload progress' --bytes --force | gof3r put -b #{bucket} -k #{key}")
+  cmd = ['bash', '-o', 'pipefail', '-c', "pg_dump --verbose --no-owner --no-privileges --format custom #{from} | pv --name 'upload progress' --bytes --force | gof3r put -b #{bucket} -k #{key}"]
   result = nil
   log "running upload pipeline"
   Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thr|

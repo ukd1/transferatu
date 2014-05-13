@@ -176,13 +176,13 @@ class Transfer < Sequel::Model
                            format: 'custom'
                          })
     log "starting dump"
-    dump_stream = pg_dump.run_async(logger)
+    dump_stream = pg_dump.run_async
     log "started async dump"
 
     uploader = S3Upload.new(logger, dump_stream, bucket, self.s3_key)
 
     log "starting upload"
-    uploader.run_async(logger)
+    uploader.run_async
     log "started async upload"
 
     dump_status = pg_dump.wait

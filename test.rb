@@ -65,7 +65,7 @@ class Transfer < Sequel::Model
 end
 
 class Log < Sequel::Model
-  many_to_one :transfers
+  many_to_one :transfer
 end
 
 setup_db

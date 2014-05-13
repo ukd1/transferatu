@@ -5,7 +5,7 @@ Sequel.migration do
 EOF
 
     create_table :transfers do
-      uuid :uuid, default: 'uuid_generate_v4()'.lit, primary_key: true
+      uuid :uuid, default: Sequel.function(:uuid_generate_v4), primary_key: true
       timestamptz :created_at, null: false, default: Sequel.function(:now)
       text :from_url, null: false
       text :s3_key, null: false
@@ -15,7 +15,7 @@ EOF
     end
 
     create_table :logs do
-      uuid :uuid, default: 'uuid_generate_v4()'.lit, primary_key: true
+      uuid :uuid, default: Sequel.function(:uuid_generate_v4), primary_key: true
       foreign_key :transfer_id, :transfers, type: :uuid, null: false
       timestamptz :created_at, null: false, default: Sequel.function(:now)
       text :message, null: false

@@ -59,6 +59,7 @@ class Transfer < Sequel::Model
       stdout_thr.join
       stderr_thr.join
     end
+  ensure
     self.update(exit_status: result, finished_at: Time.now)
     self.log "transfer completed with exit status #{result}"
   end

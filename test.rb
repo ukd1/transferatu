@@ -78,6 +78,6 @@ end
 t = Transfer.create(
     from_url: from_url,
     s3_key: "test/fake-#{Time.now.to_i}.backup",
-    db_size: from_size
+    db_size_bytes: from_size
   )
 t.perform

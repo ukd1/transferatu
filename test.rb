@@ -18,12 +18,17 @@ end
 $stdout.sync = $stderr.sync = true
 
 class PgDump
-  def initialize(from_url, opts)
+  def initialize(logger, from_url, opts)
     @from_url = from_url
     @opts = opts
+    @logger = logger
   end
 
-  def run_async(logger)
+  def log(line)
+    @logger.call(line)
+  end
+
+  def run_async
     cmd = ['pg_dump']
     # TODO: only take whitelisted opts
     @opts.each do |k,v|
@@ -33,18 +38,18 @@ class PgDump
       end
     end
     cmd << @from_url
-    log "Running #{cmd.join(' ').sub(@from_url, 'postgres://...')}"
+    log("Running #{cmd.join(' ').sub(@from_url, 'postgres://...')}")
     stdin, @stdout, stderr, @wait_thr = Open3.popen3(*cmd)
     @stderr_thr = Thread.new do
       begin
-        stderr.each_line { |l| logger.call(l) }
+        stderr.each_line { |l| log(l) }
       ensure
         stderr.close
       end
     end
     @stdout
   rescue StandardError => e
-    log "pg_dump failed: #{e.inspect}"
+    log("pg_dump failed: #{e.inspect}")
     raise
   ensure
     stdin.close unless stdin.nil?
@@ -64,14 +69,19 @@ class PgDump
 end
 
 class S3Upload
-  def initialize(source, bucket, key, opts={})
+  def initialize(logger, source, bucket, key, opts={})
     @source = source
     @bucket = bucket
     @key = key
     @opts = opts
+    @logger = logger
   end
 
-  def run_async(logger)
+  def log(line)
+    @logger.call(line)
+  end
+
+  def run_async
     # ./gof3r put -b $bucket -k $key
     cmd = %W(gof3r put -b #{@bucket} -k #{@key})
     @opts.each do |k,v|
@@ -81,7 +91,6 @@ class S3Upload
       end
     end
 
-    lock = Mutex.new
     log "Running #{cmd.join(' ')}"
     stdin, stdout, stderr, @wait_thr = Open3.popen3(*cmd)
     @stdin_thr = Thread.new do
@@ -94,10 +103,10 @@ class S3Upload
           if copied >= chunk_size
             total += copied
             copied = 0
-            lock.synchronize { logger.call("Uploaded #{total / (1024 * 1024)}MB") }
+            log("Uploaded #{total / (1024 * 1024)}MB")
           end
         end
-        lock.synchronize { logger.call("Done; uploaded #{total / (1024 * 1024)}MB total") }
+        log("Done; uploaded #{total / (1024 * 1024)}MB total")
       rescue IOError => e
         puts "Failed to process incoming upload data: #{e.inspect}"
         raise
@@ -108,7 +117,7 @@ class S3Upload
 
     @stdout_thr = Thread.new do
       begin
-        stdout.each_line { |l| lock.synchronize { logger.call(l) } }
+        stdout.each_line { |l| log(l) }
       ensure
         stdout.close
       end
@@ -160,7 +169,7 @@ class Transfer < Sequel::Model
 
     logger = ->(line) { self.log(line) }
 
-    pg_dump = PgDump.new(self.from_url, {
+    pg_dump = PgDump.new(logger, self.from_url, {
                            no_owner: true,
                            no_privileges: true,
                            verbose: true,
@@ -170,7 +179,7 @@ class Transfer < Sequel::Model
     dump_stream = pg_dump.run_async(logger)
     log "started async dump"
 
-    uploader = S3Upload.new(dump_stream, bucket, self.s3_key)
+    uploader = S3Upload.new(logger, dump_stream, bucket, self.s3_key)
 
     log "starting upload"
     uploader.run_async(logger)

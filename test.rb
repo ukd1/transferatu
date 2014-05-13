@@ -32,7 +32,7 @@ class Transfer < Sequel::Model
   def log(msg)
     @lock.synchronize do
       puts msg
-      self.add_log(msg)
+      self.add_log(message: msg)
     end
   end
 

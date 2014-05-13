@@ -17,10 +17,6 @@ end
 
 $stdout.sync = $stderr.sync = true
 
-class Log < Sequel::Model
-  many_to_one :transfers
-end
-
 class Transfer < Sequel::Model
   one_to_many :logs
 
@@ -66,6 +62,10 @@ class Transfer < Sequel::Model
     self.update(exit_status: result, finished_at: Time.now)
     self.log "transfer completed with exit status #{result}"
   end
+end
+
+class Log < Sequel::Model
+  many_to_one :transfers
 end
 
 setup_db

@@ -4,10 +4,15 @@ GEM
     coderay (1.1.0)
     method_source (0.8.2)
     mkfifo (0.0.1)
+    pg (0.17.1)
     pry (0.9.12.6)
       coderay (~> 1.0)
       method_source (~> 0.8)
       slop (~> 3.4)
+    sequel (4.8.0)
+    sequel_pg (1.6.8)
+      pg (>= 0.8.0)
+      sequel (>= 3.39.0)
     slop (3.4.7)
 
 PLATFORMS
@@ -16,3 +21,5 @@ PLATFORMS
 DEPENDENCIES
   mkfifo
   pry
+  sequel
+  sequel_pg

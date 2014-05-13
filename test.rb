@@ -3,49 +3,19 @@
 # 1. open a pg_dump to SOURCE_URL, writing to stdout
 # 2. open a gof3r writing to s3, feeding stdin from pg_dump stdout
 
+require 'sequel'
+
 require 'open3'
 require 'thread'
 
+DB = Sequel.connect(ENV['DATABASE_URL'])
+
+def setup_db
+  require 'sequel/extensions/migration'
+  Sequel::Migrator.apply(DB, 'migrations')
+end
+
 $stdout.sync = $stderr.sync = true
-
-def log(msg)
-  puts msg
-end
-
-class FailedTransfer < StandardError; end
-
-def transfer(from_url, bucket, key)
-  logger = ->(line) { puts line }
-
-  pg_dump = PgDump.new(from_url, {
-    no_owner: true,
-    no_privileges: true,
-    verbose: true,
-    format: 'custom'
-  })
-  log "starting dump"
-  dump_stream = pg_dump.run_async(logger)
-  log "started async dump"
-
-  uploader = S3Upload.new(dump_stream, bucket, key)
-
-  log "starting upload"
-  uploader.run_async(logger)
-  log "started async upload"
-
-  dump_status = pg_dump.wait
-  upload_status = uploader.wait
-
-  unless dump_status.zero?
-    raise FailedTransfer, "Oh snap: pg_dump exited with #{dump_status}"
-  end
-  unless upload_status.zero?
-    raise FailedTransfer, "Oh snap: uploader exited with #{upload_status}"
-  end
-  log "completed successfully"
-rescue StandardError => e
-  puts "transfer failed: #{e.inspect}\n#{e.backtrace.join("\n")}"
-end
 
 class PgDump
   def initialize(from_url, opts)
@@ -170,4 +140,76 @@ class S3Upload
   end
 end
 
-transfer(ENV['FROM_URL'], ENV['S3_BUCKET'], "test/fake-#{Time.now.to_i}.backup")
+class Transfer < Sequel::Model
+  one_to_many :logs
+
+  def initialize(args)
+    super
+    @lock = Mutex.new
+  end
+
+  def log(msg)
+    @lock.synchronize do
+      puts msg
+      self.add_log(message: msg)
+    end
+  end
+
+  def perform
+    bucket = ENV['S3_BUCKET']
+
+    logger = ->(line) { self.log(line) }
+
+    pg_dump = PgDump.new(self.from_url, {
+                           no_owner: true,
+                           no_privileges: true,
+                           verbose: true,
+                           format: 'custom'
+                         })
+    log "starting dump"
+    dump_stream = pg_dump.run_async(logger)
+    log "started async dump"
+
+    uploader = S3Upload.new(dump_stream, bucket, self.s3_key)
+
+    log "starting upload"
+    uploader.run_async(logger)
+    log "started async upload"
+
+    dump_status = pg_dump.wait
+    upload_status = uploader.wait
+
+    log "pg_dump exited with #{dump_status}"
+    log "uploader exited with #{upload_status}"
+
+    exit_status = if dump_status.zero?
+                    upload_status
+                  else
+                    dump_status
+                  end
+
+  rescue StandardError => e
+    log "transfer failed: #{e.inspect}\n#{e.backtrace.join("\n")}"
+  ensure
+    self.update(exit_status: exit_status, finished_at: Time.now)
+    self.log "transfer completed with exit status #{exit_status}"
+  end
+end
+
+class Log < Sequel::Model
+  many_to_one :transfer
+end
+
+setup_db
+
+from_url = ENV['FROM_URL']
+from_size = Sequel.connect(from_url) do |c|
+  c.fetch("SELECT pg_database_size(current_database()) AS size").all.first[:size]
+end
+
+t = Transfer.create(
+    from_url: from_url,
+    s3_key: "test/fake-#{Time.now.to_i}.backup",
+    db_size_bytes: from_size
+  )
+t.perform

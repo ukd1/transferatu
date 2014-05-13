@@ -24,8 +24,9 @@ end
 class Transfer < Sequel::Model
   one_to_many :logs
 
-  def initialize
-    @lock ||= Mutex.new
+  def initialize(args)
+    super
+    @lock = Mutex.new
   end
 
   def log(msg)

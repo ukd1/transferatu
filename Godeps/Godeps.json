@@ -1,14 +1,15 @@
 {
 	"ImportPath": "github.com/heroku/pg_dump-go-experiment",
-	"GoVersion": "go1.2",
-	"Packages": [
-		"./..."
-	],
+	"GoVersion": "go1.1",
 	"Deps": [
 		{
+			"ImportPath": "github.com/lib/pq",
+			"Rev": "8d9d5cfc7ffd4a7f508c1d02ae8bb50c5c8a9673"
+		},
+		{
 			"ImportPath": "github.com/rlmcpherson/s3gof3r",
-			"Comment": "v0.3.2-11-g2d1a8bd",
-			"Rev": "2d1a8bd8682ee1bf8b93823cf5e4fc03d265f46d"
+			"Comment": "v0.3.2-12-g66978b7",
+			"Rev": "66978b7b6eb03addce5248c89a17902aff825c5f"
 		}
 	]
 }

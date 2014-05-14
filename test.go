@@ -4,10 +4,13 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/rlmcpherson/s3gof3r"
+	"database/sql"
+	_ "github.com/lib/pq"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
+	"syscall"
 	"time"
 )
 
@@ -15,10 +18,49 @@ const (
 	ProgressSize =  8 * 1024 * 1024
 )
 
+func schemaSetup(db *sql.DB) error {
+	ddl := []string{`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`,
+		`CREATE TABLE IF NOT EXISTS transfers(
+    uuid uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    from_url text NOT NULL,
+    s3_key text NOT NULL,
+    db_size_bytes bigint NOT NULL,
+    exit_status int,
+    finished_at timestamptz)`,
+		`CREATE TABLE IF NOT EXISTS logs(
+    uuid uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+    transfer_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    message text NOT NULL,
+    FOREIGN KEY (transfer_id) REFERENCES transfers(uuid))`,
+	}
+
+	for _, stmt := range ddl {
+		_, err := db.Exec(stmt)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+
+
 func main() {
+	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		panic(fmt.Sprintf("Could not connect to DB: %v", err))
+	}
+	defer db.Close()
+	err = schemaSetup(db)
+	if err != nil {
+		panic(fmt.Sprintf("Could not set up schema: %v", err))
+	}
+
 	fmt.Println("running transfer")
 	backupKey := fmt.Sprintf("test/fake-%v.backup", time.Now().Unix())
-	err := transfer(os.Getenv("FROM_URL"), os.Getenv("S3_BUCKET"), backupKey)
+	err = transfer(db, os.Getenv("FROM_URL"), os.Getenv("S3_BUCKET"), backupKey)
 	if err == nil {
 		fmt.Println("transfer completed")
 	} else {
@@ -26,12 +68,30 @@ func main() {
 	}
 }
 
-func transfer(from, bucket, key string) error {
+func transfer(db *sql.DB, from, bucket, key string) error {
+	fromDB, err := sql.Open("postgres", from)
+	if err != nil {
+		return fmt.Errorf("Failed to connect to target: %v", err)
+	}
+	defer fromDB.Close()
+	var fromDBSize uint64
+	err = fromDB.QueryRow("SELECT pg_database_size(current_database())").Scan(&fromDBSize)
+	if err != nil {
+		return fmt.Errorf("Failed to get target size: %v", err)
+	}
+	var transferId string
+	err = db.QueryRow("INSERT INTO transfers(from_url, db_size_bytes, s3_key) VALUES($1, $2, $3) RETURNING uuid",
+		from, fromDBSize, key).Scan(&transferId)
+	if err != nil {
+		return fmt.Errorf("Failed to record transfer: %v", err)
+	}
+
 	dump := NewPGDump(from)
 	data, err := dump.Data()
 	if err != nil {
 		return err
 	}
+
 	log, err := dump.Log()
 	if err != nil {
 		return err
@@ -39,7 +99,11 @@ func transfer(from, bucket, key string) error {
 	go func() {
 		scanner := bufio.NewScanner(log)
 		for scanner.Scan() {
-			fmt.Println(scanner.Text())
+			_, err := db.Exec("INSERT INTO logs(transfer_id, message) VALUES($1, $2)",
+				transferId, scanner.Text())
+			if err != nil {
+				fmt.Print("failed to log: ", err)
+			}
 		}
 
 		if err := scanner.Err(); err != nil {
@@ -49,9 +113,30 @@ func transfer(from, bucket, key string) error {
 	dump.Start()
 	err = Upload(bucket, key, data)
 	if err != nil {
+		// TODO: kill source on failure
 		fmt.Print("upload failed: ", err)
 	}
-	return dump.Wait()
+	err = dump.Wait()
+	exitStatus := 255
+        if err == nil {
+		exitStatus = 0
+	} else {
+		if exiterr, ok := err.(*exec.ExitError); ok {
+			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+				exitStatus = status.ExitStatus()
+			}
+		} else {
+			fmt.Print("Could not determine exit status", err)
+		}
+	}
+
+	_, dbErr := db.Exec("UPDATE transfers SET finished_at = now(), exit_status = $1 WHERE uuid = $2",
+		exitStatus, transferId)
+	if err == nil {
+		return dbErr
+	} else {
+		return err
+	}
 }
 
 type PGDump struct {

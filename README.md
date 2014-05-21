@@ -1,5 +1,12 @@
-# Pliny Template app
+# Transferatu
 
-This is the template app used by the [Pliny](https://github.com/12-oz/pliny) gem.
+Transferatu moves your data from one place to another
 
-For more information please refer to the gem docs.
+![alt text](NosferatuShadow.jpg "Nosferatu")
+
+Supported transfers
+
+ * postgres -> postgres
+ * postgres -> S3
+ * S3 -> postgres
+

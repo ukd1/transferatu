@@ -9,4 +9,3 @@ Supported transfers
  * postgres -> postgres
  * postgres -> S3
  * S3 -> postgres
-

@@ -1,5 +1,5 @@
 module Mediators::Transfers
-  class Runners < Mediators::Base
+  class Runner < Mediators::Base
     def initialize(args)
       
     end

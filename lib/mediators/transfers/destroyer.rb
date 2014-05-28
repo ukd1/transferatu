@@ -1,5 +1,5 @@
 module Mediators::Transfers
-  class Destroyers < Mediators::Base
+  class Destroyer < Mediators::Base
     def initialize(args)
       
     end

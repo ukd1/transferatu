@@ -1,5 +1,5 @@
 module Mediators::Transfers
-  class Creators < Mediators::Base
+  class Creator < Mediators::Base
     def initialize(args)
       
     end

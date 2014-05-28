@@ -1,7 +1,9 @@
-class Transfer < Sequel::Model
+module Transferatu
+  class Transfer < Sequel::Model
 
-  include Transferatu::Loggable
+    include Transferatu::Loggable
 
-  plugin :timestamps
+    plugin :timestamps
 
+  end
 end

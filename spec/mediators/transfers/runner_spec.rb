@@ -1,5 +1,5 @@
 require "spec_helper"
 
-describe Mediators::Transfers::Runners do
+describe Mediators::Transfers::Runner do
   
 end

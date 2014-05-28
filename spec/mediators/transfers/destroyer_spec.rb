@@ -1,5 +1,5 @@
 require "spec_helper"
 
-describe Mediators::Transfers::Destroyers do
+describe Mediators::Transfers::Destroyer do
   
 end

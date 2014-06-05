@@ -31,12 +31,12 @@ module Transferatu
       opts.each do |k,v|
         kstr = k.to_s
         if kstr.length == 1
-           result << "-#{kstr}"
+          result << "-#{kstr}"
         else
-          "--#{kstr.gsub(/_/, '-')}"
+          result << "--#{kstr.gsub(/_/, '-')}"
         end
         unless v == true
-          result << v
+          result << v.to_s
         end
       end
       result + args

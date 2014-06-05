@@ -52,7 +52,7 @@ module Transferatu
     # Log each line to owner's logger function, the close the source
     def drain_log_lines(source)
       begin
-        source.each_line { |l| log l }
+        source.each_line { |l| log l.strip }
       ensure
         source.close
       end

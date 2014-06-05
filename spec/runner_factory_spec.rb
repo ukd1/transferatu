@@ -20,5 +20,42 @@ module Transferatu
         end
       end
     end
+
+    describe '#log' do
+      let(:results) { [] }
+      before do
+        s.stub(:logger).and_return(->(line) { results << line })
+      end
+      it "logs individual lines" do
+        s.log "hello"
+        s.log "goodbye"
+        expect(results).to eq(%w(hello goodbye))
+      end
+    end
+
+    describe "#drain_log_lines" do
+      let(:results) { [] }
+      before do
+        s.stub(:logger).and_return(->(line) { results << line })
+      end
+
+      it "drains a normal source" do
+        source = StringIO.new("hello\ngoodbye")
+        s.drain_log_lines(source)
+        expect(results).to eq(%w(hello goodbye))
+      end
+
+      it "drains a one-line source" do
+        source = StringIO.new("hello")
+        s.drain_log_lines(source)
+        expect(results).to eq(%w(hello))
+      end
+
+      it "drains an empty source" do
+        source = StringIO.new("")
+        s.drain_log_lines(source)
+        expect(results).to be_empty
+      end
+    end
   end
 end

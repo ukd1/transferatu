@@ -1,10 +1,10 @@
 # Transferatu
 
-Transferatu moves your data from one place to another
+Transferatu moves your data from one place to another. As a service.
 
-![alt text](NosferatuShadow.jpg "Nosferatu")
+![Nosferatu](shadow.jpg "Nosferatu")
 
-Supported transfers
+Currently supported transfer methods:
 
  * postgres -> postgres
  * postgres -> S3

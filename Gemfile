@@ -30,6 +30,7 @@ end
 group :test do
   gem "committee"
   gem "database_cleaner"
+  gem "factory_girl", "~> 4.0"
   gem "rack-test"
   gem "rspec"
 end

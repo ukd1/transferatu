@@ -4,6 +4,7 @@ module Initializer
     require_lib
     require_initializers
     require_models
+    require_workers
   end
 
   def self.require_config
@@ -16,6 +17,7 @@ module Initializer
       lib/endpoints/**/*
       lib/mediators/base
       lib/mediators/**/*
+      lib/models/**/*
       lib/routes
       lib/serializers/base
       lib/serializers/**/*
@@ -25,6 +27,12 @@ module Initializer
   def self.require_models
     require! %w(
       lib/models/**/*
+    )
+  end
+
+  def self.require_workers
+    require! %w(
+      lib/workers/**/*
     )
   end
 

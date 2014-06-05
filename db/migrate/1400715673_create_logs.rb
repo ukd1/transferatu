@@ -4,7 +4,7 @@ Sequel.migration do
     CREATE TYPE log_severity AS ENUM ('info', 'warning', 'error');
 EOF
     create_table(:logs) do
-      foreign_uuid :uuid, null: false
+      uuid         :foreign_uuid, null: false
       timestamptz  :created_at, default: Sequel.function(:now), null: false
       text         :message, null: false
       log_severity :severity, null: false

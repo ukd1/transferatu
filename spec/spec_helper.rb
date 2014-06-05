@@ -14,13 +14,20 @@ root = File.expand_path("../../", __FILE__)
 ENV.update(Pliny::Utils.parse_env("#{root}/.env.test"))
 
 require_relative "../lib/initializer"
+require_relative "factories"
 
-DatabaseCleaner.strategy = :transaction
+# N.B.: Some of our tests rely on concurrently accessing transfers, we
+# can't use the faster transcation strategy everywhere. TODO: is it
+# possible to use truncation in only some tests (it is possible on
+# only some tables, but given that transfers is pretty central, that
+# may be a moot point).
+DatabaseCleaner.strategy = :truncation
 
 # pull in test initializers
 Pliny::Utils.require_glob("#{Config.root}/spec/support/**/*.rb")
 
 RSpec.configure do |config|
+
   config.before :all do
     load('db/seeds.rb') if File.exist?('db/seeds.rb')
   end

@@ -14,24 +14,16 @@ module Transferatu
 
     def log(msg, severity=:info)
       if block_given?
-        Transferatu::Log.create(foreign_uuid: self.uuid,
-                                severity: severity.to_s,
-                                message: "starting: #{msg.to_s.strip}")
+        log_line("starting: #{msg.to_s.strip}", severity)
         begin
           yield
-          Transferatu::Log.create(foreign_uuid: self.uuid,
-                                  severity: severity.to_s,
-                                  message: "finished: #{msg.to_s.strip}")
-
+          log_line("finished: #{msg.to_s.strip}", severity)
         rescue StandardError => e
-          Transferatu::Log.create(foreign_uuid: self.uuid,
-                                  severity: severity.to_s,
-                                  message: "raised #{e.class}: #{msg.to_s.strip}\n")
+          log_line("raised #{e.class}: #{msg.to_s.strip}")
+          raise
         end
       else
-        Transferatu::Log.create(foreign_uuid: self.uuid,
-                                severity: severity.to_s,
-                                message: msg.to_s.strip)
+        log_line(msg, severity)
       end
     end
 
@@ -40,6 +32,14 @@ module Transferatu
         .where(foreign_uuid: self.uuid)
         .order_by(Sequel.desc(:created_at)).limit(limit)
         .all
+    end
+
+    private
+
+    def log_line(msg, severity=:info)
+      Transferatu::Log.create(foreign_uuid: self.uuid,
+                              severity: severity.to_s,
+                              message: msg.to_s.strip)
     end
   end
 end

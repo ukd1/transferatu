@@ -13,9 +13,26 @@ module Transferatu
     end
 
     def log(msg, severity=:info)
-      Transferatu::Log.create(foreign_uuid: self.uuid,
-                              severity: severity.to_s,
-                              message: msg.to_s.strip)
+      if block_given?
+        Transferatu::Log.create(foreign_uuid: self.uuid,
+                                severity: severity.to_s,
+                                message: "starting: #{msg.to_s.strip}")
+        begin
+          yield
+          Transferatu::Log.create(foreign_uuid: self.uuid,
+                                  severity: severity.to_s,
+                                  message: "finished: #{msg.to_s.strip}")
+
+        rescue StandardError => e
+          Transferatu::Log.create(foreign_uuid: self.uuid,
+                                  severity: severity.to_s,
+                                  message: "raised #{e.class}: #{msg.to_s.strip}\n")
+        end
+      else
+        Transferatu::Log.create(foreign_uuid: self.uuid,
+                                severity: severity.to_s,
+                                message: msg.to_s.strip)
+      end
     end
 
     def logs(limit = 200)

@@ -85,9 +85,6 @@ module Transferatu
       stdin, @stdout, stderr, @wthr = Open3.popen3(*@cmd)
       stdin.close
       @stderr_thr =  Thread.new { drain_log_lines(stderr) }
-    rescue StandardError => e
-      log "pg_dump failed: #{e.inspect}"
-      raise
     end
 
     def wait

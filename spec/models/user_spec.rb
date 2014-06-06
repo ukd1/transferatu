@@ -1,5 +1,7 @@
 require "spec_helper"
 
-describe User do
-  
+module Transferatu
+  describe User do
+    
+  end
 end

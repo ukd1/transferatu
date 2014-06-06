@@ -4,6 +4,8 @@ module Transferatu
     include Transferatu::Loggable
 
     plugin :timestamps
+
+    many_to_one :user
     
     # Flag transfer as canceled. A canceled transfer will be flagged
     # as failed as soon as possible.

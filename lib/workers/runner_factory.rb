@@ -1,6 +1,10 @@
 module Transferatu
   class RunnerFactory
     def self.make_runner(transfer)
+      from_version = PGVersion.parse(Sequel.connect(transfer.from_url) do |c|
+                                       c.fetch("SELECT version()").get(:version)
+                                     end)
+      root = "/app/bin/pg/#{from_version.major_minor}"
       source = case transfer.from_url
                when /\Apostgres:/
                  PGDumpSource.new(transfer.from_url,
@@ -10,6 +14,8 @@ module Transferatu
                                     verbose: true,
                                     format: 'custom'
                                   },
+                                  env: { "PATH" => "#{root}/bin",
+                                         "LD_LIBRARY_PATH" =>  "#{root}/lib" },
                                   logger: transfer.logger)
                else
                  raise ArgumentError, "unkown source (supported: postgres)"
@@ -70,10 +76,11 @@ module Transferatu
   class PGDumpSource
     include ShellProcessLike
     attr_reader :logger
-    def initialize(url, opts: {}, logger:)
+    def initialize(url, opts: {}, logger:, env:)
       @url = url
       @cmd = command('pg_dump', opts, @url)
       @logger = logger
+      @env = env
     end
 
     def cancel
@@ -88,7 +95,7 @@ module Transferatu
 
     def run_async
       log "Running #{@cmd.join(' ').sub(@url, 'postgres://...')}"
-      stdin, @stdout, stderr, @wthr = Open3.popen3(*@cmd)
+      stdin, @stdout, stderr, @wthr = Open3.popen3(@env, *@cmd)
       stdin.close
       @stderr_thr =  Thread.new { drain_log_lines(stderr) }
       @stdout

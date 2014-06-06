@@ -8,14 +8,29 @@ module Transferatu
         [ 'https://bucket.s3.amazonaws.com/some/key', 'postgres:///test1', false ],
         [ 'https://bucket.s3.amazonaws.com/some/key', 'https://bucket.s3.amazonaws.com/some/key', false ] ].each do |from, to, valid|
         context do
-          let(:transfer) { double(:transfer, from_url: from, to_url: to, logger: ->(l) { puts l }) }
-          it "#{if valid; "succeeds"; "fails"; end} with transfer from #{from} to #{to}" do
-            if valid
-              %i(run_transfer cancel processed_bytes).each do |action|
-                expect(RunnerFactory.make_runner(transfer)).to respond_to(action)
+          let(:from_conn)   { double(:connection) }
+          let(:from_result) { double(:result) }
+          let(:transfer)    { double(:transfer, from_url: from, to_url: to,
+                                     logger: ->(l) {}) }
+
+          # TODO: verify not just that several versions work, but that
+          # the resulting runner has the expected version
+          [
+            "PostgreSQL 9.2.8 on x86_64-unknown-linux-gnu, compiled by gcc (Ubuntu 4.8.2-16ubuntu6) 4.8.2, 64-bit",
+            "PostgreSQL 9.3.4 on x86_64-unknown-linux-gnu, compiled by gcc (Ubuntu 4.8.2-16ubuntu6) 4.8.2, 64-bit"
+          ].each do |version|
+            it "#{if valid; "succeeds"; "fails"; end} with transfer from #{from} (version #{version}) to #{to}" do
+              Sequel.should_receive(:connect).with(from).and_yield(from_conn)
+              from_conn.should_receive(:fetch).with("SELECT version()").and_return(from_result)
+              from_result.should_receive(:get).with(:version).and_return(version)
+              if valid
+                runner = RunnerFactory.make_runner(transfer)
+                %i(run_transfer cancel processed_bytes).each do |action|
+                  expect(runner).to respond_to(action)
+                end
+              else
+                expect { RunnerFactory.make_runner(transfer) }.to raise_error ArgumentError
               end
-            else
-              expect { RunnerFactory.make_runner(transfer) }.to raise_error ArgumentError
             end
           end
         end
@@ -85,7 +100,10 @@ module Transferatu
   describe PGDumpSource do
     let(:logs)     { [] }
     let(:logger)   { ->(line) { logs << line } }
-    let(:source)   { PGDumpSource.new("postgres:///test", logger: logger) }
+    let(:source)   { PGDumpSource.new("postgres:///test",
+                                      logger: logger,
+                                      env: { "PATH" => '/app/bin/pg/9.2/bin',
+                                             "LD_LIBRARY_PATH" => '/app/bin/pg/9.2/lib'}) }
     let(:stdin)    { StringIO.new("") }
     let(:stdout)   { StringIO.new("") }
     let(:stderr)   { StringIO.new("hello\nfrom\npg_dump") }
@@ -96,7 +114,7 @@ module Transferatu
 
     describe "#run_async" do
       before do
-        Open3.should_receive(:popen3).with { |arg| arg =~ /pg_dump/ }
+        Open3.should_receive(:popen3).with { |env, command| command =~ /pg_dump/ }
           .and_return([stdin, stdout, stderr, wthr])
       end
 

@@ -65,7 +65,6 @@ module Transferatu
     attr_reader :logger
     def initialize(url, opts: {}, logger:)
       @url = url
-      # TODO: only take whitelisted opts
       @cmd = command('pg_dump', opts, @url)
       @logger = logger
     end
@@ -107,10 +106,11 @@ module Transferatu
   class Gof3rSink
     include ShellProcessLike
     def initialize(url, opts: {}, logger:)
-      # assumes http S3 URIs
+      # assumes https://bucket.as3.amazonaws.com/key/path URIs
       uri = URI.parse(url)
-      segments = uri.path.split('/')
-      bucket, key = segments[1], segments[2]
+      hostname = uri.hostname
+      bucket = hostname.split('.').pop
+      key = uri.path.sub(/\A\//)
       # gof3r put -b $bucket -k $key; we assume the S3 keys are in the
       # environment.
       @cmd = command(%W(gof3r put), { b: bucket, k: key})

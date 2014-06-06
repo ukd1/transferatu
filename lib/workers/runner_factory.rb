@@ -71,7 +71,7 @@ module Transferatu
     end
 
     def cancel
-      if @whtr
+      if @wthr
         Process.kill("INT", @wthr.pid)
       end
     rescue Errno::ESRCH
@@ -85,6 +85,7 @@ module Transferatu
       stdin, @stdout, stderr, @wthr = Open3.popen3(*@cmd)
       stdin.close
       @stderr_thr =  Thread.new { drain_log_lines(stderr) }
+      @stdout
     end
 
     def wait
@@ -94,7 +95,7 @@ module Transferatu
       @stderr_thr.join
       @stdout.close
 
-      log "pg_dump done; exited with #{status.exitstatus} (signal #{status.termsig})"
+      log "pg_dump done; exited with #{status.exitstatus.inspect} (signal #{status.termsig.inspect})"
       # N.B.: we don't just return status.success? because it can be
       # nil when the process was signaled, and we want an unambiguous
       # answer here.
@@ -142,7 +143,7 @@ module Transferatu
     @stdout_thr.join
     @stderr_thr.join
 
-    log "upload done; exited with #{status.exitstatus} (signal #{status.termsig})"
+    log "upload done; exited with #{status.exitstatus.inspect} (signal #{status.termsig.inspect})"
     # Same reasoning as PgDumpSource
     status.success? == true
   end

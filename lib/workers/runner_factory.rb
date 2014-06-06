@@ -112,6 +112,8 @@ module Transferatu
   # A Sink that uploads to S3
   class Gof3rSink
     include ShellProcessLike
+    attr_reader :logger
+
     def initialize(url, opts: {}, logger:)
       # assumes https://bucket.as3.amazonaws.com/key/path URIs
       uri = URI.parse(url)
@@ -125,7 +127,7 @@ module Transferatu
     end
 
     def cancel
-      if @whtr
+      if @wthr
         Process.kill("INT", @wthr.pid)
       end
     rescue Errno::ESRCH
@@ -136,24 +138,24 @@ module Transferatu
 
     def run_async
       log "Running #{@cmd.join(' ')}"
-      stdin, stdout, stderr, @wthr = Open3.popen3(*cmd)
+      stdin, stdout, stderr, @wthr = Open3.popen3(*@cmd)
       @stdout_thr = Thread.new { drain_log_lines(stdout) }
       @stderr_thr = Thread.new { drain_log_lines(stderr) }
       stdin
     end
 
     def wait
-    log "waiting for upload to complete"
-    # Process::Status object returned; return the actual exit status
-    status = @wthr.value
+      log "waiting for upload to complete"
+      # Process::Status object returned; return the actual exit status
+      status = @wthr.value
 
-    @stdout_thr.join
-    @stderr_thr.join
+      @stdout_thr.join
+      @stderr_thr.join
 
-    log "upload done; exited with #{status.exitstatus.inspect} (signal #{status.termsig.inspect})"
-    # Same reasoning as PgDumpSource
-    status.success? == true
-  end
+      log "upload done; exited with #{status.exitstatus.inspect} (signal #{status.termsig.inspect})"
+      # Same reasoning as PgDumpSource
+      status.success? == true
+    end
 
   end
 end

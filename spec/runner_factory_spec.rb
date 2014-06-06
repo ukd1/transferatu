@@ -96,7 +96,8 @@ module Transferatu
 
     describe "#run_async" do
       before do
-        Open3.should_receive(:popen3).and_return([stdin, stdout, stderr, wthr])
+        Open3.should_receive(:popen3).with { |arg| arg =~ /pg_dump/ }
+          .and_return([stdin, stdout, stderr, wthr])
       end
 
       it "closes stdin and returns stdout" do
@@ -151,6 +152,82 @@ module Transferatu
           source.run_async
           Process.should_receive(:kill).with("INT", wthr.pid).and_raise(Errno::ESRCH)
           source.cancel
+        end
+      end
+    end
+  end
+
+  describe Gof3rSink do
+    let(:logs)     { [] }
+    let(:logger)   { ->(line) { logs << line } }
+    let(:sink)     { Gof3rSink.new("https://bucket.s3.amazonaws.com/some/key", logger: logger) }
+    let(:stdin)    { StringIO.new("") }
+    let(:stdout)   { StringIO.new("hello\nfrom\ngof3r") }
+    let(:stderr)   { StringIO.new("and some stderr\nwhat the heck?") }
+    let(:wthr)     { double(:wthr, pid: 22) }
+    let(:success)  { double(:process_status, exitstatus: 0, termsig: nil, success?: true) }
+    let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
+    let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
+
+    describe "#run_async" do
+      before do
+        Open3.should_receive(:popen3).with { |*args| args.join('') =~ /gof3r/ }
+          .and_return([stdin, stdout, stderr, wthr])
+      end
+
+      it "returns the process' stdin" do
+        stream = sink.run_async
+        expect(stream).to be(stdin)
+        expect(stream).to_not be_closed
+      end
+
+      it "collects logs while running" do
+        sink.run_async
+        wthr.should_receive(:value).and_return(success)
+        sink.wait
+        %w(hello from gof3r).each do |line|
+          expect(logs).to include(line)
+        end
+
+        [ "and some stderr", "what the heck?" ].each do |line|
+          expect(logs).to include(line)
+        end
+      end
+
+      describe "#wait" do
+        it "returns success if the transfer finishes" do
+          wthr.should_receive(:value).and_return(success)
+          sink.run_async
+          result = sink.wait
+          expect(result).to be_true
+        end
+
+        it "returns failure if the transfer with an error" do
+          wthr.should_receive(:value).and_return(failure)
+          sink.run_async
+          result = sink.wait
+          expect(result).to be_false
+        end
+
+        it "returns failure if the transfer fails due to a signal" do
+          wthr.should_receive(:value).and_return(signaled)
+          sink.run_async
+          result = sink.wait
+          expect(result).to be_false
+        end
+      end
+
+      describe "#cancel" do
+        it "cancels the asynchronus process" do
+          sink.run_async
+          Process.should_receive(:kill).with("INT", wthr.pid)
+          sink.cancel
+        end
+
+        it "ignores dead processes when canceling" do
+          sink.run_async
+          Process.should_receive(:kill).with("INT", wthr.pid).and_raise(Errno::ESRCH)
+          sink.cancel
         end
       end
     end

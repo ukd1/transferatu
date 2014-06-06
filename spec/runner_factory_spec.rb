@@ -175,7 +175,7 @@ module Transferatu
           .and_return([stdin, stdout, stderr, wthr])
       end
 
-      it "returns the process' stdin" do
+      it "returns the target process' stdin" do
         stream = sink.run_async
         expect(stream).to be(stdin)
         expect(stream).to_not be_closed

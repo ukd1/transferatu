@@ -36,6 +36,7 @@ GEM
     multi_json (1.10.1)
     oj (2.9.0)
     pg (0.17.1)
+    pgversion (0.0.2)
     pliny (0.1.0)
       activesupport (~> 4.1, >= 4.1.0)
       http_accept (~> 0.1, >= 0.1.5)
@@ -122,6 +123,7 @@ DEPENDENCIES
   multi_json
   oj
   pg
+  pgversion
   pliny
   pry
   pry-byebug

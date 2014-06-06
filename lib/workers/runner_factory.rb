@@ -1,18 +1,25 @@
 module Transferatu
   class RunnerFactory
-    def make_runner(transfer)
-      unless transfer.from_url =~ /\Apostgres:/ && transfer.to_url =~ /\As3:/
-        raise ArgumentError, "only postgres backups to s3 currently supported"
-      end
-      source = PGDumpSource.new(transfer.from_url,
-                                opts: {
-                                  no_owner: true,
-                                  no_privileges: true,
-                                  verbose: true,
-                                  format: 'custom'
-                                },
-                                logger: transfer.logger)
-      sink = Gof3rSink.new(transfer.to_url, logger: transfer.logger)
+    def self.make_runner(transfer)
+      source = case transfer.from_url
+               when /\Apostgres:/
+                 PGDumpSource.new(transfer.from_url,
+                                  opts: {
+                                    no_owner: true,
+                                    no_privileges: true,
+                                    verbose: true,
+                                    format: 'custom'
+                                  },
+                                  logger: transfer.logger)
+               else
+                 raise ArgumentError, "unkown source (supported: postgres)"
+               end
+      sink = case transfer.to_url
+             when %r{\Ahttps://[^.]+\.s3.amazonaws.com}
+               Gof3rSink.new(transfer.to_url, logger: transfer.logger)
+             else
+               raise ArgumentError, "unkown target (supported: s3)"
+             end
       DataMover.new(source, sink)
     end
   end
@@ -110,7 +117,7 @@ module Transferatu
       uri = URI.parse(url)
       hostname = uri.hostname
       bucket = hostname.split('.').pop
-      key = uri.path.sub(/\A\//)
+      key = uri.path.sub(/\A\//, '')
       # gof3r put -b $bucket -k $key; we assume the S3 keys are in the
       # environment.
       @cmd = command(%W(gof3r put), { b: bucket, k: key})

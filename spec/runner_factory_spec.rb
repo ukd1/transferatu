@@ -1,6 +1,28 @@
 require 'spec_helper'
 
 module Transferatu
+  describe RunnerFactory do
+    describe "#make_runner" do
+      [ [ 'postgres:///test1', 'postgres:///test2', false ],
+        [ 'postgres:///test1', 'https://bucket.s3.amazonaws.com/some/key', true ],
+        [ 'https://bucket.s3.amazonaws.com/some/key', 'postgres:///test1', false ],
+        [ 'https://bucket.s3.amazonaws.com/some/key', 'https://bucket.s3.amazonaws.com/some/key', false ] ].each do |from, to, valid|
+        context do
+          let(:transfer) { double(:transfer, from_url: from, to_url: to, logger: ->(l) { puts l }) }
+          it "#{if valid; "succeeds"; "fails"; end} with transfer from #{from} to #{to}" do
+            if valid
+              %i(run_transfer cancel processed_bytes).each do |action|
+                expect(RunnerFactory.make_runner(transfer)).to respond_to(action)
+              end
+            else
+              expect { RunnerFactory.make_runner(transfer) }.to raise_error ArgumentError
+            end
+          end
+        end
+      end
+    end
+  end
+
   describe ShellProcessLike do
     let(:s) { Object.new.extend(ShellProcessLike) }
     describe '#command' do

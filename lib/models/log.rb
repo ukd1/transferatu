@@ -9,7 +9,7 @@ module Transferatu
 
   module Loggable
     def logger
-      ->(message, severity) { log(message, severity) }
+      ->(message, severity=:info) { log(message, severity) }
     end
 
     def log(msg, severity=:info)

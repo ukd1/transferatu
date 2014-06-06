@@ -1,3 +1,6 @@
+require 'pgversion'
+require_relative 'workers/data_mover'
+
 module Transferatu
   class RunnerFactory
     def self.make_runner(transfer)

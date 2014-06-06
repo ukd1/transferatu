@@ -1,5 +1,4 @@
 require 'pgversion'
-require_relative 'workers/data_mover'
 
 module Transferatu
   class RunnerFactory

@@ -124,7 +124,7 @@ module Transferatu
       # assumes https://bucket.as3.amazonaws.com/key/path URIs
       uri = URI.parse(url)
       hostname = uri.hostname
-      bucket = hostname.split('.').pop
+      bucket = hostname.split('.').shift
       key = uri.path.sub(/\A\//, '')
       # gof3r put -b $bucket -k $key; we assume the S3 keys are in the
       # environment.

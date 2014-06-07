@@ -16,8 +16,7 @@ module Transferatu
                                     verbose: true,
                                     format: 'custom'
                                   },
-                                  env: { "PATH" => "#{root}/bin",
-                                         "LD_LIBRARY_PATH" =>  "#{root}/lib" },
+                                  root: root,
                                   logger: transfer.method(:log))
                else
                  raise ArgumentError, "unkown source (supported: postgres)"
@@ -76,11 +75,11 @@ module Transferatu
   class PGDumpSource
     include ShellProcessLike
     attr_reader :logger
-    def initialize(url, opts: {}, logger:, env:)
+    def initialize(url, opts: {}, logger:, root:)
       @url = url
-      @cmd = command('pg_dump', opts, @url)
+      @env = { "LD_LIBRARY_PATH" =>  "#{root}/lib" }
+      @cmd = command("#{root}/bin/pg_dump", opts, @url)
       @logger = logger
-      @env = env
     end
 
     def cancel

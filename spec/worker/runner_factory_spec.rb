@@ -105,8 +105,7 @@ module Transferatu
     let(:logger)   { ->(line, severity: info) { logs << line } }
     let(:source)   { PGDumpSource.new("postgres:///test",
                                       logger: logger,
-                                      env: { "PATH" => '/app/bin/pg/9.2/bin',
-                                             "LD_LIBRARY_PATH" => '/app/bin/pg/9.2/lib'}) }
+                                      root: '/app/bin/pg/9.2') }
     let(:stdin)    { StringIO.new("") }
     let(:stdout)   { StringIO.new("") }
     let(:stderr)   { StringIO.new("hello\nfrom\npg_dump") }

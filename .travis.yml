@@ -6,6 +6,7 @@ bundler_args: --without development
 env: DATABASE_URL=postgres://127.0.0.1:5432/transferatu_test
 before_script:
   - createdb transferatu_test
+  - bundle exec rake db:migrate
 script: bundle exec rspec
 notifications:
   email: true

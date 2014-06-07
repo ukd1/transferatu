@@ -7,7 +7,7 @@ module Transferatu
     let(:long_source)   { StringIO.new('*' * (DataMover::CHUNK_SIZE * 2)) }
     let(:sink)          { double(:sink) }
     let(:sink_stream)   { StringIO.new }
-    let(:mover)        { DataMover.new(source, sink) }
+    let(:mover)         { DataMover.new(source, sink) }
 
     it "should run transfers smaller than chunk size" do
       source.should_receive(:run_async).and_return(short_source)
@@ -53,6 +53,17 @@ module Transferatu
 
     it "should stop the transfer if copying data fails" do
 
+    end
+
+    it "should clean up even if sink fails to run entirely" do
+      source.should_receive(:run_async).and_return(long_source)
+      err = StandardError.new("oh snap")
+      sink.should_receive(:run_async).and_raise(err)
+
+      source.should_receive(:wait)
+      sink.should_not_receive(:wait)
+
+      expect { mover.run_transfer }.to raise_error(err)
     end
     
     it "should cancel the source and sink when cancelled externally" do

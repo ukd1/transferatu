@@ -82,8 +82,8 @@ module Transferatu
         sink_stream.close
       end
     ensure
-      source_result = @source.wait
-      sink_result = @sink.wait
+      source_result = @source.wait if source_stream
+      sink_result = @sink.wait if sink_stream
       source_result && sink_result
     end
   end

@@ -180,7 +180,7 @@ module Transferatu
   describe Gof3rSink do
     let(:logs)     { [] }
     let(:logger)   { ->(line, severity: :info) { logs << line } }
-    let(:sink)     { Gof3rSink.new("https://bucket.s3.amazonaws.com/some/key", logger: logger) }
+    let(:sink)     { Gof3rSink.new("https://my-bucket.s3.amazonaws.com/some/key", logger: logger) }
     let(:stdin)    { StringIO.new("") }
     let(:stdout)   { StringIO.new("hello\nfrom\ngof3r") }
     let(:stderr)   { StringIO.new("and some stderr\nwhat the heck?") }
@@ -191,8 +191,9 @@ module Transferatu
 
     describe "#run_async" do
       before do
-        Open3.should_receive(:popen3).with { |*args| args.join('') =~ /gof3r/ }
-          .and_return([stdin, stdout, stderr, wthr])
+        Open3.should_receive(:popen3).with do |*args|
+          args.include?('gof3r') && args.include?('my-bucket') && args.include?('some/key')
+        end.and_return([stdin, stdout, stderr, wthr])
       end
 
       it "returns the target process' stdin" do

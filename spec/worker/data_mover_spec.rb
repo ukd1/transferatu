@@ -51,11 +51,29 @@ module Transferatu
       mover.run_transfer
     end
 
-    it "should stop the transfer if copying data fails" do
+    it "should stop the transfer and raise if copying data fails" do
+      source.should_receive(:run_async).and_return(long_source)
+      err = StandardError.new("oh snap")
+      sink.should_receive(:run_async).and_return(sink_stream)
+      IO.should_receive(:copy_stream).and_raise(err)
 
+      source.should_receive(:wait)
+      sink.should_receive(:wait)
+
+      expect { mover.run_transfer }.to raise_error(err)
     end
 
-    it "should clean up even if sink fails to run entirely" do
+    it "should raise if source fails to run" do
+      err = StandardError.new("oh snap")
+      source.should_receive(:run_async).and_raise(err)
+
+      source.should_not_receive(:wait)
+      sink.should_not_receive(:wait)
+
+      expect { mover.run_transfer }.to raise_error(err)
+    end
+
+    it "should clean up source and raise if sink fails to run" do
       source.should_receive(:run_async).and_return(long_source)
       err = StandardError.new("oh snap")
       sink.should_receive(:run_async).and_raise(err)

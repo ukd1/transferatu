@@ -64,26 +64,30 @@ module Transferatu
     # if the transfer completes successfully, and false if it fails or
     # if it is canceled.
     def run_transfer
-      source_stream = @source.run_async
-      sink_stream = @sink.run_async
-
+      source_result = nil
+      sink_result = nil
       begin
-        until source_stream.eof?
-          @processed_bytes += IO.copy_stream(source_stream, sink_stream, CHUNK_SIZE)
+        source_stream = @source.run_async
+        sink_stream = @sink.run_async
+
+        begin
+          until source_stream.eof?
+            @processed_bytes += IO.copy_stream(source_stream, sink_stream, CHUNK_SIZE)
+          end
+        rescue Errno::EPIPE
+          # Writing failed because the sink died: we trust the sink to
+          # log the error in this case and return a failure from
+          # #wait. Note that if the source fails, we'll exit this loop
+          # normally (due to the source stream eof), but the source will
+          # notice it failed and log and update transfer status
+          # accordingly.
+        ensure
+          sink_stream.close
         end
-      rescue Errno::EPIPE
-        # Writing failed because the sink died: we trust the sink to
-        # log the error in this case and return a failure from
-        # #wait. Note that if the source fails, we'll exit this loop
-        # normally (due to the source stream eof), but the source will
-        # notice it failed and log and update transfer status
-        # accordingly.
       ensure
-        sink_stream.close
+        source_result = @source.wait if source_stream
+        sink_result = @sink.wait if sink_stream
       end
-    ensure
-      source_result = @source.wait if source_stream
-      sink_result = @sink.wait if sink_stream
       source_result && sink_result
     end
   end

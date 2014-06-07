@@ -13,8 +13,8 @@ module Transferatu
       source.should_receive(:run_async).and_return(short_source)
       sink.should_receive(:run_async).and_return(sink_stream)
 
-      source.should_receive(:wait)
-      sink.should_receive(:wait)
+      source.should_receive(:wait).and_return(true)
+      sink.should_receive(:wait).and_return(true)
 
       expect(mover.run_transfer).to be_true
 
@@ -26,8 +26,8 @@ module Transferatu
       source.should_receive(:run_async).and_return(long_source)
       sink.should_receive(:run_async).and_return(sink_stream)
 
-      source.should_receive(:wait)
-      sink.should_receive(:wait)
+      source.should_receive(:wait).and_return(true)
+      sink.should_receive(:wait).and_return(true)
 
       expect(mover.run_transfer).to be_true
 
@@ -45,8 +45,8 @@ module Transferatu
 
       sink_stream.should_receive(:write).and_raise(Errno::EPIPE)
 
-      source.should_receive(:wait)
-      sink.should_receive(:wait)
+      source.should_receive(:wait).and_return(true)
+      sink.should_receive(:wait).and_return(false)
 
       expect(mover.run_transfer).to be_false
     end
@@ -57,8 +57,8 @@ module Transferatu
       sink.should_receive(:run_async).and_return(sink_stream)
       IO.should_receive(:copy_stream).and_raise(err)
 
-      source.should_receive(:wait)
-      sink.should_receive(:wait)
+      source.should_receive(:wait).and_return(true)
+      sink.should_receive(:wait).and_return(true)
 
       expect { mover.run_transfer }.to raise_error(err)
     end
@@ -78,7 +78,7 @@ module Transferatu
       err = StandardError.new("oh snap")
       sink.should_receive(:run_async).and_raise(err)
 
-      source.should_receive(:wait)
+      source.should_receive(:wait).and_return(true)
       sink.should_not_receive(:wait)
 
       expect { mover.run_transfer }.to raise_error(err)

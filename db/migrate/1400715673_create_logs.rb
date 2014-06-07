@@ -1,7 +1,7 @@
 Sequel.migration do
   change do
     self.execute <<-EOF
-    CREATE TYPE log_severity AS ENUM ('info', 'warning', 'error');
+    CREATE TYPE log_severity AS ENUM ('internal', 'info', 'warning', 'error');
 EOF
     create_table(:logs) do
       uuid         :foreign_uuid, null: false

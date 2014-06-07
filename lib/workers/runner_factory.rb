@@ -18,13 +18,13 @@ module Transferatu
                                   },
                                   env: { "PATH" => "#{root}/bin",
                                          "LD_LIBRARY_PATH" =>  "#{root}/lib" },
-                                  logger: transfer.logger)
+                                  logger: transfer.method(:log))
                else
                  raise ArgumentError, "unkown source (supported: postgres)"
                end
       sink = case transfer.to_url
              when %r{\Ahttps://[^.]+\.s3.amazonaws.com}
-               Gof3rSink.new(transfer.to_url, logger: transfer.logger)
+               Gof3rSink.new(transfer.to_url, logger: transfer.method(:log))
              else
                raise ArgumentError, "unkown target (supported: s3)"
              end
@@ -58,10 +58,8 @@ module Transferatu
     end
 
     # Log line with owner's logger function
-    def log(line, level: :info)
-      # TODO: make the distinction between internal and user-visible
-      # logs here
-      logger.call(line)
+    def log(line, severity: :info)
+      logger.call(line, severity: severity)
     end
 
     # Log each line to owner's logger function, the close the source

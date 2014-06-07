@@ -10,9 +10,12 @@ module Transferatu
         context do
           let(:from_conn)   { double(:connection) }
           let(:from_result) { double(:result) }
-          let(:transfer)    { double(:transfer, from_url: from, to_url: to,
-                                     logger: ->(l) {}) }
-
+          let(:transfer)    { double(:transfer, from_url: from, to_url: to) }
+          before do
+            def transfer.log
+              # the RunnerFactory requires a #log method on its transfer
+            end
+          end
           # TODO: verify not just that several versions work, but that
           # the resulting runner has the expected version
           [
@@ -61,7 +64,7 @@ module Transferatu
     describe "logging" do
       let(:results) { [] }
       before do
-        s.stub(:logger).and_return(->(line) { results << line })
+        s.stub(:logger).and_return(->(line, severity: :info) { results << line })
       end
 
       describe '#log' do
@@ -99,7 +102,7 @@ module Transferatu
 
   describe PGDumpSource do
     let(:logs)     { [] }
-    let(:logger)   { ->(line) { logs << line } }
+    let(:logger)   { ->(line, severity: info) { logs << line } }
     let(:source)   { PGDumpSource.new("postgres:///test",
                                       logger: logger,
                                       env: { "PATH" => '/app/bin/pg/9.2/bin',
@@ -177,7 +180,7 @@ module Transferatu
 
   describe Gof3rSink do
     let(:logs)     { [] }
-    let(:logger)   { ->(line) { logs << line } }
+    let(:logger)   { ->(line, severity: :info) { logs << line } }
     let(:sink)     { Gof3rSink.new("https://bucket.s3.amazonaws.com/some/key", logger: logger) }
     let(:stdin)    { StringIO.new("") }
     let(:stdout)   { StringIO.new("hello\nfrom\ngof3r") }

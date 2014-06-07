@@ -8,18 +8,17 @@ module Transferatu
   end
 
   module Loggable
-    def logger
-      ->(message, severity=:info) { log(message, severity) }
-    end
-
-    def log(msg, severity=:info)
+    def log(msg, severity: :info)
       if block_given?
         log_line("starting: #{msg.to_s.strip}", severity)
         begin
           yield
           log_line("finished: #{msg.to_s.strip}", severity)
         rescue StandardError => e
-          log_line("raised #{e.class}: #{msg.to_s.strip}")
+          unless severity == :internal
+            severity = :error
+          end
+          log_line("raised #{e.class}: #{msg.to_s.strip}", severity)
           raise
         end
       else
@@ -28,7 +27,7 @@ module Transferatu
     end
 
     def logs(limit = 200)
-      Transferatu::Log.select(:severity, :created_at, :message)
+      Log.select(:severity, :created_at, :message)
         .where(foreign_uuid: self.uuid)
         .order_by(Sequel.desc(:created_at)).limit(limit)
         .all
@@ -36,10 +35,10 @@ module Transferatu
 
     private
 
-    def log_line(msg, severity=:info)
-      Transferatu::Log.create(foreign_uuid: self.uuid,
-                              severity: severity.to_s,
-                              message: msg.to_s.strip)
+    def log_line(msg, severity)
+      Log.create(foreign_uuid: self.uuid,
+                 severity: severity.to_s,
+                 message: msg.to_s.strip)
     end
   end
 end

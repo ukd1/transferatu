@@ -62,12 +62,12 @@ module Transferatu
       self.log("progress: #{bytes}", transient: true)
     end
 
-    def log(message, severity: :info, transient: false, internal: false)
-      unless internal || logplex_token.nil?
+    def log(message, severity: :info, transient: false)
+      unless severity == :internal || logplex_token.nil?
         # send to logplex with user logplex token
       end
       unless transient
-        super(message, severity)
+        super(message, severity: severity)
       end
     end    
   end

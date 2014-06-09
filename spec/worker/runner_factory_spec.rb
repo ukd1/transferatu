@@ -253,4 +253,86 @@ module Transferatu
       end
     end
   end
+
+  describe PgRestoreSink do
+    let(:url)      { "postgres://test" }
+    let(:logs)     { [] }
+    let(:logger)   { ->(line, severity: :info) { logs << line } }
+    let(:sink)     { PgRestoreSink.new(url,
+                                       logger: logger,
+                                       root: "/app/bin/pg/9.2") }
+    let(:stdin)    { StringIO.new("") }
+    let(:stdout)   { StringIO.new("not expecting stdout\nbut don't freak out") }
+    let(:stderr)   { StringIO.new("hello\nfrom\npg_restore") }
+
+    let(:wthr)     { double(:wthr, pid: 22) }
+    let(:success)  { double(:process_status, exitstatus: 0, termsig: nil, success?: true) }
+    let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
+    let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
+
+    describe "#run_async" do
+      before do
+        Open3.should_receive(:popen3) do |*args|
+          expect(args).to include_element_matching(/pg_restore/)
+          [stdin, stdout, stderr, wthr]
+        end
+      end
+
+      it "returns the target process' stdin" do
+        stream = sink.run_async
+        expect(stream).to be(stdin)
+        expect(stream).to_not be_closed
+      end
+
+      it "collects logs while running" do
+        sink.run_async
+        wthr.should_receive(:value).and_return(success)
+        sink.wait
+        %w(hello from pg_restore).each do |line|
+          expect(logs).to include(line)
+        end
+
+        [ "not expecting stdout", "but don't freak out" ].each do |line|
+          expect(logs).to include(line)
+        end
+      end
+
+      describe "#wait" do
+        it "returns success if the transfer finishes" do
+          wthr.should_receive(:value).and_return(success)
+          sink.run_async
+          result = sink.wait
+          expect(result).to be_true
+        end
+
+        it "returns failure if the transfer with an error" do
+          wthr.should_receive(:value).and_return(failure)
+          sink.run_async
+          result = sink.wait
+          expect(result).to be_false
+        end
+
+        it "returns failure if the transfer fails due to a signal" do
+          wthr.should_receive(:value).and_return(signaled)
+          sink.run_async
+          result = sink.wait
+          expect(result).to be_false
+        end
+      end
+
+      describe "#cancel" do
+        it "cancels the asynchronus process" do
+          sink.run_async
+          Process.should_receive(:kill).with("INT", wthr.pid)
+          sink.cancel
+        end
+
+        it "ignores dead processes when canceling" do
+          sink.run_async
+          Process.should_receive(:kill).with("INT", wthr.pid).and_raise(Errno::ESRCH)
+          sink.cancel
+        end
+      end
+    end
+  end
 end

@@ -61,10 +61,10 @@ module Transferatu
       logger.call(line, severity: severity)
     end
 
-    # Log each line to owner's logger function, the close the source
-    def drain_log_lines(source)
+    # Log each line to owner's logger function, then close the source
+    def drain_log_lines(source, severity: :info)
       begin
-        source.each_line { |l| log l.strip }
+        source.each_line { |l| log(l.strip, severity: severity) }
       ensure
         source.close
       end
@@ -137,9 +137,7 @@ module Transferatu
         Process.kill("INT", @wthr.pid)
       end
     rescue Errno::ESRCH
-      # Do nothing; our async pg_dump may have completed. N.B.: this
-      # means that right now, canceled transfers can in fact complete
-      # successfully. This may be a bug or a feature. TBD.
+      # Do nothing; our async process may have completed
     end
 
     def run_async
@@ -162,6 +160,49 @@ module Transferatu
       # Same reasoning as PgDumpSource
       status.success? == true
     end
+  end
+  
+  # A Sink that restores a custom-format Postgres dump into a database
+  class PgRestoreSink
+    include ShellProcessLike
+    attr_reader :logger
 
+    def initialize(url, opts: {}, logger:, root:)
+      @url = url
+      @env = { "LD_LIBRARY_PATH" =>  "#{root}/lib" }
+      @cmd = command("#{root}/bin/pg_restore", opts.merge(dbname: @url))
+      @logger = logger
+    end
+
+    def cancel
+      if @wthr
+        Process.kill("INT", @wthr.pid)
+      end
+    rescue Errno::ESRCH
+      # Do nothing; our async process may have completed
+    end
+
+    def run_async
+      log "Running #{@cmd.join(' ').sub(@url, 'postgres://...')}}"
+      stdin, stdout, stderr, @wthr = Open3.popen3(*@cmd)
+      # We don't expect any output from stdout. Capture it anyway, but
+      # keep it internal.
+      @stdout_thr = Thread.new { drain_log_lines(stdout, severity: :internal) }
+      @stderr_thr = Thread.new { drain_log_lines(stderr) }
+      stdin
+    end
+
+    def wait
+      log "waiting for restore to complete"
+      # Process::Status object returned; return the actual exit status
+      status = @wthr.value
+
+      @stdout_thr.join
+      @stderr_thr.join
+
+      log "restore done; exited with #{status.exitstatus.inspect} (signal #{status.termsig.inspect})"
+      # Same reasoning as PgDumpSource
+      status.success? == true
+    end
   end
 end

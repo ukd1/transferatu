@@ -184,7 +184,7 @@ module Transferatu
 
     def run_async
       log "Running #{@cmd.join(' ').sub(@url, 'postgres://...')}}"
-      stdin, stdout, stderr, @wthr = Open3.popen3(*@cmd)
+      stdin, stdout, stderr, @wthr = Open3.popen3(@env, *@cmd)
       # We don't expect any output from stdout. Capture it anyway, but
       # keep it internal.
       @stdout_thr = Thread.new { drain_log_lines(stdout, severity: :internal) }

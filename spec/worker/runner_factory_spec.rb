@@ -101,11 +101,13 @@ module Transferatu
   end
 
   describe PGDumpSource do
+    let(:root)     { "/app/bin/pg/9.2" }
+    let(:url)      { "postgres:///test" }
     let(:logs)     { [] }
     let(:logger)   { ->(line, severity: info) { logs << line } }
-    let(:source)   { PGDumpSource.new("postgres:///test",
+    let(:source)   { PGDumpSource.new(url,
                                       logger: logger,
-                                      root: '/app/bin/pg/9.2') }
+                                      root: root) }
     let(:stdin)    { StringIO.new("") }
     let(:stdout)   { StringIO.new("") }
     let(:stderr)   { StringIO.new("hello\nfrom\npg_dump") }
@@ -116,8 +118,9 @@ module Transferatu
 
     describe "#run_async" do
       before do
-        Open3.should_receive(:popen3).with { |env, command| command =~ /pg_dump/ }
-          .and_return([stdin, stdout, stderr, wthr])
+        Open3.should_receive(:popen3) do |env, *command|
+          expect(command).to include("#{root}/bin/pg_dump", url)
+        end.and_return([stdin, stdout, stderr, wthr])
       end
 
       it "closes stdin and returns stdout" do
@@ -191,8 +194,8 @@ module Transferatu
 
     describe "#run_async" do
       before do
-        Open3.should_receive(:popen3).with do |*args|
-          args.include?('gof3r') && args.include?('my-bucket') && args.include?('some/key')
+        Open3.should_receive(:popen3) do |*args|
+          expect(args).to include('gof3r', 'my-bucket', 'some/key')
         end.and_return([stdin, stdout, stderr, wthr])
       end
 
@@ -255,12 +258,13 @@ module Transferatu
   end
 
   describe PgRestoreSink do
+    let(:root)     { "/app/bin/pg/9.2" }
     let(:url)      { "postgres://test" }
     let(:logs)     { [] }
     let(:logger)   { ->(line, severity: :info) { logs << line } }
     let(:sink)     { PgRestoreSink.new(url,
                                        logger: logger,
-                                       root: "/app/bin/pg/9.2") }
+                                       root: root) }
     let(:stdin)    { StringIO.new("") }
     let(:stdout)   { StringIO.new("not expecting stdout\nbut don't freak out") }
     let(:stderr)   { StringIO.new("hello\nfrom\npg_restore") }
@@ -272,10 +276,9 @@ module Transferatu
 
     describe "#run_async" do
       before do
-        Open3.should_receive(:popen3) do |*args|
-          expect(args).to include_element_matching(/pg_restore/)
-          [stdin, stdout, stderr, wthr]
-        end
+        Open3.should_receive(:popen3) do |env, *command|
+          expect(command).to include("#{root}/bin/pg_restore", url)
+        end.and_return([stdin, stdout, stderr, wthr])
       end
 
       it "returns the target process' stdin" do

@@ -1,7 +1,6 @@
 module Transferatu
   class TransferWorker
-    def perform(transfer_id)
-      transfer = Transfer[transfer_id]
+    def perform(transfer)
       runner = RunnerFactory.runner_for(transfer)
 
       progress_thr = Thread.new do

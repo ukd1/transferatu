@@ -41,8 +41,8 @@ module Transferatu
     end
   end
 
-  describe ShellProcessLike do
-    let(:s) { Object.new.extend(ShellProcessLike) }
+  describe Commandable do
+    let(:s) { Object.new.extend(Commandable) }
     describe '#command' do
       [
         [ 'git' , {}, [], %w(git) ],
@@ -60,42 +60,120 @@ module Transferatu
         end
       end
     end
+    describe "#run_command" do
+      let(:stdin)  { double(:stdin) }
+      let(:stdout) { double(:stdout) }
+      let(:stderr) { double(:stderr) }
+      let(:wthr)   { double(:wthr) }
+      let(:env)    { double(:env) }
+      let(:cmd)    { double(:cmd) }
+      
+      it "delegates to Open3.popen3 and wraps the result in a ShellFuture" do
+        Open3.should_receive(:popen3).and_return([stdin, stdout, stderr, wthr])
+        result = s.run_command(env, cmd)
+        expect(result).to be_instance_of(ShellFuture)
+        expect(result.stdin).to be stdin
+        expect(result.stdout).to be stdout
+        expect(result.stderr).to be stderr
+      end
+    end
+  end
 
-    describe "logging" do
-      let(:results) { [] }
-      before do
-        s.stub(:logger).and_return(->(line, severity: :info) { results << line })
+  describe ShellFuture do
+    let(:logs)   { [] }
+    let(:logger) { ->(line) { logs << line } }
+
+    describe "#drain_stdout" do
+      let(:content) { %w(cello hang piano) }
+      let(:stdin)   { StringIO.new("") }
+      let(:stdout)  { StringIO.new(content.join("\n")) }
+      let(:stderr)  { StringIO.new("") }
+      let(:status)  { double(:process_status, success?: true) }
+      let(:wthr)    { double(:wthr, value: status) }
+      let(:future)  { ShellFuture.new(stdin, stdout, stderr, wthr) }
+
+      it "drains stdout to a function" do
+        future.drain_stdout(logger)
+        future.wait
+        expect(logs).to match_array(content)
+      end
+    end
+
+    describe "#drain_stderr" do
+      let(:content) { %w(kiwi orange pineapple) }
+      let(:stdin)   { StringIO.new("") }
+      let(:stdout)  { StringIO.new("") }
+      let(:stderr)  { StringIO.new(content.join("\n")) }
+      let(:status)  { double(:process_status, success?: true) }
+      let(:wthr)    { double(:wthr, value: status) }
+      let(:future)  { ShellFuture.new(stdin, stdout, stderr, wthr) }
+
+      it "drains stderr to a function" do
+        future.drain_stderr(logger)
+        future.wait
+        expect(logs).to match_array(content)
+      end
+    end
+
+    describe "#wait" do
+      let(:success)  { double(:process_status, exitstatus: 0, termsig: nil, success?: true) }
+      let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
+      let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
+
+      let(:stdin)    { StringIO.new("hello") }
+      let(:stdout)   { StringIO.new("hello") }
+      let(:stderr)   { StringIO.new("hello") }
+      let(:status)   { double(:process_status, success?: true) }
+      let(:wthr)     { double(:wthr, value: status) }
+
+      let(:future)   { ShellFuture.new(stdin, stdout, stderr, wthr) }
+
+      it "returns true when successful" do
+        wthr.stub(:value).and_return(success)
+        expect(future.wait).to be_true
       end
 
-      describe '#log' do
-        it "logs individual lines" do
-          s.log "hello"
-          s.log "goodbye"
-          expect(results).to eq(%w(hello goodbye))
-        end
+      it "returns false when failed" do
+        wthr.stub(:value).and_return(failure)
+        expect(future.wait).to be_false
       end
 
-      describe "#drain_log_lines" do
-        it "drains a normal source" do
-          source = StringIO.new("hello\ngoodbye")
-          s.drain_log_lines(source)
-          expect(results).to eq(%w(hello goodbye))
-          expect(source).to be_closed
-        end
+      it "returns false when signaled" do
+        wthr.stub(:value).and_return(signaled)
+        expect(future.wait).to be_false
+      end
 
-        it "drains a one-line source" do
-          source = StringIO.new("hello")
-          s.drain_log_lines(source)
-          expect(results).to eq(%w(hello))
-          expect(source).to be_closed
-        end
+      it "closes all open streams" do
+        future.wait
+        expect(stdin).to be_closed
+        expect(stdout).to be_closed
+        expect(stderr).to be_closed
+      end
 
-        it "drains an empty source" do
-          source = StringIO.new("")
-          s.drain_log_lines(source)
-          expect(results).to be_empty
-          expect(source).to be_closed
-        end
+      it "closes remaining streams if one is already closed" do
+        stdin.close
+        future.wait
+        expect(stdin).to be_closed
+        expect(stdout).to be_closed
+        expect(stderr).to be_closed
+      end
+    end
+
+    describe "#cancel" do
+      let(:stdin)    { double(:stdin) }
+      let(:stdout)   { double(:stdout) }
+      let(:stderr)   { double(:stderr) }
+      let(:wthr)     { double(:wthr, pid: 42) }
+      let(:future)   { ShellFuture.new(stdin, stdout, stderr, wthr) }
+
+      it "cancels the asynchronus process" do
+        Process.should_receive(:kill).with("INT", wthr.pid)
+        future.cancel
+      end
+
+      it "ignores dead processes when canceling" do
+        Process.should_receive(:kill).with("INT", wthr.pid).and_raise(Errno::ESRCH)
+        future.cancel
       end
     end
   end
@@ -103,78 +181,55 @@ module Transferatu
   describe PGDumpSource do
     let(:root)     { "/app/bin/pg/9.2" }
     let(:url)      { "postgres:///test" }
-    let(:logs)     { [] }
-    let(:logger)   { ->(line, severity: info) { logs << line } }
+    let(:logger)   { ->(line, severity: :info) {} }
+    let(:stdin)    { double(:stdin) }
+    let(:stdout)   { double(:stdout) }
+    let(:stderr)   { double(:stderr) }
+    let(:wthr)     { double(:wthr) }
     let(:source)   { PGDumpSource.new(url,
                                       logger: logger,
                                       root: root) }
-    let(:stdin)    { StringIO.new("") }
-    let(:stdout)   { StringIO.new("") }
-    let(:stderr)   { StringIO.new("hello\nfrom\npg_dump") }
-    let(:wthr)     { double(:wthr, pid: 22) }
-    let(:success)  { double(:process_status, exitstatus: 0, termsig: nil, success?: true) }
-    let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
-    let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
+    let(:future)   { ShellFuture.new(stdin, stdout, stderr, wthr) }
 
     describe "#run_async" do
       before do
-        Open3.should_receive(:popen3) do |env, *command|
+        source.should_receive(:run_command) do |env, command|
           expect(command).to include("#{root}/bin/pg_dump", url)
           expect(env["LD_LIBRARY_PATH"]).to eq("#{root}/lib")
-        end.and_return([stdin, stdout, stderr, wthr])
+        end.and_return(future)
       end
 
-      it "closes stdin and returns stdout" do
+      it "returns stdout" do
         stream = source.run_async
         expect(stream).to be(stdout)
         expect(stdout).to_not be_closed
-        expect(stdin).to be_closed
       end
 
       it "collects logs while running" do
+        future.should_receive(:drain_stderr).with(logger)
         source.run_async
-        wthr.should_receive(:value).and_return(success)
-        source.wait
-        %w(hello from pg_dump).each do |line|
-          expect(logs).to include(line)
-        end
       end
 
-      # It's dicey to nest contexts, but #wait and #cancel are only
-      # meaningful after a run_async
       describe "#wait" do
-        it "returns success if the transfer finishes" do
-          wthr.should_receive(:value).and_return(success)
+        before do
           source.run_async
-          result = source.wait
-          expect(result).to be_true
         end
-
-        it "returns failure if the transfer with an error" do
-          wthr.should_receive(:value).and_return(failure)
-          source.run_async
-          result = source.wait
-          expect(result).to be_false
+        it "delegates to the ShellFuture#wait when the process succeeds" do
+          future.should_receive(:wait).and_return(true)
+          expect(source.wait).to be_true
         end
-
-        it "returns failure if the transfer fails due to a signal" do
-          wthr.should_receive(:value).and_return(signaled)
-          source.run_async
-          result = source.wait
-          expect(result).to be_false
+        it "delegates to the ShellFuture#wait when the process fails" do
+          future.should_receive(:wait).and_return(false)
+          expect(source.wait).to be_false
         end
       end
 
       describe "#cancel" do
-        it "cancels the asynchronus process" do
+        before do
           source.run_async
-          Process.should_receive(:kill).with("INT", wthr.pid)
-          source.cancel
         end
-
-        it "ignores dead processes when canceling" do
-          source.run_async
-          Process.should_receive(:kill).with("INT", wthr.pid).and_raise(Errno::ESRCH)
+        it "delegates to ShellProcess#cancel" do
+          future.should_receive(:cancel)
           source.cancel
         end
       end
@@ -182,22 +237,19 @@ module Transferatu
   end
 
   describe Gof3rSink do
-    let(:logs)     { [] }
-    let(:logger)   { ->(line, severity: :info) { logs << line } }
+    let(:logger)   { ->(line, severity: :info) {} }
     let(:sink)     { Gof3rSink.new("https://my-bucket.s3.amazonaws.com/some/key", logger: logger) }
-    let(:stdin)    { StringIO.new("") }
-    let(:stdout)   { StringIO.new("hello\nfrom\ngof3r") }
-    let(:stderr)   { StringIO.new("and some stderr\nwhat the heck?") }
+    let(:stdin)    { double(:stdin) }
+    let(:stdout)   { double(:stdout) }
+    let(:stderr)   { double(:stderr) }
     let(:wthr)     { double(:wthr, pid: 22) }
-    let(:success)  { double(:process_status, exitstatus: 0, termsig: nil, success?: true) }
-    let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
-    let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
+    let(:future)   { ShellFuture.new(stdin, stdout, stderr, wthr) }
 
     describe "#run_async" do
       before do
-        Open3.should_receive(:popen3) do |*args|
-          expect(args).to include('gof3r', 'my-bucket', 'some/key')
-        end.and_return([stdin, stdout, stderr, wthr])
+        sink.should_receive(:run_command) do |command|
+          expect(command).to include('gof3r', 'my-bucket', 'some/key')
+        end.and_return(future)
       end
 
       it "returns the target process' stdin" do
@@ -207,51 +259,34 @@ module Transferatu
       end
 
       it "collects logs while running" do
+        future.should_receive(:drain_stdout).with(logger)
+        future.should_receive(:drain_stderr) do |logfn|
+          # TODO: we should also verify here that logger is being called
+          expect(logfn).to respond_to(:call)
+        end
         sink.run_async
-        wthr.should_receive(:value).and_return(success)
-        sink.wait
-        %w(hello from gof3r).each do |line|
-          expect(logs).to include(line)
-        end
-
-        [ "and some stderr", "what the heck?" ].each do |line|
-          expect(logs).to include(line)
-        end
       end
 
       describe "#wait" do
-        it "returns success if the transfer finishes" do
-          wthr.should_receive(:value).and_return(success)
+        before do
           sink.run_async
-          result = sink.wait
-          expect(result).to be_true
         end
-
-        it "returns failure if the transfer with an error" do
-          wthr.should_receive(:value).and_return(failure)
-          sink.run_async
-          result = sink.wait
-          expect(result).to be_false
+        it "delegates to the ShellFuture#wait when the process succeeds" do
+          future.should_receive(:wait).and_return(true)
+          expect(sink.wait).to be_true
         end
-
-        it "returns failure if the transfer fails due to a signal" do
-          wthr.should_receive(:value).and_return(signaled)
-          sink.run_async
-          result = sink.wait
-          expect(result).to be_false
+        it "delegates to the ShellFuture#wait when the process fails" do
+          future.should_receive(:wait).and_return(false)
+          expect(sink.wait).to be_false
         end
       end
 
       describe "#cancel" do
-        it "cancels the asynchronus process" do
+        before do
           sink.run_async
-          Process.should_receive(:kill).with("INT", wthr.pid)
-          sink.cancel
         end
-
-        it "ignores dead processes when canceling" do
-          sink.run_async
-          Process.should_receive(:kill).with("INT", wthr.pid).and_raise(Errno::ESRCH)
+        it "delegates to ShellProcess#cancel" do
+          future.should_receive(:cancel)
           sink.cancel
         end
       end
@@ -260,81 +295,56 @@ module Transferatu
 
   describe PgRestoreSink do
     let(:root)     { "/app/bin/pg/9.2" }
-    let(:url)      { "postgres://test" }
-    let(:logs)     { [] }
-    let(:logger)   { ->(line, severity: :info) { logs << line } }
+    let(:url)      { "postgres:///test" }
+    let(:logger)   { ->(line, severity: :info) {} }
+    let(:stdin)    { double(:stdin) }
+    let(:stdout)   { double(:stdout) }
+    let(:stderr)   { double(:stderr) }
+    let(:wthr)     { double(:wthr) }
     let(:sink)     { PgRestoreSink.new(url,
                                        logger: logger,
                                        root: root) }
-    let(:stdin)    { StringIO.new("") }
-    let(:stdout)   { StringIO.new("not expecting stdout\nbut don't freak out") }
-    let(:stderr)   { StringIO.new("hello\nfrom\npg_restore") }
-
-    let(:wthr)     { double(:wthr, pid: 22) }
-    let(:success)  { double(:process_status, exitstatus: 0, termsig: nil, success?: true) }
-    let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
-    let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
+    let(:future)   { ShellFuture.new(stdin, stdout, stderr, wthr) }
 
     describe "#run_async" do
       before do
-        Open3.should_receive(:popen3) do |env, *command|
+        sink.should_receive(:run_command) do |env, command|
           expect(command).to include("#{root}/bin/pg_restore", url)
           expect(env["LD_LIBRARY_PATH"]).to eq("#{root}/lib")
-        end.and_return([stdin, stdout, stderr, wthr])
+        end.and_return(future)
       end
 
-      it "returns the target process' stdin" do
+      it "returns the target process stdin" do
         stream = sink.run_async
         expect(stream).to be(stdin)
         expect(stream).to_not be_closed
       end
 
       it "collects logs while running" do
+        future.should_receive(:drain_stderr).with(logger)
         sink.run_async
-        wthr.should_receive(:value).and_return(success)
-        sink.wait
-        %w(hello from pg_restore).each do |line|
-          expect(logs).to include(line)
-        end
-
-        [ "not expecting stdout", "but don't freak out" ].each do |line|
-          expect(logs).to include(line)
-        end
       end
 
       describe "#wait" do
-        it "returns success if the transfer finishes" do
-          wthr.should_receive(:value).and_return(success)
+        before do
           sink.run_async
-          result = sink.wait
-          expect(result).to be_true
         end
-
-        it "returns failure if the transfer with an error" do
-          wthr.should_receive(:value).and_return(failure)
-          sink.run_async
-          result = sink.wait
-          expect(result).to be_false
+        it "delegates to the ShellFuture#wait when the process succeeds" do
+          future.should_receive(:wait).and_return(true)
+          expect(sink.wait).to be_true
         end
-
-        it "returns failure if the transfer fails due to a signal" do
-          wthr.should_receive(:value).and_return(signaled)
-          sink.run_async
-          result = sink.wait
-          expect(result).to be_false
+        it "delegates to the ShellFuture#wait when the process fails" do
+          future.should_receive(:wait).and_return(false)
+          expect(sink.wait).to be_false
         end
       end
 
       describe "#cancel" do
-        it "cancels the asynchronus process" do
+        before do
           sink.run_async
-          Process.should_receive(:kill).with("INT", wthr.pid)
-          sink.cancel
         end
-
-        it "ignores dead processes when canceling" do
-          sink.run_async
-          Process.should_receive(:kill).with("INT", wthr.pid).and_raise(Errno::ESRCH)
+        it "delegates to ShellProcess#cancel" do
+          future.should_receive(:cancel)
           sink.cancel
         end
       end

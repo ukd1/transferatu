@@ -31,7 +31,71 @@ module Transferatu
     end
   end
 
-  module ShellProcessLike
+  class ShellFuture
+    # The arguments are the return values of popen
+    attr_reader :stdin, :stdout, :stderr
+    def initialize(stdin, stdout, stderr, wthr)
+      @stdin, @stdout, @stderr = stdin, stdout, stderr
+      @wthr = wthr
+      @log_threads = []
+    end
+
+    # Asynchronously write each line of of stdout to the +log+
+    # function, which must accept a single String argument, then close
+    # the stream (+wait+ will wait for output to be drained before
+    # returning).
+    def drain_stdout(logger)
+      drain_stream(@stdout, logger)
+    end
+
+    # Same as drain_stdout, but for standard error.
+    def drain_stderr(logger)
+      drain_stream(@stderr, logger)
+    end
+
+    # Wait for the process to finish. Returns true if the process
+    # completed successfully, false otherwise.
+    def wait
+      status = @wthr.value
+
+      @log_threads.each { |thr| thr.join }
+      [ @stdin, @stdout, @stderr ].each do |stream|
+        stream.close unless stream.closed?
+      end
+      # TODO: restore this information:
+      # "#{cmd_name} done; exited with #{status.exitstatus.inspect}
+      #   (signal #{status.termsig.inspect})"
+
+      # N.B.: we don't just return status.success? because it can be
+      # nil when the process was signaled, and we want an unambiguous
+      # answer here.
+      status.success? == true
+    end
+    
+    def cancel
+      if @wthr
+        Process.kill("INT", @wthr.pid)
+      end
+    rescue Errno::ESRCH
+      # Do nothing; our async pg_dump may have completed. N.B.: this
+      # means that right now, canceled transfers can in fact complete
+      # successfully. This may be a bug or a feature. TBD.
+    end
+
+    private
+
+    def drain_stream(stream, logger)
+      @log_threads << Thread.new do
+        begin
+          stream.each_line { |l| logger.call(l.strip) }
+        ensure
+          stream.close
+        end
+      end
+    end
+  end
+
+  module Commandable
     # Takes a hash of snake-cased symbol keys and values that define
     # #to_s and builds an Array of command arguments with the
     # corresponding GNU flag representation. Returns the resulting
@@ -56,25 +120,19 @@ module Transferatu
       result + args
     end
 
-    # Log line with owner's logger function
-    def log(line, severity: :info)
-      logger.call(line, severity: severity)
-    end
-
-    # Log each line to owner's logger function, then close the source
-    def drain_log_lines(source, severity: :info)
-      begin
-        source.each_line { |l| log(l.strip, severity: severity) }
-      ensure
-        source.close
-      end
+    def run_command(env={}, cmd)
+      stdin, stdout, stderr, wthr = Open3.popen3(env, *cmd)
+      ShellFuture.new(stdin, stdout, stderr, wthr)
     end
   end
 
   # A source that runs pg_dump
   class PGDumpSource
-    include ShellProcessLike
-    attr_reader :logger
+    include Commandable
+    extend Forwardable
+
+    def_delegators :@future, :cancel
+
     def initialize(url, opts: {}, logger:, root:)
       @url = url
       @env = { "LD_LIBRARY_PATH" =>  "#{root}/lib" }
@@ -82,43 +140,27 @@ module Transferatu
       @logger = logger
     end
 
-    def cancel
-      if @wthr
-        Process.kill("INT", @wthr.pid)
-      end
-    rescue Errno::ESRCH
-      # Do nothing; our async pg_dump may have completed. N.B.: this
-      # means that right now, canceled transfers can in fact complete
-      # successfully. This may be a bug or a feature. TBD.
-    end
-
     def run_async
-      log "Running #{@cmd.join(' ').sub(@url, 'postgres://...')}"
-      stdin, @stdout, stderr, @wthr = Open3.popen3(@env, *@cmd)
-      stdin.close
-      @stderr_thr =  Thread.new { drain_log_lines(stderr) }
-      @stdout
+      @logger.call "Running #{@cmd.join(' ').sub(@url, 'postgres://...')}"
+      @future = run_command(@env, @cmd)
+      @future.drain_stderr(@logger)
+      @future.stdout
     end
 
     def wait
-      log "waiting for pg_dump to complete"
-      status = @wthr.value
-
-      @stderr_thr.join
-      @stdout.close
-
-      log "pg_dump done; exited with #{status.exitstatus.inspect} (signal #{status.termsig.inspect})"
-      # N.B.: we don't just return status.success? because it can be
-      # nil when the process was signaled, and we want an unambiguous
-      # answer here.
-      status.success? == true
+      @logger.call "waiting for pg_dump to complete"
+      result = @future.wait
+      @logger.call "pg_dump done"
+      result
     end
   end
 
   # A Sink that uploads to S3
   class Gof3rSink
-    include ShellProcessLike
-    attr_reader :logger
+    include Commandable
+    extend Forwardable
+
+    def_delegators :@future, :cancel
 
     def initialize(url, opts: {}, logger:)
       # assumes https://bucket.as3.amazonaws.com/key/path URIs
@@ -132,40 +174,28 @@ module Transferatu
       @logger = logger
     end
 
-    def cancel
-      if @wthr
-        Process.kill("INT", @wthr.pid)
-      end
-    rescue Errno::ESRCH
-      # Do nothing; our async process may have completed
-    end
-
     def run_async
-      log "Running #{@cmd.join(' ')}"
-      stdin, stdout, stderr, @wthr = Open3.popen3(*@cmd)
-      @stdout_thr = Thread.new { drain_log_lines(stdout) }
-      @stderr_thr = Thread.new { drain_log_lines(stderr) }
-      stdin
+      @logger.call "Running #{@cmd.join(' ')}"
+      @future = run_command(@cmd)
+      @future.drain_stdout(@logger)
+      @future.drain_stderr(->(line) { @logger.call(line, severity: :internal) })
+      @future.stdin
     end
 
     def wait
-      log "waiting for upload to complete"
-      # Process::Status object returned; return the actual exit status
-      status = @wthr.value
-
-      @stdout_thr.join
-      @stderr_thr.join
-
-      log "upload done; exited with #{status.exitstatus.inspect} (signal #{status.termsig.inspect})"
-      # Same reasoning as PgDumpSource
-      status.success? == true
+      @logger.call "waiting for upload to complete"
+      result = @future.wait
+      @logger.call "upload done"
+      result
     end
   end
   
   # A Sink that restores a custom-format Postgres dump into a database
   class PgRestoreSink
-    include ShellProcessLike
-    attr_reader :logger
+    include Commandable
+    extend Forwardable
+
+    def_delegators :@future, :cancel
 
     def initialize(url, opts: {}, logger:, root:)
       @url = url
@@ -174,42 +204,31 @@ module Transferatu
       @logger = logger
     end
 
-    def cancel
-      if @wthr
-        Process.kill("INT", @wthr.pid)
-      end
-    rescue Errno::ESRCH
-      # Do nothing; our async process may have completed
-    end
-
     def run_async
-      log "Running #{@cmd.join(' ').sub(@url, 'postgres://...')}}"
-      stdin, stdout, stderr, @wthr = Open3.popen3(@env, *@cmd)
+      @logger.call "Running #{@cmd.join(' ').sub(@url, 'postgres://...')}}"
+      @future = run_command(@env, @cmd)
       # We don't expect any output from stdout. Capture it anyway, but
       # keep it internal.
-      @stdout_thr = Thread.new { drain_log_lines(stdout, severity: :internal) }
-      @stderr_thr = Thread.new { drain_log_lines(stderr) }
-      stdin
+      @future.drain_stdout(->(line) { @logger.call(line, severity: :internal) })
+      @future.drain_stderr(@logger)
+      @future.stdin
     end
 
     def wait
-      log "waiting for restore to complete"
-      # Process::Status object returned; return the actual exit status
-      status = @wthr.value
-
-      @stdout_thr.join
-      @stderr_thr.join
-
-      log "restore done; exited with #{status.exitstatus.inspect} (signal #{status.termsig.inspect})"
-      # Same reasoning as PgDumpSource
-      status.success? == true
+      @logger.call "waiting for restore to complete"
+      result = @future.wait
+      @logger.call "restore done"
+      result
     end
   end
 
   # A source that runs Gof3r to fetch from an S3 URL
   class Gof3rSource
-    include ShellProcessLike
-    attr_reader :logger
+    include Commandable
+    extend Forwardable
+
+    def_delegators :@future, :cancel
+
     def initialize(url, opts: {}, logger:)
       # assumes https://bucket.as3.amazonaws.com/key/path URIs
       uri = URI.parse(url)
@@ -224,37 +243,17 @@ module Transferatu
       @logger = logger
     end
 
-    def cancel
-      if @wthr
-        Process.kill("INT", @wthr.pid)
-      end
-    rescue Errno::ESRCH
-      # Do nothing; our async pg_dump may have completed. N.B.: this
-      # means that right now, canceled transfers can in fact complete
-      # successfully. This may be a bug or a feature. TBD.
-    end
-
     def run_async
-      log "Running #{@cmd.join(' ').sub(@url, 'postgres://...')}"
-      stdin, @stdout, stderr, @wthr = Open3.popen3(@env, *@cmd)
-      stdin.close
-      @stderr_thr =  Thread.new { drain_log_lines(stderr) }
-      @stdout
+      @logger.call "Running #{@cmd.join(' ').sub(@url, 'postgres://...')}"
+      @future = run_command(@cmd)
+      @future.drain_stderr(@logger)
+      @future.stdout
     end
 
     def wait
       log "waiting for pg_dump to complete"
-      status = @wthr.value
-
-      @stderr_thr.join
-      @stdout.close
-
-      log "pg_dump done; exited with #{status.exitstatus.inspect} (signal #{status.termsig.inspect})"
-      # N.B.: we don't just return status.success? because it can be
-      # nil when the process was signaled, and we want an unambiguous
-      # answer here.
-      status.success? == true
+      result = @future.wait
+      log "download done"
     end
   end
-
 end

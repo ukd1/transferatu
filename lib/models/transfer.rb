@@ -6,6 +6,23 @@ module Transferatu
     plugin :timestamps
 
     many_to_one :user
+
+    def self.begin_next_pending
+      self.db.transaction(isolation: :serializable) do
+        Transfer.with_sql(<<-EOF).first
+WITH oldest_pending AS (
+  SELECT uuid FROM transfers WHERE started_at IS NULL ORDER BY created_at LIMIT 1
+)
+UPDATE
+  transfers SET started_at = now()
+FROM
+  oldest_pending
+WHERE
+  oldest_pending.uuid = transfers.uuid
+RETURNING *
+EOF
+      end
+    end
     
     # Flag transfer as canceled. A canceled transfer will be flagged
     # as failed as soon as possible.

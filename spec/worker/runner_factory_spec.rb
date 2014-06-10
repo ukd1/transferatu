@@ -120,6 +120,7 @@ module Transferatu
       before do
         Open3.should_receive(:popen3) do |env, *command|
           expect(command).to include("#{root}/bin/pg_dump", url)
+          expect(env["LD_LIBRARY_PATH"]).to eq("#{root}/lib")
         end.and_return([stdin, stdout, stderr, wthr])
       end
 
@@ -278,6 +279,7 @@ module Transferatu
       before do
         Open3.should_receive(:popen3) do |env, *command|
           expect(command).to include("#{root}/bin/pg_restore", url)
+          expect(env["LD_LIBRARY_PATH"]).to eq("#{root}/lib")
         end.and_return([stdin, stdout, stderr, wthr])
       end
 

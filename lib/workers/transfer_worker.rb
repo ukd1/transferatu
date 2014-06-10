@@ -2,7 +2,7 @@ module Transferatu
   class TransferWorker
     def perform(transfer_id)
       transfer = Transfer[transfer_id]
-      runner = RunnerFactory.make_runner(transfer)
+      runner = RunnerFactory.runner_for(transfer)
 
       progress_thr = Thread.new do
         # Because of the threading model, we can update the value in the other

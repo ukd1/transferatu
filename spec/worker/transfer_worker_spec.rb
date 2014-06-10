@@ -34,7 +34,7 @@ module Transferatu
     end
 
     it "should record success in case of a successful transfer" do
-      RunnerFactory.should_receive(:make_runner).with(transfer).and_return(good_runner)
+      RunnerFactory.should_receive(:runner_for).with(transfer).and_return(good_runner)
       worker.perform(transfer.uuid)
       transfer.reload
       expect(transfer.in_progress?).to be_false
@@ -44,7 +44,7 @@ module Transferatu
     end
 
     it "should record failure in case of a failed transfer" do
-      RunnerFactory.should_receive(:make_runner).with(transfer).and_return(bad_runner)
+      RunnerFactory.should_receive(:runner_for).with(transfer).and_return(bad_runner)
       worker.perform(transfer.uuid)
       transfer.reload
       expect(transfer.in_progress?).to be_false
@@ -59,7 +59,7 @@ module Transferatu
       # variable
       xfer = transfer
       
-      RunnerFactory.should_receive(:make_runner) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
+      RunnerFactory.should_receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
       xfer_th = Thread.new { worker.perform(xfer.uuid) }
       xfer.cancel
       xfer_th.join
@@ -75,7 +75,7 @@ module Transferatu
       # Same as above; avoid separate transfer objects
       xfer = transfer
 
-      RunnerFactory.should_receive(:make_runner) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
+      RunnerFactory.should_receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
       xfer_th = Thread.new { worker.perform(xfer.uuid) }
       sleep SLOW_RUNTIME / 4
       xfer.reload

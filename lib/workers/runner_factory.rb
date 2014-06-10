@@ -2,7 +2,7 @@ require 'pgversion'
 
 module Transferatu
   class RunnerFactory
-    def self.make_runner(transfer)
+    def self.runner_for(transfer)
       from_type, to_type = transfer.type.split(':')
 
       if from_type == 'gof3r' && to_type == 'gof3r'

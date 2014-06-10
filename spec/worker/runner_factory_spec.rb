@@ -2,7 +2,7 @@ require 'spec_helper'
 
 module Transferatu
   describe RunnerFactory do
-    describe "#make_runner" do
+    describe "#runner_for" do
       [ [ 'pg_dump:pg_restore', 'postgres:///test1', 'postgres:///test2', true ],
         [ 'pg_dump:gof3r', 'postgres:///test1', 'https://bucket.s3.amazonaws.com/some/key', true ],
         [ 'gof3r:pg_restore', 'https://bucket.s3.amazonaws.com/some/key', 'postgres:///test1', true ],
@@ -37,12 +37,12 @@ module Transferatu
               end
 
               if valid
-                runner = RunnerFactory.make_runner(transfer)
+                runner = RunnerFactory.runner_for(transfer)
                 %i(run_transfer cancel processed_bytes).each do |action|
                   expect(runner).to respond_to(action)
                 end
               else
-                expect { RunnerFactory.make_runner(transfer) }.to raise_error ArgumentError
+                expect { RunnerFactory.runner_for(transfer) }.to raise_error ArgumentError
               end
             end
           end

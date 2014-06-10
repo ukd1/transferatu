@@ -205,4 +205,56 @@ module Transferatu
       status.success? == true
     end
   end
+
+  # A source that runs Gof3r to fetch from an S3 URL
+  class Gof3rSource
+    include ShellProcessLike
+    attr_reader :logger
+    def initialize(url, opts: {}, logger:)
+      # assumes https://bucket.as3.amazonaws.com/key/path URIs
+      uri = URI.parse(url)
+      hostname = uri.hostname
+      bucket = hostname.split('.').shift
+      key = uri.path.sub(/\A\//, '')
+      # gof3r get -b $bucket -k $key; we assume the S3 keys are in the
+      # environment.
+      @cmd = command(%W(gof3r get), { b: bucket, k: key})
+      @url = url
+      @cmd = command("gof3r", opts, @url)
+      @logger = logger
+    end
+
+    def cancel
+      if @wthr
+        Process.kill("INT", @wthr.pid)
+      end
+    rescue Errno::ESRCH
+      # Do nothing; our async pg_dump may have completed. N.B.: this
+      # means that right now, canceled transfers can in fact complete
+      # successfully. This may be a bug or a feature. TBD.
+    end
+
+    def run_async
+      log "Running #{@cmd.join(' ').sub(@url, 'postgres://...')}"
+      stdin, @stdout, stderr, @wthr = Open3.popen3(@env, *@cmd)
+      stdin.close
+      @stderr_thr =  Thread.new { drain_log_lines(stderr) }
+      @stdout
+    end
+
+    def wait
+      log "waiting for pg_dump to complete"
+      status = @wthr.value
+
+      @stderr_thr.join
+      @stdout.close
+
+      log "pg_dump done; exited with #{status.exitstatus.inspect} (signal #{status.termsig.inspect})"
+      # N.B.: we don't just return status.success? because it can be
+      # nil when the process was signaled, and we want an unambiguous
+      # answer here.
+      status.success? == true
+    end
+  end
+
 end

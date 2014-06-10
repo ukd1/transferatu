@@ -3,12 +3,48 @@ require 'pgversion'
 module Transferatu
   class RunnerFactory
     def self.make_runner(transfer)
-      from_version = PGVersion.parse(Sequel.connect(transfer.from_url) do |c|
-                                       c.fetch("SELECT version()").get(:version)
-                                     end)
-      root = "/app/bin/pg/#{from_version.major_minor}"
-      source = case transfer.from_url
-               when /\Apostgres:/
+      from_type, to_type = transfer.type.split(':')
+
+      if from_type == 'gof3r' && to_type == 'gof3r'
+        raise ArgumentError, "S3 transfers not supported"
+      end
+
+      pg_root = nil
+      logger = transfer.method(:log)
+      sink = case to_type
+             when 'pg_restore'
+               to_version = PGVersion.parse(Sequel.connect(transfer.to_url) do |c|
+                                              c.fetch("SELECT version()").get(:version)
+                                            end)
+               pg_root = "/app/bin/pg/#{to_version.major_minor}"
+               PGRestoreSink.new(transfer.to_url,
+                                 opts: {
+                                   no_owner: true,
+                                   no_privileges: true,
+                                   verbose: true,
+                                   format: 'custom'
+                                 },
+                                 root: pg_root,
+                                 logger: logger)
+             when 'gof3r'
+               Gof3rSink.new(transfer.to_url, logger: logger)
+             else
+               raise ArgumentError, "Unkown transfer sink type: #{to_type}"
+             end
+      
+      source = case from_type
+               when 'pg_dump'
+                 # N.B.: if the pg_root has already been set, don't
+                 # override it. This is useful when doing direct
+                 # transfer to a newer version, where the target
+                 # version pg_dump may be useful for an upgrade or
+                 # necessary for a downgrade.
+                 if pg_root.nil?
+                   from_version = PGVersion.parse(Sequel.connect(transfer.from_url) do |c|
+                                                    c.fetch("SELECT version()").get(:version)
+                                                  end)
+                   pg_root = "/app/bin/pg/#{from_version.major_minor}"
+                 end
                  PGDumpSource.new(transfer.from_url,
                                   opts: {
                                     no_owner: true,
@@ -16,17 +52,13 @@ module Transferatu
                                     verbose: true,
                                     format: 'custom'
                                   },
-                                  root: root,
-                                  logger: transfer.method(:log))
+                                  root: pg_root,
+                                  logger: logger)
+               when 'gof3r'
+                 Gof3rSource.new(transfer.from_url, logger: logger)
                else
-                 raise ArgumentError, "unkown source (supported: postgres)"
+                 raise ArgumentError, "Unkown transfer source type: #{from_type}"
                end
-      sink = case transfer.to_url
-             when %r{\Ahttps://[^.]+\.s3.amazonaws.com}
-               Gof3rSink.new(transfer.to_url, logger: transfer.method(:log))
-             else
-               raise ArgumentError, "unkown target (supported: s3)"
-             end
       DataMover.new(source, sink)
     end
   end
@@ -191,7 +223,7 @@ module Transferatu
   end
   
   # A Sink that restores a custom-format Postgres dump into a database
-  class PgRestoreSink
+  class PGRestoreSink
     include Commandable
     extend Forwardable
 

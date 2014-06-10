@@ -13,6 +13,7 @@ FactoryGirl.define do
     user_id SecureRandom.uuid
     group
     logplex_token
+    type "pg_dump:gof3r"
   end
 end
 

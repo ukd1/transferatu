@@ -3,14 +3,16 @@ require 'spec_helper'
 module Transferatu
   describe RunnerFactory do
     describe "#make_runner" do
-      [ [ 'postgres:///test1', 'postgres:///test2', false ],
-        [ 'postgres:///test1', 'https://bucket.s3.amazonaws.com/some/key', true ],
-        [ 'https://bucket.s3.amazonaws.com/some/key', 'postgres:///test1', false ],
-        [ 'https://bucket.s3.amazonaws.com/some/key', 'https://bucket.s3.amazonaws.com/some/key', false ] ].each do |from, to, valid|
+      [ [ 'pg_dump:pg_restore', 'postgres:///test1', 'postgres:///test2', true ],
+        [ 'pg_dump:gof3r', 'postgres:///test1', 'https://bucket.s3.amazonaws.com/some/key', true ],
+        [ 'gof3r:pg_restore', 'https://bucket.s3.amazonaws.com/some/key', 'postgres:///test1', true ],
+        [ 'gof3r:gof3r', 'https://bucket.s3.amazonaws.com/some/key', 'https://bucket.s3.amazonaws.com/some/key', false ] ].each do |type, from, to, valid|
         context do
           let(:from_conn)   { double(:connection) }
           let(:from_result) { double(:result) }
-          let(:transfer)    { double(:transfer, from_url: from, to_url: to) }
+          let(:to_conn)     { double(:connection) }
+          let(:to_result)   { double(:result) }
+          let(:transfer)    { double(:transfer, type: type, from_url: from, to_url: to) }
           before do
             def transfer.log
               # the RunnerFactory requires a #log method on its transfer
@@ -23,9 +25,17 @@ module Transferatu
             "PostgreSQL 9.3.4 on x86_64-unknown-linux-gnu, compiled by gcc (Ubuntu 4.8.2-16ubuntu6) 4.8.2, 64-bit"
           ].each do |version|
             it "#{if valid; "succeeds"; "fails"; end} with transfer from #{from} (version #{version}) to #{to}" do
-              Sequel.should_receive(:connect).with(from).and_yield(from_conn)
-              from_conn.should_receive(:fetch).with("SELECT version()").and_return(from_result)
-              from_result.should_receive(:get).with(:version).and_return(version)
+              if type =~ /^pg_dump:/ && !(type =~ /pg_restore$/)
+                Sequel.should_receive(:connect).with(from).and_yield(from_conn)
+                from_conn.should_receive(:fetch).with("SELECT version()").and_return(from_result)
+                from_result.should_receive(:get).with(:version).and_return(version)
+              end
+              if type =~ /:pg_restore$/
+                Sequel.should_receive(:connect).with(to).and_yield(to_conn)
+                to_conn.should_receive(:fetch).with("SELECT version()").and_return(to_result)
+                to_result.should_receive(:get).with(:version).and_return(version)
+              end
+
               if valid
                 runner = RunnerFactory.make_runner(transfer)
                 %i(run_transfer cancel processed_bytes).each do |action|
@@ -293,7 +303,7 @@ module Transferatu
     end
   end
 
-  describe PgRestoreSink do
+  describe PGRestoreSink do
     let(:root)     { "/app/bin/pg/9.2" }
     let(:url)      { "postgres:///test" }
     let(:logger)   { ->(line, severity: :info) {} }
@@ -301,7 +311,7 @@ module Transferatu
     let(:stdout)   { double(:stdout) }
     let(:stderr)   { double(:stderr) }
     let(:wthr)     { double(:wthr) }
-    let(:sink)     { PgRestoreSink.new(url,
+    let(:sink)     { PGRestoreSink.new(url,
                                        logger: logger,
                                        root: root) }
     let(:future)   { ShellFuture.new(stdin, stdout, stderr, wthr) }

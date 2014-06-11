@@ -24,7 +24,8 @@ module Transferatu
           transfer.fail
         end
       rescue StandardError => e
-        log("Transfer failed for unknown reason: #{e.message}\n #{e.backtrace.join("\n")}")
+        transfer.log("Transfer failed for unexpected reason: #{e.message}\n #{e.backtrace.join("\n")}
+", severity: :internal)
         transfer.fail unless transfer.failed?
         raise
       end

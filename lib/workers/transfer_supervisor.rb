@@ -1,13 +1,21 @@
 module Transferatu
   module TransferSupervisor
-    def run
+    def self.run
       worker = TransferWorker.new
       loop do
-        transfer = Transfer.begin_next_pending(t)
+        run_next(worker)
+      end
+    end
+
+    def self.run_next(worker)
+      transfer = Transfer.begin_next_pending
+      if transfer
         worker.perform(transfer)
-        sleep 5 * rand
+      else
+        # randomize sleep to avoid lock-stepping workers into a single
+        # sequence
+        sleep 1 + 4 * rand
       end
     end
   end
 end
-

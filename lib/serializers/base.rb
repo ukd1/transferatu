@@ -1,4 +1,4 @@
-class Serializers
+module Transferatu::Serializers
   class Base
     @@structures = {}
 

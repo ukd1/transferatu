@@ -1,10 +1,6 @@
 FactoryGirl.define do
   to_create { |instance| instance.save }
 
-  sequence :group do |i|
-    "group-#{i}"
-  end
-
   sequence :logplex_token do |i|
     "t.logplex-token-#{i}"
   end
@@ -18,11 +14,20 @@ FactoryGirl.define do
   end
 
   factory :transfer, class: Transferatu::Transfer do
-    user_id SecureRandom.uuid
-    group
     logplex_token
     type "pg_dump:gof3r"
+    group
     from_url
     to_url
   end
+
+  factory :group, class: Transferatu::Group do
+    user
+    sequence(:name) { |i| "group-#{i}" }
+  end
+
+  factory :user, class: Transferatu::User do
+    sequence(:name) { |i| "user-#{i}" }
+  end
+
 end

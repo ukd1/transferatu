@@ -5,7 +5,7 @@ module Transferatu
 
     plugin :timestamps
 
-    many_to_one :user
+    many_to_one :group
 
     def self.begin_next_pending
       self.db.transaction(isolation: :serializable) do

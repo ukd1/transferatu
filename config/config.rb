@@ -15,7 +15,8 @@ module Config
 
   # Mandatory -- exception is raised for these variables when missing.
   mandatory \
-    :database_url
+    :database_url,
+    :s3_bucket_name
 
   # Optional -- value is returned or `nil` if it wasn't present.
   optional \

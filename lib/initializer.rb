@@ -11,6 +11,12 @@ module Initializer
     require_relative "../config/config"
   end
 
+  def self.initialize_database
+    Sequel.connect(Config.database_url, max_connections: Config.db_pool)
+    db = Sequel::DATABASES.first
+    db.extension :pg_json
+  end
+
   def self.require_lib
     require! %w(
       lib/endpoints/base

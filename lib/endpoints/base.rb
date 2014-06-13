@@ -1,4 +1,4 @@
-module Endpoints
+module Transferatu::Endpoints
   # The base class for all Sinatra-based endpoints. Use sparingly.
   class Base < Sinatra::Base
     register Pliny::Extensions::Instruments

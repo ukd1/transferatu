@@ -1,23 +1,25 @@
-module Transferatu::Endpoints
-  # The base class for all Sinatra-based endpoints. Use sparingly.
-  class Base < Sinatra::Base
-    register Pliny::Extensions::Instruments
-    register Sinatra::Namespace
+module Transferatu
+  module Endpoints
+    # The base class for all Sinatra-based endpoints. Use sparingly.
+    class Base < Sinatra::Base
+      register Pliny::Extensions::Instruments
+      register Sinatra::Namespace
 
-    helpers Pliny::Helpers::Params
+      helpers Pliny::Helpers::Params
 
-    set :dump_errors, false
-    set :raise_errors, true
-    set :show_exceptions, false
+      set :dump_errors, false
+      set :raise_errors, true
+      set :show_exceptions, false
 
-    configure :development do
-      register Sinatra::Reloader
-    end
+      configure :development do
+        register Sinatra::Reloader
+      end
 
-    not_found do
-      content_type :json
-      status 404
-      "{}"
+      not_found do
+        content_type :json
+        status 404
+        "{}"
+      end
     end
   end
 end

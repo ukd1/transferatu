@@ -27,7 +27,8 @@ FactoryGirl.define do
   end
 
   factory :user, class: Transferatu::User do
-    sequence(:name) { |i| "user-#{i}" }
+    sequence(:name)  { |i| "user-#{i}" }
+    sequence(:token) { |i| "super-secret-#{i}" }
   end
 
 end

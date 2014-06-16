@@ -12,9 +12,9 @@ Routes = Rack::Builder.new do
   use Rack::SSL if Config.force_ssl?
 
   use Pliny::Router do
-    mount Endpoints::Transfers
+    mount Transferatu::Endpoints::Transfers
   end
 
   # root app; but will also handle some defaults like 404
-  run Endpoints::Root
+  run Transferatu::Endpoints::Root
 end

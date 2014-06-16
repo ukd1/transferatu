@@ -1,9 +1,7 @@
-module Transferatu
-  module Endpoints
-    class Root < Base
-      get "/" do
-        "hello."
-      end
+module Transferatu::Endpoints
+  class Root < Base
+    get "/" do
+      "hello."
     end
   end
 end

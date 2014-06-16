@@ -1,31 +1,32 @@
-module Transferatu
-  module Endpoints
-    class Transfers < Base
-      namespace "/transfers" do
-        before do
-          content_type :json
-        end
+module Transferatu::Endpoints
+  class Transfers < Base
+    include Authenticator
 
-        get do
-          "[]"
-        end
+    namespace "/transfers" do
+      before do
+        content_type :json
+        authenticate
+      end
 
-        post do
-          status 201
-          "{}"
-        end
+      get do
+        "[]"
+      end
 
-        get "/:id" do
-          "{}"
-        end
+      post do
+        status 201
+        "{}"
+      end
 
-        patch "/:id" do |id|
-          "{}"
-        end
+      get "/:id" do
+        "{}"
+      end
 
-        delete "/:id" do |id|
-          "{}"
-        end
+      patch "/:id" do |id|
+        "{}"
+      end
+
+      delete "/:id" do |id|
+        "{}"
       end
     end
   end

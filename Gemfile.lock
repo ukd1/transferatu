@@ -8,6 +8,7 @@ GEM
       thread_safe (~> 0.1)
       tzinfo (~> 1.1)
     backports (3.6.0)
+    bcrypt (3.1.7)
     byebug (2.7.0)
       columnize (~> 0.3)
       debugger-linecache (~> 1.2)
@@ -116,6 +117,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  bcrypt
   committee
   database_cleaner
   factory_girl (~> 4.0)

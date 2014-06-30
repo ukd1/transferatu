@@ -8,9 +8,9 @@ module Transferatu::Endpoints
       unless auth.provided? && auth.basic? && auth.credentials
         throw(:halt, [401, "Not Authorized\n"])
       end
-      user, token = auth.credentials
-      @current_user = Transferatu::User.where(name: user, token: token, deleted_at: nil).first
-      unless @current_user
+      user, password = auth.credentials
+      @current_user = Transferatu::User.where(name: user, deleted_at: nil).first
+      unless @current_user && @current_user.password == password
         throw(:halt, [401, "Not Authorized\n"])
       end
     end

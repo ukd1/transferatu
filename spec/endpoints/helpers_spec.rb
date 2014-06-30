@@ -5,9 +5,13 @@ describe Transferatu::Endpoints::Authenticator do
   let(:rack_request) { double(:request, env: rack_env) }
   let(:rack_auth)    { double(:auth) }
 
-  let!(:user1) { create(:user) }
-  let!(:user2) { create(:user) }
-  let!(:user3) { create(:user) }
+  let(:pwd1) { 'passw0rd' }
+  let(:pwd2) { 'mr. fluffy' }
+  let(:pwd3) { 'super-secret' }
+
+  let!(:user1) { create(:user, password: pwd1) }
+  let!(:user2) { create(:user, password: pwd2) }
+  let!(:user3) { create(:user, password: pwd3) }
   let(:auther) { Object.new.extend(Transferatu::Endpoints::Authenticator) }
 
   before do
@@ -17,26 +21,26 @@ describe Transferatu::Endpoints::Authenticator do
   end
 
   it "finds the right user with the correct credentials" do
-    rack_auth.stub(provided?: true, basic?: true, credentials: [ user1.name, user1.token ])
+    rack_auth.stub(provided?: true, basic?: true, credentials: [ user1.name, pwd1 ])
     auther.authenticate
     expect(auther.current_user.uuid).to eq(user1.uuid)
   end
 
-  it "finds the right user even when two users have same token" do
-    rack_auth.stub(provided?: true, basic?: true, credentials: [ user1.name, user1.token ])
-    user2.update(token: user1.token)
+  it "finds the right user even when two users have same password" do
+    rack_auth.stub(provided?: true, basic?: true, credentials: [ user1.name, pwd1 ])
+    user2.password = pwd1
     auther.authenticate
     expect(auther.current_user.uuid).to eq(user1.uuid)
   end
 
   it "throws 401 for a non-existent user" do
-    rack_auth.stub(provided?: true, basic?: true, credentials: [ 'agnes', 'passw0rd' ])
+    rack_auth.stub(provided?: true, basic?: true, credentials: [ 'agnes', 'password123' ])
     expect { auther.authenticate }.to throw_symbol(:halt)
   end
 
   it "throws 401 for a deleted user" do
     user1.update(deleted_at: Time.now)
-    rack_auth.stub(provided?: true, basic?: true, credentials: [ user1.name, user1.token ])
+    rack_auth.stub(provided?: true, basic?: true, credentials: [ user1.name, pwd1 ])
     expect { auther.authenticate }.to throw_symbol(:halt)
   end
 
@@ -46,7 +50,7 @@ describe Transferatu::Endpoints::Authenticator do
   end
 
   it "throws 401 for auth other than basic auth" do
-    rack_auth.stub(provided?: false, basic?: false, credentials: [ user1.name, user1.token ])
+    rack_auth.stub(provided?: false, basic?: false, credentials: [ user1.name, pwd1 ])
     expect { auther.authenticate }.to throw_symbol(:halt)
   end
 end

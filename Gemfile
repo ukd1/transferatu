@@ -19,12 +19,13 @@ gem "sinatra-contrib", require: ["sinatra/namespace", "sinatra/reloader"]
 gem "sinatra-router"
 gem "sucker_punch"
 
+# additional gems (not from template)
+gem "pgversion"
+gem "bcrypt"
 
 group :development, :test do
   gem "pry-byebug"
 end
-
-gem "pgversion"
 
 group :development do
   gem "foreman"

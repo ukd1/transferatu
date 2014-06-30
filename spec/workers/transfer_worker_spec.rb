@@ -37,20 +37,20 @@ module Transferatu
       RunnerFactory.should_receive(:runner_for).with(transfer).and_return(good_runner)
       worker.perform(transfer)
       transfer.reload
-      expect(transfer.in_progress?).to be_false
-      expect(transfer.failed?).to be_false
-      expect(transfer.canceled?).to be_false
-      expect(transfer.succeeded?).to be_true
+      expect(transfer.in_progress?).to be false
+      expect(transfer.failed?).to be false
+      expect(transfer.canceled?).to be false
+      expect(transfer.succeeded?).to be true
     end
 
     it "should record failure in case of a failed transfer" do
       RunnerFactory.should_receive(:runner_for).with(transfer).and_return(bad_runner)
       worker.perform(transfer)
       transfer.reload
-      expect(transfer.in_progress?).to be_false
-      expect(transfer.failed?).to be_true
-      expect(transfer.canceled?).to be_false
-      expect(transfer.succeeded?).to be_false
+      expect(transfer.in_progress?).to be false
+      expect(transfer.failed?).to be true
+      expect(transfer.canceled?).to be false
+      expect(transfer.succeeded?).to be false
     end
 
     it "should cancel the run when a transfer is canceled" do
@@ -65,10 +65,10 @@ module Transferatu
       xfer_th.join
 
       xfer.reload
-      expect(xfer.in_progress?).to be_false
-      expect(xfer.failed?).to be_true
-      expect(xfer.canceled?).to be_true
-      expect(xfer.succeeded?).to be_false
+      expect(xfer.in_progress?).to be false
+      expect(xfer.failed?).to be true
+      expect(xfer.canceled?).to be true
+      expect(xfer.succeeded?).to be false
     end
 
     it "should update progress in the course of a transfer" do
@@ -79,10 +79,10 @@ module Transferatu
       xfer_th = Thread.new { worker.perform(xfer) }
       sleep SLOW_RUNTIME / 4
       xfer.reload
-      expect(xfer.in_progress?).to be_true
-      expect(xfer.failed?).to be_false
-      expect(xfer.canceled?).to be_false
-      expect(xfer.succeeded?).to be_false
+      expect(xfer.in_progress?).to be true
+      expect(xfer.failed?).to be false
+      expect(xfer.canceled?).to be false
+      expect(xfer.succeeded?).to be false
       expect(xfer.processed_bytes).to be > 0
       expect(xfer.processed_bytes).to be < 1024**3
 

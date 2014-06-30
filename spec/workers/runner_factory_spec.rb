@@ -140,17 +140,17 @@ module Transferatu
 
       it "returns true when successful" do
         wthr.stub(:value).and_return(success)
-        expect(future.wait).to be_true
+        expect(future.wait).to be true
       end
 
       it "returns false when failed" do
         wthr.stub(:value).and_return(failure)
-        expect(future.wait).to be_false
+        expect(future.wait).to be false
       end
 
       it "returns false when signaled" do
         wthr.stub(:value).and_return(signaled)
-        expect(future.wait).to be_false
+        expect(future.wait).to be false
       end
 
       it "closes all open streams" do
@@ -226,11 +226,11 @@ module Transferatu
         end
         it "delegates to the ShellFuture#wait when the process succeeds" do
           future.should_receive(:wait).and_return(true)
-          expect(source.wait).to be_true
+          expect(source.wait).to be true
         end
         it "delegates to the ShellFuture#wait when the process fails" do
           future.should_receive(:wait).and_return(false)
-          expect(source.wait).to be_false
+          expect(source.wait).to be false
         end
       end
 
@@ -283,11 +283,11 @@ module Transferatu
         end
         it "delegates to the ShellFuture#wait when the process succeeds" do
           future.should_receive(:wait).and_return(true)
-          expect(sink.wait).to be_true
+          expect(sink.wait).to be true
         end
         it "delegates to the ShellFuture#wait when the process fails" do
           future.should_receive(:wait).and_return(false)
-          expect(sink.wait).to be_false
+          expect(sink.wait).to be false
         end
       end
 
@@ -341,11 +341,11 @@ module Transferatu
         end
         it "delegates to the ShellFuture#wait when the process succeeds" do
           future.should_receive(:wait).and_return(true)
-          expect(sink.wait).to be_true
+          expect(sink.wait).to be true
         end
         it "delegates to the ShellFuture#wait when the process fails" do
           future.should_receive(:wait).and_return(false)
-          expect(sink.wait).to be_false
+          expect(sink.wait).to be false
         end
       end
 

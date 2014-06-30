@@ -16,7 +16,7 @@ module Transferatu
       source.should_receive(:wait).and_return(true)
       sink.should_receive(:wait).and_return(true)
 
-      expect(mover.run_transfer).to be_true
+      expect(mover.run_transfer).to be true
 
       expect(mover.processed_bytes).to eq(short_source.length)
       expect(sink_stream.length).to eq(short_source.length)
@@ -29,7 +29,7 @@ module Transferatu
       source.should_receive(:wait).and_return(true)
       sink.should_receive(:wait).and_return(true)
 
-      expect(mover.run_transfer).to be_true
+      expect(mover.run_transfer).to be true
 
       expect(mover.processed_bytes).to eq(long_source.length)
       expect(sink_stream.length).to eq(long_source.length)
@@ -48,7 +48,7 @@ module Transferatu
       source.should_receive(:wait).and_return(true)
       sink.should_receive(:wait).and_return(false)
 
-      expect(mover.run_transfer).to be_false
+      expect(mover.run_transfer).to be false
     end
 
     it "should stop the transfer and raise if copying data fails" do

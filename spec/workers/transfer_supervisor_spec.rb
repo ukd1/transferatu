@@ -13,10 +13,7 @@ module Transferatu
       it "sleeps when no transfers are available" do
         Transfer.should_receive(:begin_next_pending).and_return(nil)
         worker.should_not_receive(:perform)
-        TransferSupervisor.should_receive(:sleep) do |naptime|
-          expect(naptime).to be >= 1
-          expect(naptime).to be <= 5
-        end
+        TransferSupervisor.stub(:sleep)
         TransferSupervisor.run_next(worker)        
       end
     end

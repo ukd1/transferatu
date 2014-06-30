@@ -13,6 +13,9 @@ module Transferatu
       it "sleeps when no transfers are available" do
         Transfer.should_receive(:begin_next_pending).and_return(nil)
         worker.should_not_receive(:perform)
+        # TODO: we should probably check that the naptime here is as
+        # expected, but it's hard to do that with the existing rspec
+        # hooks
         TransferSupervisor.stub(:sleep)
         TransferSupervisor.run_next(worker)        
       end

@@ -1,5 +1,7 @@
 module Transferatu
   module Mediators::Transfers
+    class InvalidTransferError < StandardError; end
+
     class Creator < Mediators::Base
       def initialize(group:, type:, from_url:, to_url:, options:)
         @group = group
@@ -16,6 +18,8 @@ module Transferatu
             bucket = Config.s3_bucket_name
             key = "#{URI.encode(@group.name)}/#{Time.new.utc.iso8601}"
             @to_url = "https://#{bucket}.s3.amazonaws.com/#{key}"
+          else
+            raise InvalidTransferError, "to_url must be 'auto' for transfers targeting gof3r"
           end
         end
         begin

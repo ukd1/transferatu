@@ -4,6 +4,7 @@ module Transferatu
     include Transferatu::Loggable
 
     plugin :timestamps
+    plugin :paranoid
 
     many_to_one :group
 

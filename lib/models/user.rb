@@ -2,7 +2,10 @@ module Transferatu
   class User < Sequel::Model
     include Transferatu::Loggable
     include BCrypt
+
     plugin :timestamps
+    plugin :paranoid
+
     one_to_many :groups
 
     def password

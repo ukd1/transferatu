@@ -5,7 +5,7 @@ module Transferatu
     describe ".call" do
       let(:group)    { create(:group, name: 'foo') }
       let(:from_url) { 'postgres:///test1' }
-      let(:to_url)   { 'https://bucket.s3.amazonaws.com/key' }
+      let(:to_url)   { 'postgres:///test2' }
       let(:opts)     { {} }
 
       it "creates a new transfer" do
@@ -36,9 +36,30 @@ module Transferatu
         creator = Mediators::Transfers::Creator.new(group: group,
                                                     type: 'pg_dump:gof3r',
                                                     from_url: from_url,
-                                                    to_url: to_url,
+                                                    to_url: 'https://bucket.s3.amazonaws.com/key',
                                                     options: opts)
         expect { creator.call }.to raise_error(Mediators::Transfers::InvalidTransferError)
+      end
+
+      { 'an invalid url' => 'not really a url at all',
+        'a non-postgres url' => 'mysql://u:p@example.com/foo' }.each do |description, url|
+        it "rejects a new transfer with #{description} source for pg_dump" do
+          creator = Mediators::Transfers::Creator.new(group: group,
+                                                      type: 'pg_dump:gof3r',
+                                                      from_url: url,
+                                                      to_url: to_url,
+                                                      options: opts)
+          expect { creator.call }.to raise_error(Mediators::Transfers::InvalidTransferError)
+        end
+
+        it "rejects a new transfer with #{description} target for pg_restore" do
+          creator = Mediators::Transfers::Creator.new(group: group,
+                                                      type: 'gof3r:pg_restore',
+                                                      from_url: from_url,
+                                                      to_url: url,
+                                                      options: opts)
+          expect { creator.call }.to raise_error(Mediators::Transfers::InvalidTransferError)
+        end
       end
     end
   end

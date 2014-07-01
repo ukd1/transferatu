@@ -22,6 +22,26 @@ module Transferatu
             raise InvalidTransferError, "to_url must be 'auto' for transfers targeting gof3r"
           end
         end
+        if @type =~ /:pg_restore$/
+          begin
+            to_uri = URI.parse(@to_url)
+            if to_uri.scheme.nil? || to_uri.scheme != 'postgres'
+              raise InvalidTransferError, "to_url must be valid postgres URL for pg_restore"
+            end
+          rescue URI::InvalidURIError
+            raise InvalidTransferError, "invalid to_url for pg_restore"
+          end
+        end
+        if @type =~ /^pg_dump:/
+          begin
+            from_uri = URI.parse(@from_url)
+            if from_uri.scheme.nil? || from_uri.scheme != 'postgres'
+              raise InvalidTransferError, "from_url must be valid postgres URL for pg_dump"
+            end
+          rescue URI::InvalidURIError
+            raise InvalidTransferError, "invalid to_url for pg_dump"
+          end
+        end
         begin
           Transfer.create(group: @group, type: @type,
                           from_url: @from_url, to_url: @to_url,

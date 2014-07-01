@@ -8,9 +8,14 @@ module Transferatu::Endpoints
       Transfers
     end
 
+    before do
+      password = 'passw0rd'
+      @user = create(:user, password: password)
+      authorize @user.name, password
+    end
+
     describe "GET /transfers" do
-      # TODO: fix; fails because of auth issues
-      xit "succeeds" do
+      it "succeeds" do
         get "/transfers"
         last_response.status.should eq(200)
       end

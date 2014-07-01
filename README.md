@@ -8,6 +8,7 @@ Transferatu moves your data from one place to another. As a service.
 
 Currently supported transfer methods:
 
- * postgres -> postgres
- * postgres -> S3
- * S3 -> postgres
+|                   | To Postgres | To S3 |
+|-------------------|-------------|-------|
+| **From Postgres** |     YES     |  YES  |
+| **From S3**       |     YES     | what? |

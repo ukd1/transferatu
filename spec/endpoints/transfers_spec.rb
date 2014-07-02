@@ -12,11 +12,12 @@ module Transferatu::Endpoints
       password = 'passw0rd'
       @user = create(:user, password: password)
       authorize @user.name, password
+      @group = create(:group, user: @user)
     end
 
-    describe "GET /transfers" do
+    describe "GET /groups/:name/transfers" do
       it "succeeds" do
-        get "/transfers"
+        get "/groups/#{@group.name}/transfers"
         last_response.status.should eq(200)
       end
     end

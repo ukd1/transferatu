@@ -4,11 +4,7 @@ module Transferatu
   describe User do
     let(:password)     { "hunter2" }
     let(:bad_password) { "passw0rd" }
-    let(:user)         { create(:user) }
-
-    before do
-      user.password = password
-    end
+    let(:user)         { create(:user, password: password) }
 
     it "should recognize the right password" do
       expect(user.password == password).to be true

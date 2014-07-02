@@ -1,3 +1,5 @@
+require_relative 'helpers'
+
 module Transferatu::Endpoints
   class Transfers < Base
     include Authenticator
@@ -8,19 +10,6 @@ module Transferatu::Endpoints
 
     def serialize(transfer)
       serializer.serialize(transfer)
-    end
-
-    def self.schema
-      @@schema ||= File.read("docs/schema.json")
-    end
-
-    use Committee::Middleware::RequestValidation,
-        schema: schema, strict: true
-
-    helpers do
-      def data
-        env["committee.params"]
-      end
     end
 
     namespace "/groups/:group/transfers" do

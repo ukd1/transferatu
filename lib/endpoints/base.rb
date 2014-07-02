@@ -20,10 +20,23 @@ module Transferatu
         status 404
         "{}"
       end
+      
+      def self.schema
+        @@schema ||= File.read("docs/schema.json")
+      end
 
-      def respond(response, status: nil)
-        status(status) unless status.nil?
-        JSON.generate(response)
+      use Committee::Middleware::RequestValidation,
+          schema: schema, strict: true
+
+      helpers do
+        def data
+          env["committee.params"]
+        end
+
+        def respond(response, status: nil)
+          status(status) unless status.nil?
+          JSON.generate(response)
+        end
       end
     end
   end

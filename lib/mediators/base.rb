@@ -1,4 +1,4 @@
-class Mediators
+class Transferatu::Mediators
   class Base
     def self.run(options={})
       new(options).call

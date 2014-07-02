@@ -11,11 +11,6 @@ module Transferatu::Serializers
         options:   transfer.options,
         log_token: transfer.logplex_token,
 
-        group: {
-          uuid: transfer.group.uuid,
-          name: transfer.group.name
-        },
-
         source_bytes:    transfer.source_bytes,
         processed_bytes: transfer.processed_bytes,
         succeeded:       transfer.succeeded,

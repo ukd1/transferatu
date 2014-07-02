@@ -25,7 +25,7 @@ module Transferatu::Endpoints
 
     namespace "/groups/:group/transfers" do
       before do
-        content_type :json
+        content_type :json, charset: 'utf-8'
         authenticate
         @group = Transferatu::Group.find(user: current_user, name: params[:group])
       end

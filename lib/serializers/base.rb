@@ -12,7 +12,12 @@ module Transferatu
       end
 
       def serialize(object)
-        @@structures["#{self.class.name}::#{@type}"].call(object)
+        serializer = @@structures["#{self.class.name}::#{@type}"]
+        if object.is_a?(Array)
+          object.map { |item| serializer.call(item) }
+        else
+          serializer.call(object)
+        end
       end
     end
   end

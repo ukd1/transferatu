@@ -43,8 +43,7 @@ module Transferatu::Endpoints
                    to_url: data["to_url"],
                    options: data["options"] || {}
                  )
-        status 201
-        respond serialize(transfer)
+        respond serialize(transfer), status: 201
       end
 
       get "/:id" do

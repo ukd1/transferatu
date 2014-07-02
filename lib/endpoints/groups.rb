@@ -31,13 +31,13 @@ module Transferatu::Endpoints
         respond serialize(group), status: 201
       end
 
-      get "/:id" do
-        group = current_user.groups_dataset.present.where(uuid: params[:id]).first
+      get "/:name" do
+        group = current_user.groups_dataset.present.where(name: params[:name]).first
         respond serialize(group)
       end
 
-      delete "/:id" do |id|
-        group = current_user.groups_dataset.present.where(uuid: params[:id]).first
+      delete "/:name" do |id|
+        group = current_user.groups_dataset.present.where(name: params[:name]).first
         unless group.nil?
           group.destroy
         end

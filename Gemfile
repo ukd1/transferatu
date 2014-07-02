@@ -22,6 +22,7 @@ gem "sucker_punch"
 # additional gems (not from template)
 gem "pgversion"
 gem "bcrypt"
+gem "committee" # promoted from 'test' in template
 
 group :development, :test do
   gem "pry-byebug"
@@ -32,7 +33,6 @@ group :development do
 end
 
 group :test do
-  gem "committee"
   gem "database_cleaner"
   gem "factory_girl", "~> 4.0"
   gem "rack-test"

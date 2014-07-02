@@ -1,0 +1,69 @@
+---
+"$schema": http://json-schema.org/draft-04/hyper-schema
+title: FIXME - Transfer
+definitions:
+  created_at:
+    description: when transfer was created
+    example: '2012-01-01T12:00:00Z'
+    format: date-time
+    type:
+    - string
+  id:
+    description: unique identifier of transfer
+    example: 01234567-89ab-cdef-0123-456789abcdef
+    format: uuid
+    type:
+    - string
+  identity:
+    "$ref": "/schemata/transfer#/definitions/id"
+  updated_at:
+    description: when transfer was updated
+    example: '2012-01-01T12:00:00Z'
+    format: date-time
+    type:
+    - string
+description: FIXME
+links:
+- description: Create a new transfer.
+  href: "/transfers"
+  method: POST
+  rel: create
+  schema:
+    properties: {}
+    type:
+    - object
+  title: Create
+- description: Delete an existing transfer.
+  href: "/transfers/{(%2Fschemata%2Ftransfer%23%2Fdefinitions%2Fidentity)}"
+  method: DELETE
+  rel: destroy
+  title: Delete
+- description: Info for existing transfer.
+  href: "/transfers/{(%2Fschemata%2Ftransfer%23%2Fdefinitions%2Fidentity)}"
+  method: GET
+  rel: self
+  title: Info
+- description: List existing transfers.
+  href: "/transfers"
+  method: GET
+  rel: instances
+  title: List
+- description: Update an existing transfer.
+  href: "/transfers/{(%2Fschemata%2Ftransfer%23%2Fdefinitions%2Fidentity)}"
+  method: PATCH
+  rel: update
+  schema:
+    properties: {}
+    type:
+    - object
+  title: Update
+properties:
+  created_at:
+    "$ref": "/schemata/transfer#/definitions/created_at"
+  id:
+    "$ref": "/schemata/transfer#/definitions/id"
+  updated_at:
+    "$ref": "/schemata/transfer#/definitions/updated_at"
+type:
+- object
+id: schemata/transfer

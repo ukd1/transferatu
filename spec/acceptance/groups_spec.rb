@@ -1,7 +1,7 @@
 require "spec_helper"
 
 module Transferatu
-  describe Endpoints::Transfers do
+  describe Endpoints::Groups do
     include Committee::Test::Methods
     include Rack::Test::Methods
 
@@ -10,32 +10,32 @@ module Transferatu
     end
 
     # TODO: restore acceptance tests
-    xit "GET /transfers" do
-      get "/transfers"
+    xit "GET /groups" do
+      get "/groups"
       last_response.status.should eq(200)
       last_response.body.should eq("[]")
     end
 
-    xit "POST /transfers/:id" do
-      post "/transfers"
+    xit "POST /groups/:id" do
+      post "/groups"
       last_response.status.should eq(201)
       last_response.body.should eq("{}")
     end
 
-    xit "GET /transfers/:id" do
-      get "/transfers/123"
+    xit "GET /groups/:id" do
+      get "/groups/123"
       last_response.status.should eq(200)
       last_response.body.should eq("{}")
     end
 
-    xit "PATCH /transfers/:id" do
-      patch "/transfers/123"
+    xit "PATCH /groups/:id" do
+      patch "/groups/123"
       last_response.status.should eq(200)
       last_response.body.should eq("{}")
     end
 
-    xit "DELETE /transfers/:id" do
-      delete "/transfers/123"
+    xit "DELETE /groups/:id" do
+      delete "/groups/123"
       last_response.status.should eq(200)
       last_response.body.should eq("{}")
     end

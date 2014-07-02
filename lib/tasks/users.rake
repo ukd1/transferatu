@@ -13,5 +13,6 @@ namespace :users do
       raise StandardError, "Could not generate token"
     end
     Transferatu::User.create(name: args.name, password: password, token: token)
+    puts "Created user #{args.name} with password #{password}"
   end
 end

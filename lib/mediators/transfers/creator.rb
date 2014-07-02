@@ -39,7 +39,7 @@ module Transferatu
               raise InvalidTransferError, "from_url must be valid postgres URL for pg_dump"
             end
           rescue URI::InvalidURIError
-            raise InvalidTransferError, "invalid to_url for pg_dump"
+            raise InvalidTransferError, "invalid from_url for pg_dump"
           end
         end
         begin

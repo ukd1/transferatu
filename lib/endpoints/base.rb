@@ -20,6 +20,11 @@ module Transferatu
         status 404
         "{}"
       end
+
+      def respond(response, status: nil)
+        status(status) unless status.nil?
+        JSON.generate(response)
+      end
     end
   end
 end

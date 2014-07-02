@@ -24,16 +24,24 @@ module Transferatu::Endpoints
       end
 
       post do
-        status 201
-        "{}"
+        group = Transferatu::Mediators::Groups::Creator.run(
+                user: current_user,
+                name: data["name"]
+              )
+        respond serialize(group), status: 201
       end
 
       get "/:id" do
-        "{}"
+        group = current_user.groups_dataset.present.where(uuid: params[:id]).first
+        respond serialize(group)
       end
 
       delete "/:id" do |id|
-        "{}"
+        group = current_user.groups_dataset.present.where(uuid: params[:id]).first
+        unless group.nil?
+          group.destroy
+        end
+        respond serialize(group)
       end
     end
   end

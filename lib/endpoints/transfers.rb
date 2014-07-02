@@ -27,11 +27,11 @@ module Transferatu::Endpoints
       before do
         content_type :json, charset: 'utf-8'
         authenticate
-        @group = Transferatu::Group.find(user: current_user, name: params[:group])
+        @group = Transferatu::Group.present.where(user: current_user, name: params[:group]).first
       end
 
       get do
-        transfers = Transferatu::Transfer.where(deleted_at: nil, group: @group).all
+        transfers = Transferatu::Transfer.present.where(group: @group).all
         respond serialize(transfers)
       end
 
@@ -47,14 +47,14 @@ module Transferatu::Endpoints
       end
 
       get "/:id" do
-        transfer = Transferatu::Transfer[uuid: params[:id], group: @group]
+        transfer = Transferatu::Transfer.present.where(uuid: params[:id], group: @group).first
         respond serialize(transfer)
       end
 
       delete "/:id" do |id|
         # This could go in a mediator, but there's no point for now
         # while this is so thin
-        transfer = Transferatu::Transfer[uuid: params[:id], group: @group]
+        transfer = Transferatu::Transfer.present.where(uuid: params[:id], group: @group).first
         unless transfer.nil?
           transfer.destroy
         end

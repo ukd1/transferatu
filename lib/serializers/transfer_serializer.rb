@@ -17,7 +17,7 @@ module Transferatu::Serializers
 
         created_at:  transfer.created_at,
         started_at:  transfer.started_at,
-        canceled_at: transfer.created_at,
+        canceled_at: transfer.canceled_at,
         updated_at:  transfer.updated_at,
         finished_at: transfer.finished_at,
         deleted_at:  transfer.deleted_at,

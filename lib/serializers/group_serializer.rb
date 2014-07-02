@@ -6,11 +6,6 @@ module Transferatu::Serializers
         name:           group.name,
         transfer_count: group.transfer_count,
 
-        user: {
-          uuid: group.user.uuid,
-          name: group.user.name
-        },
-
         created_at: group.created_at,
         updated_at: group.updated_at,
         deleted_at: group.deleted_at

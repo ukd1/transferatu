@@ -4,11 +4,11 @@ namespace :users do
     Bundler.require
     require_relative "../initializer"
 
-    password=` dd if=/dev/urandom bs=32 count=1 2>/dev/null | openssl base64`
+    password=` dd if=/dev/urandom bs=32 count=1 2>/dev/null | openssl base64`.strip
     if password.empty?
       raise StandardError, "Could not generate password"
     end
-    token=` dd if=/dev/urandom bs=32 count=1 2>/dev/null | openssl base64`
+    token=` dd if=/dev/urandom bs=32 count=1 2>/dev/null | openssl base64`.strip
     if token.empty?
       raise StandardError, "Could not generate token"
     end

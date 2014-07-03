@@ -200,9 +200,10 @@ module Transferatu
       hostname = uri.hostname
       bucket = hostname.split('.').shift
       key = uri.path.sub(/\A\//, '')
-      # gof3r put -b $bucket -k $key; we assume the S3 keys are in the
-      # environment.
-      @cmd = command(%W(gof3r put), { b: bucket, k: key})
+      # gof3r put -b $bucket -k $key -m x-amz-server-side-encryption:AES256;
+      # we assume the S3 keys are in the environment for now.
+      @cmd = command(%W(gof3r put), { b: bucket, k: key,
+                                      m: 'x-amz-server-side-encryption:AES256'})
       @logger = logger
     end
 

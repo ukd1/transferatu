@@ -18,15 +18,15 @@ describe Transferatu::Log do
       message = messages.first
       Transferatu::Log.should_receive(:create)
         .with(message: message,
-              severity: "warning",
+              level: "warning",
               foreign_uuid: loggable.uuid)
-      loggable.log(message, severity: :warning)
+      loggable.log(message, level: :warning)
     end
-    it "defaults to INFO severity" do
+    it "defaults to INFO level" do
       message = messages.first
       Transferatu::Log.should_receive(:create)
         .with(message: message,
-              severity: "info",
+              level: "info",
               foreign_uuid: loggable.uuid)
       loggable.log(message)
     end
@@ -36,7 +36,7 @@ describe Transferatu::Log do
     let(:logged) { [] }
     before do
       messages.each do |msg|
-        logged << Transferatu::Log.create(message: msg, severity: "info",
+        logged << Transferatu::Log.create(message: msg, level: "info",
                                           foreign_uuid: loggable.uuid)
       end
     end
@@ -45,7 +45,7 @@ describe Transferatu::Log do
       # N.B.: these are not entirely equal as we don't pull in the foreign_uuid
       loggable.logs.zip(logged.reverse).each do |logged, expected|
         expect(logged.created_at).to eq(expected.created_at)
-        expect(logged.severity).to eq(expected.severity)
+        expect(logged.level).to eq(expected.level)
         expect(logged.message).to eq(expected.message)
       end
     end

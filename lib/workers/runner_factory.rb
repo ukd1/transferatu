@@ -211,7 +211,7 @@ module Transferatu
       @logger.call "Running #{@cmd.join(' ')}"
       @future = run_command(@cmd)
       @future.drain_stdout(@logger)
-      @future.drain_stderr(->(line) { @logger.call(line, severity: :internal) })
+      @future.drain_stderr(->(line) { @logger.call(line, level: :internal) })
       @future.stdin
     end
 
@@ -242,7 +242,7 @@ module Transferatu
       @future = run_command(@env, @cmd)
       # We don't expect any output from stdout. Capture it anyway, but
       # keep it internal.
-      @future.drain_stdout(->(line) { @logger.call(line, severity: :internal) })
+      @future.drain_stdout(->(line) { @logger.call(line, level: :internal) })
       @future.drain_stderr(@logger)
       @future.stdin
     end

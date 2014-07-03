@@ -80,12 +80,12 @@ EOF
       self.log("progress: #{bytes}", transient: true)
     end
 
-    def log(message, severity: :info, transient: false)
-      unless severity == :internal || logplex_token.nil?
+    def log(message, level: :info, transient: false)
+      unless level == :internal || logplex_token.nil?
         # send to logplex with user logplex token
       end
       unless transient
-        super(message, severity: severity)
+        super(message, level: level)
       end
     end    
   end

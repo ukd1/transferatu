@@ -191,7 +191,7 @@ module Transferatu
   describe PGDumpSource do
     let(:root)     { "/app/bin/pg/9.2" }
     let(:url)      { "postgres:///test" }
-    let(:logger)   { ->(line, severity: :info) {} }
+    let(:logger)   { ->(line, level: :info) {} }
     let(:stdin)    { double(:stdin) }
     let(:stdout)   { double(:stdout) }
     let(:stderr)   { double(:stderr) }
@@ -247,7 +247,7 @@ module Transferatu
   end
 
   describe Gof3rSink do
-    let(:logger)   { ->(line, severity: :info) {} }
+    let(:logger)   { ->(line, level: :info) {} }
     let(:sink)     { Gof3rSink.new("https://my-bucket.s3.amazonaws.com/some/key", logger: logger) }
     let(:stdin)    { double(:stdin) }
     let(:stdout)   { double(:stdout) }
@@ -306,7 +306,7 @@ module Transferatu
   describe PGRestoreSink do
     let(:root)     { "/app/bin/pg/9.2" }
     let(:url)      { "postgres:///test" }
-    let(:logger)   { ->(line, severity: :info) {} }
+    let(:logger)   { ->(line, level: :info) {} }
     let(:stdin)    { double(:stdin) }
     let(:stdout)   { double(:stdout) }
     let(:stderr)   { double(:stderr) }

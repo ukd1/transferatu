@@ -14,6 +14,7 @@ Routes = Rack::Builder.new do
   use Pliny::Router do
     mount Transferatu::Endpoints::Transfers
     mount Transferatu::Endpoints::Groups
+    mount Transferatu::Endpoints::Schedules
   end
 
   # root app; but will also handle some defaults like 404

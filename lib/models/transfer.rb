@@ -1,12 +1,12 @@
 module Transferatu
   class Transfer < Sequel::Model
-
     include Transferatu::Loggable
 
     plugin :timestamps
     plugin :paranoid
 
     many_to_one :group
+    many_to_one :schedule
 
     def self.begin_next_pending
       self.db.transaction(isolation: :serializable) do

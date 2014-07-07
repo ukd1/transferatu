@@ -13,6 +13,11 @@ FactoryGirl.define do
     "https://bucket.s3.amazonaws.com/key-#{i}"
   end
 
+  sequence :timezone do |i|
+    zones = %w(America/Los_Angeles America/New_York Europe/Paris Asia/Hong_Kong)
+    zones.at(i % zones.length)
+  end
+
   factory :transfer, class: Transferatu::Transfer do
     logplex_token
     type "pg_dump:gof3r"
@@ -32,4 +37,13 @@ FactoryGirl.define do
     sequence(:password_hash) { |i| "also-secret-#{i}" }
   end
 
+  factory :schedule, class: Transferatu::Schedule do
+    group
+    sequence(:name)         { |i| "schedule-#{i}" }
+    sequence(:callback_url) { |i| "https://example.com/transferatu/schedules/group-#{i}" }
+    sequence(:hour)         { |i| i % 24 }
+    # an arbitrary but not random set of days to run
+    sequence(:dows)         { |i| (0..6).reject { |j| i % (j + 1) < 1 }.each_slice(4).first }
+    timezone
+  end
 end

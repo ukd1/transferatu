@@ -1,10 +1,9 @@
 module Transferatu
-  class Group < Sequel::Model
+  class Schedule < Sequel::Model
     plugin :timestamps
     plugin :paranoid
 
-    many_to_one :user
+    many_to_one :group
     one_to_many :transfers
-    one_to_many :schedules
   end
 end

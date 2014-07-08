@@ -24,11 +24,15 @@ module Transferatu::Endpoints
       end
 
       post do
-        group = Transferatu::Mediators::Groups::Creator.run(
-                user: current_user,
-                name: data["name"]
-              )
-        respond serialize(group), status: 201
+        begin
+          group = Transferatu::Mediators::Groups::Creator.run(
+                  user: current_user,
+                  name: data["name"]
+                )
+          respond serialize(group), status: 201
+        rescue Sequel::UniqueConstraintViolation => e
+          raise Pliny::Errors::Conflict, "group #{data["name"]} already exists"
+        end
       end
 
       get "/:name" do

@@ -36,5 +36,9 @@ describe Transferatu::Endpoints::Groups do
       post "/groups", JSON.generate(name: 'foo')
       last_response.status.should eq(201)
     end
+    it "responds with 409 Conflict if group already exists" do
+      post "/groups", JSON.generate(name: @group.name)
+      last_response.status.should eq(409)
+    end
   end
 end

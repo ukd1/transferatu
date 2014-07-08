@@ -16,5 +16,27 @@ module Transferatu
         end
       end
     end
+
+    module Serializer
+      def self.included(base)
+        base.extend(ClassMethods)
+      end
+
+      module ClassMethods
+        def serialize_with(klass, flavor: :default)
+          @serializer = klass.new(flavor)
+        end
+
+        def serializer
+          @serializer
+        end
+      end
+
+      def serialize(result)
+        unless result.nil?
+          self.class.serializer.serialize(result)
+        end
+      end
+    end
   end
 end

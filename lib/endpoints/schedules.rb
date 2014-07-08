@@ -3,14 +3,9 @@ require_relative 'helpers'
 module Transferatu::Endpoints
   class Schedules < Base
     include Authenticator
+    include Serializer
 
-    def serializer
-      @serializer ||= Transferatu::Serializers::Schedule.new(:default)
-    end
-
-    def serialize(schedule)
-      serializer.serialize(schedule)
-    end
+    serialize_with Transferatu::Serializers::Schedule
 
     namespace "/groups/:group/schedules" do
       before do

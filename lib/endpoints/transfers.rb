@@ -3,14 +3,9 @@ require_relative 'helpers'
 module Transferatu::Endpoints
   class Transfers < Base
     include Authenticator
+    include Serializer
 
-    def serializer
-      @serializer ||= Transferatu::Serializers::Transfer.new(:default)
-    end
-
-    def serialize(transfer)
-      serializer.serialize(transfer)
-    end
+    serialize_with Transferatu::Serializers::Transfer
 
     namespace "/groups/:group/transfers" do
       before do

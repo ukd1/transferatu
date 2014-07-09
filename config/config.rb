@@ -16,7 +16,9 @@ module Config
   # Mandatory -- exception is raised for these variables when missing.
   mandatory \
     :database_url,
-    :s3_bucket_name
+    :s3_bucket_name,
+    :heroku_api_token,
+    :heroku_app_name
 
   # Optional -- value is returned or `nil` if it wasn't present.
   optional \
@@ -37,5 +39,8 @@ module Config
     root:             File.expand_path("../../", __FILE__),
     timeout:          45,
     force_ssl:        'true',
-    versioning:       'false'
+    versioning:       'false',
+
+    worker_count:     5,
+    worker_size:      '1X'
 end

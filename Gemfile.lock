@@ -14,6 +14,9 @@ GEM
       debugger-linecache (~> 1.2)
     celluloid (0.15.2)
       timers (~> 1.1.0)
+    clockwork (0.7.7)
+      activesupport
+      tzinfo
     coderay (1.1.0)
     columnize (0.8.9)
     committee (0.4.13)
@@ -24,21 +27,32 @@ GEM
     diff-lcs (1.2.5)
     dotenv (0.7.0)
     erubis (2.7.0)
+    excon (0.38.0)
     factory_girl (4.4.0)
       activesupport (>= 3.0.0)
     foreman (0.67.0)
       dotenv (~> 0.7.0)
       thor (~> 0.17.0)
+    heroics (0.0.10)
+      erubis (~> 2.7.0)
+      excon
+      moneta
+      multi_json (>= 1.9.2)
+      netrc
     http_accept (0.1.5)
     i18n (0.6.9)
     json (1.8.1)
     json_schema (0.1.4)
     method_source (0.8.2)
     minitest (5.3.5)
+    moneta (0.8.0)
     multi_json (1.10.1)
+    netrc (0.7.7)
     oj (2.9.0)
     pg (0.17.1)
     pgversion (0.0.2)
+    platform-api (0.2.0)
+      heroics (~> 0.0.10)
     pliny (0.1.0)
       activesupport (~> 4.1, >= 4.1.0)
       http_accept (~> 0.1, >= 0.1.5)
@@ -120,6 +134,7 @@ PLATFORMS
 
 DEPENDENCIES
   bcrypt
+  clockwork
   committee
   database_cleaner
   factory_girl (~> 4.0)
@@ -128,6 +143,7 @@ DEPENDENCIES
   oj
   pg
   pgversion
+  platform-api
   pliny
   pry
   pry-byebug

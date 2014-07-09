@@ -33,7 +33,6 @@ EOF
     # as failed as soon as possible.
     def cancel
       self.update(canceled_at: Time.now)
-      self.reload
     end
 
     # Has this transfer been flag to be canceled? Note that the

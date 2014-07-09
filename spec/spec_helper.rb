@@ -20,8 +20,10 @@ require_relative "factories"
 # can't use the faster transcation strategy everywhere. TODO: is it
 # possible to use truncation in only some tests (it is possible on
 # only some tables, but given that transfers is pretty central, that
-# may be a moot point).
-DatabaseCleaner.strategy = :truncation
+# may be a moot point). Note that we omit the app_status table, since
+# its contents are really more a part of the schema than the data
+# model.
+DatabaseCleaner.strategy = :truncation, {:except => %w[app_status]}
 
 # pull in test initializers
 Pliny::Utils.require_glob("#{Config.root}/spec/support/**/*.rb")

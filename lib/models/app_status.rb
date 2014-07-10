@@ -1,9 +1,5 @@
 module Transferatu
   class AppStatus < Sequel::Model(:app_status)
-    def self.create(*args)
-      raise StandardError, "app status already exists"
-    end
-
     def self.mark_update
       self.first.update(updated_at: Time.now)
     end

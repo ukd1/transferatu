@@ -29,6 +29,5 @@ module Transferatu
         .select { |process| process['command'] == WORK_COMMAND }
         .count
     end
-
   end
 end

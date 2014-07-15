@@ -22,8 +22,9 @@ module Transferatu::Endpoints
       post do
         transfer = Transferatu::Mediators::Transfers::Creator.run(
                    group: @group,
-                   type: data["type"],
+                   from_type: data["from_type"],
                    from_url: data["from_url"],
+                   to_type: data["to_type"],
                    to_url: data["to_url"],
                    options: data["options"] || {}
                  )

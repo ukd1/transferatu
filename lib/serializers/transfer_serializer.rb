@@ -3,10 +3,11 @@ module Transferatu::Serializers
     structure(:default) do |transfer|
       {
         uuid: transfer.uuid,
-        type: transfer.type,
         num:  transfer.transfer_num,
 
+        from_type: transfer.from_type,
         from_url:  transfer.from_url,
+        to_type:   transfer.to_type,
         to_url:    transfer.to_url,
         options:   transfer.options,
         log_token: transfer.logplex_token,

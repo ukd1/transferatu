@@ -20,7 +20,8 @@ FactoryGirl.define do
 
   factory :transfer, class: Transferatu::Transfer do
     logplex_token
-    type "pg_dump:gof3r"
+    from_type "pg_dump"
+    to_type "gof3r"
     group
     from_url
     to_url

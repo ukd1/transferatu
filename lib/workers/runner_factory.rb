@@ -3,7 +3,7 @@ require 'pgversion'
 module Transferatu
   class RunnerFactory
     def self.runner_for(transfer)
-      from_type, to_type = transfer.type.split(':')
+      from_type, to_type = transfer.from_type, transfer.to_type
 
       if from_type == 'gof3r' && to_type == 'gof3r'
         raise ArgumentError, "S3 transfers not supported"

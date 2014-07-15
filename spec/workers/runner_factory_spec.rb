@@ -3,16 +3,18 @@ require 'spec_helper'
 module Transferatu
   describe RunnerFactory do
     describe "#runner_for" do
-      [ [ 'pg_dump:pg_restore', 'postgres:///test1', 'postgres:///test2', true ],
-        [ 'pg_dump:gof3r', 'postgres:///test1', 'https://bucket.s3.amazonaws.com/some/key', true ],
-        [ 'gof3r:pg_restore', 'https://bucket.s3.amazonaws.com/some/key', 'postgres:///test1', true ],
-        [ 'gof3r:gof3r', 'https://bucket.s3.amazonaws.com/some/key', 'https://bucket.s3.amazonaws.com/some/key', false ] ].each do |type, from, to, valid|
+      [ [ 'pg_dump', 'postgres:///test1', 'pg_restore', 'postgres:///test2', true ],
+        [ 'pg_dump', 'postgres:///test1', 'gof3r', 'https://bucket.s3.amazonaws.com/some/key', true ],
+        [ 'gof3r', 'https://bucket.s3.amazonaws.com/some/key', 'pg_restore', 'postgres:///test1', true ],
+        [ 'gof3r', 'https://bucket.s3.amazonaws.com/some/key', 'gof3r', 'https://bucket.s3.amazonaws.com/some/key', false ] ].each do |from_type, from, to_type, to, valid|
         context do
           let(:from_conn)   { double(:connection) }
           let(:from_result) { double(:result) }
           let(:to_conn)     { double(:connection) }
           let(:to_result)   { double(:result) }
-          let(:transfer)    { double(:transfer, type: type, from_url: from, to_url: to) }
+          let(:transfer)    { double(:transfer,
+                                     from_type: from_type, from_url: from,
+                                     to_type: to_type, to_url: to) }
           before do
             def transfer.log
               # the RunnerFactory requires a #log method on its transfer
@@ -25,12 +27,12 @@ module Transferatu
             "PostgreSQL 9.3.4 on x86_64-unknown-linux-gnu, compiled by gcc (Ubuntu 4.8.2-16ubuntu6) 4.8.2, 64-bit"
           ].each do |version|
             it "#{if valid; "succeeds"; "fails"; end} with transfer from #{from} (version #{version}) to #{to}" do
-              if type =~ /^pg_dump:/ && !(type =~ /pg_restore$/)
+              if from_type == 'pg_dump' && to_type != 'pg_restore'
                 Sequel.should_receive(:connect).with(from).and_yield(from_conn)
                 from_conn.should_receive(:fetch).with("SELECT version()").and_return(from_result)
                 from_result.should_receive(:get).with(:version).and_return(version)
               end
-              if type =~ /:pg_restore$/
+              if to_type == 'pg_restore'
                 Sequel.should_receive(:connect).with(to).and_yield(to_conn)
                 to_conn.should_receive(:fetch).with("SELECT version()").and_return(to_result)
                 to_result.should_receive(:get).with(:version).and_return(version)

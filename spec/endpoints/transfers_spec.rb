@@ -37,9 +37,10 @@ module Transferatu::Endpoints
       end
       it "succeeds" do
         post "/groups/#{@group.name}/transfers", JSON.generate(
-                                                 type:     'pg_dump:pg_restore',
-                                                 from_url: 'postgres:///test1',
-                                                 to_url:   'postgres:///test2'
+                                                 from_type: 'pg_dump',
+                                                 from_url:  'postgres:///test1',
+                                                 to_type:   'pg_restore',
+                                                 to_url:    'postgres:///test2'
                                                )
         last_response.status.should eq(201)
       end

@@ -22,6 +22,24 @@ module Transferatu
         expect(t).to be_instance_of(Transferatu::Transfer)
       end
 
+      it "sets optional transfer from_name and to_name" do
+        from_name = "my favorite database"
+        to_name = "some backup"
+        creator = Mediators::Transfers::Creator.new(group: group,
+                                                    from_type: from_type,
+                                                    from_url: from_url,
+                                                    from_name: from_name,
+                                                    to_type: to_type,
+                                                    to_url: to_url,
+                                                    to_name: to_name,
+                                                    options: opts)
+        t = creator.call
+        expect(t).to_not be_nil
+        expect(t).to be_instance_of(Transferatu::Transfer)
+        expect(t.from_name).to eq(from_name)
+        expect(t.to_name).to eq(to_name)
+      end
+
       it "creates a new backup with an auto-generated gof3r target url" do
         creator = Mediators::Transfers::Creator.new(group: group,
                                                     from_type: 'pg_dump',

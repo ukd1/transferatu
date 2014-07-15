@@ -3,12 +3,17 @@ module Transferatu
     class InvalidTransferError < StandardError; end
 
     class Creator < Mediators::Base
-      def initialize(group:, from_type:, from_url:, to_type:, to_url:, options:)
+      def initialize(group:,
+                          from_type:, from_url:, from_name: nil,
+                          to_type:, to_url:, to_name: nil,
+                          options:)
         @group = group
         @from_type = from_type
         @from_url = from_url
+        @from_name = from_name
         @to_type = to_type
         @to_url = to_url
+        @to_name = to_name
         @options = options
       end
 
@@ -45,8 +50,8 @@ module Transferatu
         end
         begin
           Transfer.create(group: @group,
-                          from_type: @from_type, from_url: @from_url,
-                          to_type: @to_type, to_url: @to_url,
+                          from_type: @from_type, from_url: @from_url, from_name: @from_name,
+                          to_type: @to_type, to_url: @to_url, to_name: @to_name,
                           options: @options)
         rescue StandardError => e
           puts e.inspect

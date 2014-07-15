@@ -44,6 +44,18 @@ module Transferatu::Endpoints
                                                )
         last_response.status.should eq(201)
       end
+
+      it "accepts optional from_name and to_name values" do
+        post "/groups/#{@group.name}/transfers", JSON.generate(
+                                                 from_type: 'pg_dump',
+                                                 from_url:  'postgres:///test1',
+                                                 from_name: 'arthur',
+                                                 to_type:   'pg_restore',
+                                                 to_url:    'postgres:///test2',
+                                                 to_name:   'esther'
+                                               )
+        last_response.status.should eq(201)
+      end
     end
   end
 end

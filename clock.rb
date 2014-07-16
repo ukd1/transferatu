@@ -12,6 +12,6 @@ module Clockwork
   end
 
   every(4.hours, "mark-restart") do
-    Transferatu::AppStatus.mark_restart
+    Transferatu::AppStatus.mark_update
   end
 end

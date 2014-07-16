@@ -5,8 +5,10 @@ module Transferatu::Serializers
         uuid: transfer.uuid,
         num:  transfer.transfer_num,
 
+        from_name: transfer.from_name,
         from_type: transfer.from_type,
         from_url:  transfer.from_url,
+        to_name:   transfer.to_name,
         to_type:   transfer.to_type,
         to_url:    transfer.to_url,
         options:   transfer.options,

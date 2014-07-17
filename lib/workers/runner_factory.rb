@@ -277,7 +277,7 @@ module Transferatu
     end
 
     def run_async
-      @logger.call "Running #{@cmd.join(' ').sub(@url, 'postgres://...')}"
+      @logger.call "Running #{@cmd.join(' ')}"
       @future = run_command(@cmd)
       @future.drain_stderr(@logger)
       @future.stdout

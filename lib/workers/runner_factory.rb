@@ -103,7 +103,7 @@ module Transferatu
       # answer here.
       status.success? == true
     end
-    
+
     def cancel
       if @wthr
         Process.kill("INT", @wthr.pid)
@@ -283,7 +283,7 @@ module Transferatu
     end
 
     def wait
-      @logger.call "waiting for pg_dump to complete"
+      @logger.call "waiting for download to complete"
       result = @future.wait
       @logger.call "download done"
       result

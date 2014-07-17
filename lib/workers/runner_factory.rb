@@ -272,7 +272,6 @@ module Transferatu
       # environment.
       @cmd = command(%W(gof3r get), { b: bucket, k: key})
       @url = url
-      @cmd = command("gof3r", opts, @url)
       @logger = logger
     end
 
@@ -287,6 +286,7 @@ module Transferatu
       @logger.call "waiting for pg_dump to complete"
       result = @future.wait
       @logger.call "download done"
+      result
     end
   end
 end

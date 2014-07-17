@@ -305,6 +305,60 @@ module Transferatu
     end
   end
 
+  
+  describe Gof3rSource do
+    let(:logger)   { ->(line, level: :info) {} }
+    let(:source)     { Gof3rSource.new("https://my-bucket.s3.amazonaws.com/some/key", logger: logger) }
+    let(:stdin)    { double(:stdin) }
+    let(:stdout)   { double(:stdout) }
+    let(:stderr)   { double(:stderr) }
+    let(:wthr)     { double(:wthr, pid: 22) }
+    let(:future)   { ShellFuture.new(stdin, stdout, stderr, wthr) }
+
+    describe "#run_async" do
+      before do
+        source.should_receive(:run_command) do |command|
+          expect(command).to include('gof3r', 'my-bucket', 'some/key')
+        end.and_return(future)
+      end
+
+      it "returns the target process' stdin" do
+        stream = source.run_async
+        expect(stream).to be(stdout)
+        expect(stream).to_not be_closed
+      end
+
+      it "collects logs while running" do
+        future.should_receive(:drain_stderr).with(logger)
+        source.run_async
+      end
+
+      describe "#wait" do
+        before do
+          source.run_async
+        end
+        it "delegates to the ShellFuture#wait when the process succeeds" do
+          future.should_receive(:wait).and_return(true)
+          expect(source.wait).to be true
+        end
+        it "delegates to the ShellFuture#wait when the process fails" do
+          future.should_receive(:wait).and_return(false)
+          expect(source.wait).to be false
+        end
+      end
+
+      describe "#cancel" do
+        before do
+          source.run_async
+        end
+        it "delegates to ShellProcess#cancel" do
+          future.should_receive(:cancel)
+          source.cancel
+        end
+      end
+    end
+  end
+
   describe PGRestoreSink do
     let(:root)     { "/app/bin/pg/9.2" }
     let(:url)      { "postgres:///test" }

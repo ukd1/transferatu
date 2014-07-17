@@ -88,5 +88,21 @@ module Transferatu
 
       xfer_th.join
     end
+
+    it "should update progress after a transfer" do
+      # Same as above; avoid separate transfer objects
+      xfer = transfer
+
+      RunnerFactory.should_receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
+      xfer_th = Thread.new { worker.perform(xfer) }
+      sleep SLOW_RUNTIME / 4
+      xfer_th.join
+      xfer.reload
+      expect(xfer.in_progress?).to be false
+      expect(xfer.failed?).to be false
+      expect(xfer.canceled?).to be false
+      expect(xfer.succeeded?).to be true
+      expect(xfer.processed_bytes).to eq 1024**3
+    end
   end
 end

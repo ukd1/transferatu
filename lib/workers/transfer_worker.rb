@@ -14,6 +14,7 @@ module Transferatu
           transfer.mark_progress(runner.processed_bytes)
           sleep 5
         end
+        transfer.mark_progress(runner.processed_bytes)
       end
 
       begin

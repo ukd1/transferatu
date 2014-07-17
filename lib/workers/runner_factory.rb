@@ -284,9 +284,9 @@ module Transferatu
     end
 
     def wait
-      log "waiting for pg_dump to complete"
+      @logger.call "waiting for pg_dump to complete"
       result = @future.wait
-      log "download done"
+      @logger.call "download done"
     end
   end
 end

@@ -6,12 +6,12 @@ module Transferatu
       def authenticate
         auth = Rack::Auth::Basic::Request.new(request.env)
         unless auth.provided? && auth.basic? && auth.credentials
-          throw(:halt, [401, "Not Authorized\n"])
+          raise Pliny::Errors::Unauthorized
         end
         user, password = auth.credentials
         @current_user = Transferatu::User.where(name: user, deleted_at: nil).first
         unless @current_user && @current_user.password == password
-          throw(:halt, [401, "Not Authorized\n"])
+          raise Pliny::Errors::Unauthorized
         end
       end
     end

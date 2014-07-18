@@ -33,24 +33,24 @@ describe Transferatu::Endpoints::Authenticator do
     expect(auther.current_user.uuid).to eq(user1.uuid)
   end
 
-  it "throws 401 for a non-existent user" do
+  it "raises Unauthorized for a non-existent user" do
     rack_auth.stub(provided?: true, basic?: true, credentials: [ 'agnes', 'password123' ])
-    expect { auther.authenticate }.to throw_symbol(:halt)
+    expect { auther.authenticate }.to raise_error(Pliny::Errors::Unauthorized)
   end
 
-  it "throws 401 for a deleted user" do
+  it "raises Unauthorized for a deleted user" do
     user1.update(deleted_at: Time.now)
     rack_auth.stub(provided?: true, basic?: true, credentials: [ user1.name, pwd1 ])
-    expect { auther.authenticate }.to throw_symbol(:halt)
+    expect { auther.authenticate }.to raise_error(Pliny::Errors::Unauthorized)
   end
 
-  it "throws 401 if credentials not provided" do
+  it "raises Unauthorized if credentials not provided" do
     rack_auth.stub(provided?: false, basic?: true, credentials: nil)
-    expect { auther.authenticate }.to throw_symbol(:halt)
+    expect { auther.authenticate }.to raise_error(Pliny::Errors::Unauthorized)
   end
 
-  it "throws 401 for auth other than basic auth" do
+  it "raises Unauthorized for auth other than basic auth" do
     rack_auth.stub(provided?: false, basic?: false, credentials: [ user1.name, pwd1 ])
-    expect { auther.authenticate }.to throw_symbol(:halt)
+    expect { auther.authenticate }.to raise_error(Pliny::Errors::Unauthorized)
   end
 end

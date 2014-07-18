@@ -34,7 +34,12 @@ module Transferatu::Endpoints
       end
 
       get "/:id" do
-        transfer = @group.transfers_dataset.present.where(uuid: params[:id]).first
+        id = params[:id]
+        transfer = if id =~ /\A\d+\z/
+                     @group.transfers_dataset.present.where(transfer_num: id.to_i).first
+                   else
+                     @group.transfers_dataset.present.where(uuid: id).first
+                   end
         respond serialize(transfer)
       end
 

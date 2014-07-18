@@ -29,6 +29,11 @@ module Transferatu::Endpoints
         get "/groups/#{@group.name}/transfers/#{xfer.uuid}"
         last_response.status.should eq(200)
       end
+
+      it "can look up a transfer by its numeric id" do
+        get "/groups/#{@group.name}/transfers/#{xfer.transfer_num}"
+        last_response.status.should eq(200)
+      end
     end
 
     describe "POST /groups/:name/transfers" do

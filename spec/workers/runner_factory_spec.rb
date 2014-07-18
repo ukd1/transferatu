@@ -128,10 +128,7 @@ module Transferatu
     end
 
     describe "#wait" do
-      let(:success)  { double(:process_status, exitstatus: 0, termsig: nil, success?: true) }
-      let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
-      let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
-
+      let(:status)   { double(:process_status) }
       let(:stdin)    { StringIO.new("hello") }
       let(:stdout)   { StringIO.new("hello") }
       let(:stderr)   { StringIO.new("hello") }
@@ -140,19 +137,9 @@ module Transferatu
 
       let(:future)   { ShellFuture.new(stdin, stdout, stderr, wthr) }
 
-      it "returns true when successful" do
-        wthr.stub(:value).and_return(success)
-        expect(future.wait).to be true
-      end
-
-      it "returns false when failed" do
-        wthr.stub(:value).and_return(failure)
-        expect(future.wait).to be false
-      end
-
-      it "returns false when signaled" do
-        wthr.stub(:value).and_return(signaled)
-        expect(future.wait).to be false
+      it "returns the process status" do
+        wthr.stub(:value).and_return(status)
+        expect(future.wait).to be status
       end
 
       it "closes all open streams" do
@@ -191,6 +178,10 @@ module Transferatu
   end
 
   describe PGDumpSource do
+    let(:success)  { double(:process_status, exitstatus: 0, termsig: nil, success?: true) }
+    let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
+    let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
+
     let(:root)     { "/app/bin/pg/9.2" }
     let(:url)      { "postgres:///test" }
     let(:logger)   { ->(line, level: :info) {} }
@@ -226,12 +217,16 @@ module Transferatu
         before do
           source.run_async
         end
-        it "delegates to the ShellFuture#wait when the process succeeds" do
-          future.should_receive(:wait).and_return(true)
+        it "returns true when the process succeeds" do
+          future.should_receive(:wait).and_return(success)
           expect(source.wait).to be true
         end
-        it "delegates to the ShellFuture#wait when the process fails" do
-          future.should_receive(:wait).and_return(false)
+        it "returns false when the process fails" do
+          future.should_receive(:wait).and_return(failure)
+          expect(source.wait).to be false
+        end
+        it "returns false when the process is signaled" do
+          future.should_receive(:wait).and_return(signaled)
           expect(source.wait).to be false
         end
       end
@@ -249,6 +244,10 @@ module Transferatu
   end
 
   describe Gof3rSink do
+    let(:success)  { double(:process_status, exitstatus: 0, termsig: nil, success?: true) }
+    let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
+    let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
+
     let(:logger)   { ->(line, level: :info) {} }
     let(:sink)     { Gof3rSink.new("https://my-bucket.s3.amazonaws.com/some/key", logger: logger) }
     let(:stdin)    { double(:stdin) }
@@ -283,12 +282,16 @@ module Transferatu
         before do
           sink.run_async
         end
-        it "delegates to the ShellFuture#wait when the process succeeds" do
-          future.should_receive(:wait).and_return(true)
+        it "returns true when the process succeeds" do
+          future.should_receive(:wait).and_return(success)
           expect(sink.wait).to be true
         end
-        it "delegates to the ShellFuture#wait when the process fails" do
-          future.should_receive(:wait).and_return(false)
+        it "returns false when the process fails" do
+          future.should_receive(:wait).and_return(failure)
+          expect(sink.wait).to be false
+        end
+        it "returns false when the process is signaled" do
+          future.should_receive(:wait).and_return(signaled)
           expect(sink.wait).to be false
         end
       end
@@ -305,10 +308,13 @@ module Transferatu
     end
   end
 
-  
   describe Gof3rSource do
+    let(:success)  { double(:process_status, exitstatus: 0, termsig: nil, success?: true) }
+    let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
+    let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
+
     let(:logger)   { ->(line, level: :info) {} }
-    let(:source)     { Gof3rSource.new("https://my-bucket.s3.amazonaws.com/some/key", logger: logger) }
+    let(:source)   { Gof3rSource.new("https://my-bucket.s3.amazonaws.com/some/key", logger: logger) }
     let(:stdin)    { double(:stdin) }
     let(:stdout)   { double(:stdout) }
     let(:stderr)   { double(:stderr) }
@@ -337,12 +343,16 @@ module Transferatu
         before do
           source.run_async
         end
-        it "delegates to the ShellFuture#wait when the process succeeds" do
-          future.should_receive(:wait).and_return(true)
+        it "returns true when the process succeeds" do
+          future.should_receive(:wait).and_return(success)
           expect(source.wait).to be true
         end
-        it "delegates to the ShellFuture#wait when the process fails" do
-          future.should_receive(:wait).and_return(false)
+        it "returns false when the process fails" do
+          future.should_receive(:wait).and_return(failure)
+          expect(source.wait).to be false
+        end
+        it "returns false when the process is signaled" do
+          future.should_receive(:wait).and_return(signaled)
           expect(source.wait).to be false
         end
       end
@@ -360,9 +370,14 @@ module Transferatu
   end
 
   describe PGRestoreSink do
+    let(:success)  { double(:process_status, exitstatus: 0, termsig: nil, success?: true) }
+    let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
+    let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
+
     let(:root)     { "/app/bin/pg/9.2" }
     let(:url)      { "postgres:///test" }
-    let(:logger)   { ->(line, level: :info) {} }
+    let(:logs)     { [] }
+    let(:logger)   { ->(line, level: :info) { logs << line } }
     let(:stdin)    { double(:stdin) }
     let(:stdout)   { double(:stdout) }
     let(:stderr)   { double(:stderr) }
@@ -387,20 +402,56 @@ module Transferatu
       end
 
       it "collects logs while running" do
-        future.should_receive(:drain_stderr).with(logger)
+        future.should_receive(:drain_stderr) do |l|
+          l.call("hello")
+        end
         sink.run_async
+        expect(logs).to include('hello')
       end
 
       describe "#wait" do
-        before do
+        it "it returns true when the process succeeds" do
+          future.should_receive(:wait).and_return(success)
           sink.run_async
-        end
-        it "delegates to the ShellFuture#wait when the process succeeds" do
-          future.should_receive(:wait).and_return(true)
           expect(sink.wait).to be true
         end
-        it "delegates to the ShellFuture#wait when the process fails" do
-          future.should_receive(:wait).and_return(false)
+        it "it returns true when the process fails with comment errors matching warning count" do
+          future.should_receive(:wait).and_return(failure)
+          future.should_receive(:drain_stderr) do |l|
+            l.call "Command was: COMMENT ON EXTENSION plpgsql IS 'it is okay i guess'"
+            l.call "Command was: COMMENT ON EXTENSION pg_stat_statements IS 'a damn fine extension'"
+            l.call "WARNING: errors ignored on restore: 2"
+          end
+          sink.run_async
+          expect(sink.wait).to be true
+        end
+        it "it returns false when process fails with comment errors not matching warning count" do
+          future.should_receive(:wait).and_return(failure)
+          future.should_receive(:drain_stderr) do |l|
+            l.call "Command was: COMMENT ON EXTENSION plpgsql IS 'hello'"
+            l.call "WARNING: errors ignored on restore: 3"
+          end
+          sink.run_async
+          expect(sink.wait).to be false
+        end
+        it "it returns false when the process fails otherwise" do
+          future.should_receive(:wait).and_return(failure)
+          sink.run_async
+          expect(sink.wait).to be true
+        end
+        it "it returns false when the process is signaled" do
+          future.should_receive(:wait).and_return(signaled)
+          sink.run_async
+          expect(sink.wait).to be false
+        end
+        it "it returns false when process is signaled and has comment errors matching warning count" do
+          future.should_receive(:wait).and_return(signaled)
+          future.should_receive(:drain_stderr) do |l|
+            l.call "Command was: COMMENT ON EXTENSION plpgsql IS 'it is okay i guess'"
+            l.call "Command was: COMMENT ON EXTENSION pg_stat_statements IS 'a damn fine extension'"
+            l.call "WARNING: errors ignored on restore: 2"
+          end
+          sink.run_async
           expect(sink.wait).to be false
         end
       end

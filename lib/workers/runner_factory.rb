@@ -85,8 +85,8 @@ module Transferatu
       drain_stream(@stderr, logger)
     end
 
-    # Wait for the process to finish. Returns true if the process
-    # completed successfully, false otherwise.
+    # Wait for the process to finish. Returns the resulting
+    # Process::Status of the process.
     def wait
       status = @wthr.value
 
@@ -94,14 +94,7 @@ module Transferatu
       [ @stdin, @stdout, @stderr ].each do |stream|
         stream.close unless stream.closed?
       end
-      # TODO: restore this information:
-      # "#{cmd_name} done; exited with #{status.exitstatus.inspect}
-      #   (signal #{status.termsig.inspect})"
-
-      # N.B.: we don't just return status.success? because it can be
-      # nil when the process was signaled, and we want an unambiguous
-      # answer here.
-      status.success? == true
+      status
     end
 
     def cancel
@@ -183,7 +176,7 @@ module Transferatu
       @logger.call "waiting for pg_dump to complete"
       result = @future.wait
       @logger.call "pg_dump done"
-      result
+      result.success? == true
     end
   end
 
@@ -219,7 +212,7 @@ module Transferatu
       @logger.call "waiting for upload to complete"
       result = @future.wait
       @logger.call "upload done"
-      result
+      result.success? == true
     end
   end
   
@@ -243,7 +236,24 @@ module Transferatu
       # We don't expect any output from stdout. Capture it anyway, but
       # keep it internal.
       @future.drain_stdout(->(line) { @logger.call(line, level: :internal) })
-      @future.drain_stderr(@logger)
+      # pg_restore basically uses two exit codes: 1 and 0. This means
+      # we can't rely on exit status to tell us much of anything,
+      # since there's no way for an unprivileged user to comment on an
+      # extension, and that's a standard part of a pg_dump, and
+      # there's no way to avoid these. Instead, we watch for these and
+      # compare them against the total number of errors reported by
+      # pg_restore. This is pretty gross (e.g., it does not work with
+      # a localized pg_restore), but safer.
+      @failed_extension_comment_count = 0
+      @pg_restore_error_count = 0
+      @future.drain_stderr(->(line) do
+                             if line =~ /\ACommand was: COMMENT ON EXTENSION /
+                               @failed_extension_comment_count += 1
+                             elsif line =~ /\AWARNING: errors ignored on restore: (\d+)/
+                               @pg_restore_error_count = $1.to_i
+                             end
+                             @logger.call(line)
+                           end)
       @future.stdin
     end
 
@@ -251,7 +261,8 @@ module Transferatu
       @logger.call "waiting for restore to complete"
       result = @future.wait
       @logger.call "restore done"
-      result
+      result.success? == true ||
+        (result.exitstatus == 1 && @failed_extension_comment_count == @pg_restore_error_count)
     end
   end
 
@@ -286,7 +297,7 @@ module Transferatu
       @logger.call "waiting for download to complete"
       result = @future.wait
       @logger.call "download done"
-      result
+      result.success? == true
     end
   end
 end

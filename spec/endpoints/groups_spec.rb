@@ -41,4 +41,15 @@ describe Transferatu::Endpoints::Groups do
       last_response.status.should eq(409)
     end
   end
+
+  describe "DELETE /groups/:name" do
+    it "succeeds" do
+      delete "/groups/#{@group.name}"
+      last_response.status.should eq(200)
+    end
+    it "responds with 404 on missing groups" do
+      delete "/groups/not-a-real-group"
+      last_response.status.should eq(404)
+    end
+  end
 end

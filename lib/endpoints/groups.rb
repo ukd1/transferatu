@@ -37,10 +37,12 @@ module Transferatu::Endpoints
 
       delete "/:name" do |id|
         group = current_user.groups_dataset.present.where(name: params[:name]).first
-        unless group.nil?
+        if group.nil?
+          raise Pliny::Errors::NotFound, "group #{params[:name]} not found"
+        else
           group.destroy
+          respond serialize(group)
         end
-        respond serialize(group)
       end
     end
   end

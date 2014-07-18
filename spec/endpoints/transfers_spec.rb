@@ -62,5 +62,19 @@ module Transferatu::Endpoints
         last_response.status.should eq(201)
       end
     end
+
+    describe "DELETE /groups/:name/transfers/:id" do
+      let(:xfer) { create(:transfer, group: @group) }
+
+      it "succeeds" do
+        delete "/groups/#{@group.name}/transfers/#{xfer.uuid}"
+        last_response.status.should eq(200)
+      end
+
+      it "can look up a transfer by its numeric id" do
+        delete "/groups/#{@group.name}/transfers/#{xfer.transfer_num}"
+        last_response.status.should eq(200)
+      end
+    end
   end
 end

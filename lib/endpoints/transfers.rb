@@ -11,7 +11,32 @@ module Transferatu::Endpoints
       before do
         content_type :json, charset: 'utf-8'
         authenticate
-        @group = current_user.groups_dataset.present.where(name: params[:group]).first
+        @group = find_group(params[:group])
+      end
+
+      helpers do
+        def find_group(name)
+          group = current_user.groups_dataset.present.where(name: name).first
+          if group.nil?
+            raise Pliny::Errors::NotFound, "group #{name} does not exist"
+          else
+            group
+          end
+        end
+
+        def find_transfer(group, id)
+          base_dataset = group.transfers_dataset.present
+          xfer = if id =~ /\A\d+\z/
+                   base_dataset.where(transfer_num: id.to_i)
+                 else
+                   base_dataset.where(uuid: id)
+                 end.first
+          if xfer.nil?
+            raise Pliny::Errors::NotFound, "transfer #{id} for group #{group.name} does not exist"
+          else
+            xfer
+          end
+        end
       end
 
       get do
@@ -34,22 +59,15 @@ module Transferatu::Endpoints
       end
 
       get "/:id" do
-        id = params[:id]
-        transfer = if id =~ /\A\d+\z/
-                     @group.transfers_dataset.present.where(transfer_num: id.to_i).first
-                   else
-                     @group.transfers_dataset.present.where(uuid: id).first
-                   end
+        transfer = find_transfer(@group, params[:id])
         respond serialize(transfer)
       end
 
-      delete "/:id" do |id|
+      delete "/:id" do
         # This could go in a mediator, but there's no point for now
         # while this is so thin
-        transfer = @group.transfers_dataset.present.where(uuid: params[:id]).first
-        unless transfer.nil?
-          transfer.destroy
-        end
+        transfer = find_transfer(@group, params[:id])
+        transfer.destroy
         respond serialize(transfer)
       end
     end

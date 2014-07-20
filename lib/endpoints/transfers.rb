@@ -25,14 +25,15 @@ module Transferatu::Endpoints
         end
 
         def find_transfer(group, id)
-          base_dataset = group.transfers_dataset.present
           xfer = if id =~ /\A\d+\z/
-                   base_dataset.where(transfer_num: id.to_i)
+                   group.transfers_dataset.where(transfer_num: id.to_i)
                  else
-                   base_dataset.where(uuid: id)
+                   group.transfers_dataset.where(uuid: id)
                  end.first
           if xfer.nil?
             raise Pliny::Errors::NotFound, "transfer #{id} for group #{group.name} does not exist"
+          elsif xfer.deleted?
+            raise Pliny::Errors::Gone, "transfer #{id} for group #{group.name} destroyed at #{xfer.deleted_at}"
           else
             xfer
           end

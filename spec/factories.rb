@@ -21,10 +21,12 @@ FactoryGirl.define do
   factory :transfer, class: Transferatu::Transfer do
     logplex_token
     from_type "pg_dump"
-    to_type "gof3r"
-    group
     from_url
+    from_name { |i| "database-#{i}" }
+    to_type "gof3r"
     to_url
+    to_name   { |i| "backup-#{i}" }
+    group
   end
 
   factory :group, class: Transferatu::Group do

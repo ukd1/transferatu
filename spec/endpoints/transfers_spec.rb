@@ -18,21 +18,51 @@ module Transferatu::Endpoints
     describe "GET /groups/:name/transfers" do
       it "lists transfers for the group" do
         get "/groups/#{@group.name}/transfers"
-        last_response.status.should eq(200)
+        expect(last_response.status).to eq(200)
+      end
+
+      it "does not include deleted transfers" do
+        t = create(:transfer)
+        t.destroy
+        get "/groups/#{@group.name}/transfers"
+        expect(last_response.status).to eq(200)
+        expect(JSON.parse(last_response.body)).to be_empty
+      end
+
+      it "does not include transfers from other groups" do
+        other_group = create(:group, user: @user)
+        other_xfer = create(:transfer, group: other_group)
+        get "/groups/#{@group.name}/transfers"
+        expect(last_response.status).to eq(200)
+        expect(JSON.parse(last_response.body).find do |xfer|
+                 xfer[:uuid] = other_xfer.uuid
+                 end).to be_nil
       end
     end
 
     describe "GET /groups/:name/transfers/:id" do
       let(:xfer) { create(:transfer, group: @group) }
 
-      it "succeeds" do
+      it "looks up a transfer by uuid" do
         get "/groups/#{@group.name}/transfers/#{xfer.uuid}"
-        last_response.status.should eq(200)
+        expect(last_response.status).to eq(200)
       end
 
-      it "can look up a transfer by its numeric id" do
+      it "looks up a transfer by its numeric id" do
         get "/groups/#{@group.name}/transfers/#{xfer.transfer_num}"
-        last_response.status.should eq(200)
+        expect(last_response.status).to eq(200)
+      end
+
+      it "does not include deleted transfers" do
+        xfer.destroy
+        get "/groups/#{@group.name}/transfers/#{xfer.uuid}"
+        expect(last_response.status).to eq(410)
+      end
+
+      it "does not include transfers from other groups" do
+        other_group = create(:group)
+        get "/groups/#{other_group.name}/transfers/#{xfer.uuid}"
+        expect(last_response.status).to eq(404)
       end
     end
 
@@ -40,14 +70,14 @@ module Transferatu::Endpoints
       before do
         header "Content-Type", "application/json"
       end
-      it "succeeds" do
+      it "creates a transfer" do
         post "/groups/#{@group.name}/transfers", JSON.generate(
                                                  from_type: 'pg_dump',
                                                  from_url:  'postgres:///test1',
                                                  to_type:   'pg_restore',
                                                  to_url:    'postgres:///test2'
                                                )
-        last_response.status.should eq(201)
+        expect(last_response.status).to eq(201)
       end
 
       it "accepts optional from_name and to_name values" do
@@ -59,21 +89,21 @@ module Transferatu::Endpoints
                                                  to_url:    'postgres:///test2',
                                                  to_name:   'esther'
                                                )
-        last_response.status.should eq(201)
+        expect(last_response.status).to eq(201)
       end
     end
 
     describe "DELETE /groups/:name/transfers/:id" do
       let(:xfer) { create(:transfer, group: @group) }
 
-      it "succeeds" do
+      it "deletes a transfer by uuid" do
         delete "/groups/#{@group.name}/transfers/#{xfer.uuid}"
-        last_response.status.should eq(200)
+        expect(last_response.status).to eq(200)
       end
 
-      it "can look up a transfer by its numeric id" do
+      it "deletes a transfer by its numeric id" do
         delete "/groups/#{@group.name}/transfers/#{xfer.transfer_num}"
-        last_response.status.should eq(200)
+        expect(last_response.status).to eq(200)
       end
     end
   end

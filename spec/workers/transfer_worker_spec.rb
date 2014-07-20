@@ -58,6 +58,7 @@ module Transferatu
       # same let from separate threads; avoid that with a local
       # variable
       xfer = transfer
+      xfer.update(started_at: Time.now)
       
       RunnerFactory.should_receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
       xfer_th = Thread.new { worker.perform(xfer) }
@@ -74,6 +75,7 @@ module Transferatu
     it "should update progress in the course of a transfer" do
       # Same as above; avoid separate transfer objects
       xfer = transfer
+      xfer.update(started_at: Time.now)
 
       RunnerFactory.should_receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
       xfer_th = Thread.new { worker.perform(xfer) }
@@ -92,6 +94,7 @@ module Transferatu
     it "should update progress after a transfer" do
       # Same as above; avoid separate transfer objects
       xfer = transfer
+      xfer.update(started_at: Time.now)
 
       RunnerFactory.should_receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
       xfer_th = Thread.new { worker.perform(xfer) }

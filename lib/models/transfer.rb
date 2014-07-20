@@ -26,7 +26,7 @@ EOF
     end
 
     def_dataset_method(:in_progress) do
-      self.where(Sequel.~(started_at: nil), finished_at: nil)
+      self.where(Sequel.~(started_at: nil), canceled_at: nil, finished_at: nil)
     end
 
     # Flag transfer as canceled. A canceled transfer will be flagged
@@ -43,6 +43,17 @@ EOF
       !self.this.get(:canceled_at).nil?
     end
 
+    # Transfer has started processing
+    def started?
+      !self.started_at.nil?
+    end
+    
+    # Has not yet completed. Note that a canceled transfer may briefly
+    # be in progress before the cancelation is processed.
+    def in_progress?
+      started? && !finished?
+    end
+
     # Transfer has finished, whether successfully or not
     def finished?
       !self.finished_at.nil?
@@ -50,7 +61,7 @@ EOF
 
     # Transfer has finished successfully
     def succeeded?
-      !self.finished_at.nil? && self.succeeded
+      finished? && succeeded
     end
 
     # Flag transfer as successfully completed
@@ -60,7 +71,7 @@ EOF
 
     # Transfer has finished unsuccessfully
     def failed?
-      !self.finished_at.nil? && !self.succeeded
+      finished? && !succeeded
     end
 
     # Flag transfer as unsusccessfully completed
@@ -68,11 +79,11 @@ EOF
       self.update(finished_at: Time.now, succeeded: false)
     end
 
-    # Has not yet completed. Note that a canceled transfer may briefly
-    # be in progress before the cancelation is processed.
-    def in_progress?
-      self.finished_at.nil?
-    end
+    # Mark transfer as deleted, and cancel it if it is in progress
+   def after_destroy
+     cancel if in_progress?
+     super
+   end
 
     # Update the transfer to indicate the number of +bytes+ that have
     # been processed so far. Note that this may be called (shortly)
@@ -83,6 +94,7 @@ EOF
       self.log("progress: #{bytes}", transient: true)
     end
 
+    # Log a message relating to this transfer
     def log(message, level: :info, transient: false)
       unless level == :internal || logplex_token.nil?
         # send to logplex with user logplex token

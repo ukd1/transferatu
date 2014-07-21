@@ -61,7 +61,11 @@ module Transferatu::Endpoints
 
       get "/:id" do
         transfer = find_transfer(@group, params[:id])
-        respond serialize(transfer)
+        if params[:verbose]
+          respond serialize(transfer, flavor: :verbose)
+        else
+          respond serialize(transfer)
+        end
       end
 
       delete "/:id" do

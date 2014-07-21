@@ -1,6 +1,26 @@
 module Transferatu::Serializers
   class Transfer < Base
     structure(:default) do |transfer|
+      basic_structure(transfer)
+    end
+
+    structure(:verbose) do |transfer|
+      response = basic_structure(transfer)
+      response[:logs] = transfer.logs.reject do |item|
+        item.level == 'internal'
+      end.sort_by(&:created_at).map do |item|
+        {
+          created_at: item.created_at,
+          level:      item.level,
+          message:    item.message
+        }
+      end
+      response
+    end
+
+    private
+
+    def self.basic_structure(transfer)
       {
         uuid: transfer.uuid,
         num:  transfer.transfer_num,

@@ -11,6 +11,10 @@ module Transferatu
       set :raise_errors, true
       set :show_exceptions, false
 
+      error Pliny::Errors::Error do
+        Pliny::Errors::Error.render(env["sinatra.error"])
+      end
+
       configure :development do
         register Sinatra::Reloader
       end

@@ -96,7 +96,7 @@ EOF
 
     # Log a message relating to this transfer
     def log(message, level: :info, transient: false)
-      unless level == :internal || logplex_token.nil?
+      unless level == :internal || group.logplex_token.nil?
         # send to logplex with user logplex token
       end
       unless transient

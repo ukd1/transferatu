@@ -22,7 +22,8 @@ module Transferatu::Endpoints
         begin
           group = Transferatu::Mediators::Groups::Creator.run(
                   user: current_user,
-                  name: data["name"]
+                  name: data["name"],
+                  logplex_token: data["logplex_token"],
                 )
           respond serialize(group), status: 201
         rescue Sequel::UniqueConstraintViolation => e

@@ -32,7 +32,6 @@ module Transferatu::Serializers
         to_type:   transfer.to_type,
         to_url:    transfer.to_url,
         options:   transfer.options,
-        log_token: transfer.logplex_token,
 
         source_bytes:    transfer.source_bytes,
         processed_bytes: transfer.processed_bytes,

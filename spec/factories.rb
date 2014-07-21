@@ -19,7 +19,6 @@ FactoryGirl.define do
   end
 
   factory :transfer, class: Transferatu::Transfer do
-    logplex_token
     from_type "pg_dump"
     from_url
     to_type "gof3r"
@@ -30,6 +29,7 @@ FactoryGirl.define do
   factory :group, class: Transferatu::Group do
     user
     sequence(:name) { |i| "group-#{i}" }
+    logplex_token
   end
 
   factory :user, class: Transferatu::User do

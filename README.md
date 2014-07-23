@@ -37,7 +37,7 @@ Created OAuth authorization.
 ```
 
 [Create an S3 bucket](http://docs.aws.amazon.com/AmazonS3/latest/gsg/CreatingABucket.html) and then
-[Create an AWS user](http://docs.aws.amazon.com/IAM/latest/UserGuide/Using_SettingUpUser.html#Using_CreateUser_console)
+[create an AWS user](http://docs.aws.amazon.com/IAM/latest/UserGuide/Using_SettingUpUser.html#Using_CreateUser_console)
 with an access policy restricted to read and write that bucket and
 its contents:
 

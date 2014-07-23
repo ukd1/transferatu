@@ -4,7 +4,7 @@ module Transferatu::Serializers
       {
         uuid:           group.uuid,
         name:           group.name,
-        logplex_token:  group.logplex_token,
+        log_input_url:  group.log_input_url,
         transfer_count: group.transfer_count,
 
         created_at: group.created_at,

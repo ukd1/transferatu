@@ -1,8 +1,8 @@
 FactoryGirl.define do
   to_create { |instance| instance.save }
 
-  sequence :logplex_token do |i|
-    "t.logplex-token-#{i}"
+  sequence :log_input_url do |i|
+    "https://token:t.logplex-token-#{i}@example.com/logs"
   end
 
   sequence :from_url do |i|
@@ -29,7 +29,7 @@ FactoryGirl.define do
   factory :group, class: Transferatu::Group do
     user
     sequence(:name) { |i| "group-#{i}" }
-    logplex_token
+    log_input_url
   end
 
   factory :user, class: Transferatu::User do

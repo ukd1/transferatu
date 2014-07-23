@@ -1,14 +1,14 @@
 module Transferatu
   module Mediators::Groups
     class Creator < Mediators::Base
-      def initialize(user: , name:, logplex_token: nil)
+      def initialize(user: , name:, log_input_url: nil)
         @user = user
         @name = name
-        @logplex_token = logplex_token
+        @log_input_url = log_input_url
       end
 
       def call
-        @user.add_group(name: @name, logplex_token: @logplex_token)
+        @user.add_group(name: @name, log_input_url: @log_input_url)
       end
     end
   end

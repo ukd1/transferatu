@@ -75,13 +75,14 @@ Transferatu also needs a Postgres database:
 $ heroku addons:add heroku-postgresql:premium-yanari
 ```
 
-Once everything is set up, you can deploy and run a schema migration
-to set up the database:
+Once everything is set up, you can deploy, run a schema migration to
+set up the database, and scale up the clock process:
 
 ```console
 $ git push heroku master
 ...
 $ heroku run bundle exec rake db:migrate
+$ heroku ps:scale clock=1
 ```
 
 

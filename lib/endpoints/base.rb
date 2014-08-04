@@ -24,7 +24,7 @@ module Transferatu
         status 404
         "{}"
       end
-      
+
       def self.schema
         @@schema ||= File.read("docs/schema.json")
       end

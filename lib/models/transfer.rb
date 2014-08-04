@@ -47,7 +47,7 @@ EOF
     def started?
       !self.started_at.nil?
     end
-    
+
     # Has not yet completed. Note that a canceled transfer may briefly
     # be in progress before the cancelation is processed.
     def in_progress?
@@ -102,6 +102,6 @@ EOF
       unless transient
         super(message, level: level)
       end
-    end    
+    end
   end
 end

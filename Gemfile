@@ -25,6 +25,8 @@ gem "bcrypt"
 gem "committee" # promoted from 'test' in template
 gem "clockwork"
 gem "platform-api"
+gem "fernet"
+gem "attr_secure"
 
 group :development, :test do
   gem "pry-byebug"

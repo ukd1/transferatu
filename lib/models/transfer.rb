@@ -8,6 +8,9 @@ module Transferatu
     many_to_one :group
     many_to_one :schedule
 
+    attr_secure :from_url, :secret => Config.at_rest_fernet_secret
+    attr_secure :to_url, :secret => Config.at_rest_fernet_secret
+
     def self.begin_next_pending
       self.db.transaction(isolation: :serializable) do
         Transfer.with_sql(<<-EOF).first

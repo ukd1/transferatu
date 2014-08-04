@@ -7,6 +7,8 @@ GEM
       minitest (~> 5.1)
       thread_safe (~> 0.1)
       tzinfo (~> 1.1)
+    attr_secure (0.4.1)
+      fernet (= 1.6)
     backports (3.6.0)
     bcrypt (3.1.7)
     byebug (2.7.0)
@@ -30,6 +32,8 @@ GEM
     excon (0.38.0)
     factory_girl (4.4.0)
       activesupport (>= 3.0.0)
+    fernet (1.6)
+      yajl-ruby
     foreman (0.67.0)
       dotenv (~> 0.7.0)
       thor (~> 0.17.0)
@@ -127,17 +131,20 @@ GEM
     timers (1.1.0)
     tzinfo (1.2.1)
       thread_safe (~> 0.1)
+    yajl-ruby (1.2.1)
     yard (0.8.7.4)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  attr_secure
   bcrypt
   clockwork
   committee
   database_cleaner
   factory_girl (~> 4.0)
+  fernet
   foreman
   multi_json
   oj

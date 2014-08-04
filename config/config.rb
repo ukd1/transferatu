@@ -18,7 +18,8 @@ module Config
     :database_url,
     :s3_bucket_name,
     :heroku_api_token,
-    :heroku_app_name
+    :heroku_app_name,
+    :at_rest_fernet_secret
 
   # Optional -- value is returned or `nil` if it wasn't present.
   optional \

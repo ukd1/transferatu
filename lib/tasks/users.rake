@@ -3,8 +3,9 @@ namespace :users do
     require "bundler"
     Bundler.require
     require_relative "../initializer"
+    require "securerandom"
 
-    password=`dd if=/dev/urandom bs=32 count=1 2>/dev/null | openssl base64`.strip
+    password = SecureRandom.base64(128)
     if password.empty?
       raise StandardError, "Could not generate password"
     end
@@ -12,7 +13,7 @@ namespace :users do
     if token.empty?
       raise StandardError, "Could not generate token"
     end
-    callback_password=`dd if=/dev/urandom bs=32 count=1 2>/dev/null | openssl base64`.strip
+    callback_password = SecureRandom.base64(128)
     if callback_password.empty?
       raise StandardError, "Could not generate token"
     end

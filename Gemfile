@@ -26,6 +26,7 @@ gem "committee" # promoted from 'test' in template
 gem "clockwork"
 gem "platform-api"
 gem "fernet"
+gem "fernet-rack"
 gem "attr_secure"
 
 group :development, :test do

@@ -2,7 +2,6 @@ require_relative 'helpers'
 
 module Transferatu::Endpoints
   class Schedules < Base
-    include Authenticator
     include Serializer
 
     serialize_with Transferatu::Serializers::Schedule
@@ -10,7 +9,6 @@ module Transferatu::Endpoints
     namespace "/groups/:group/schedules" do
       before do
         content_type :json, charset: 'utf-8'
-        authenticate
         @group = current_user.groups_dataset.present.where(name: params[:group]).first
       end
 

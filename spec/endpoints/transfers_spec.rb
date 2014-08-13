@@ -9,10 +9,9 @@ module Transferatu::Endpoints
     end
 
     before do
-      password = 'passw0rd'
-      @user = create(:user, password: password)
+      @user = create(:user)
       @group = create(:group, user: @user)
-      authorize @user.name, password
+      Transferatu::RequestStore.current_user = @user
     end
 
     describe "GET /groups/:name/transfers" do

@@ -41,6 +41,10 @@ module Transferatu
           status(status) unless status.nil?
           JSON.generate(response)
         end
+
+        def current_user
+          Transferatu::RequestStore.current_user
+        end
       end
     end
   end

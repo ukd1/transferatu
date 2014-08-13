@@ -2,7 +2,6 @@ require_relative 'helpers'
 
 module Transferatu::Endpoints
   class Transfers < Base
-    include Authenticator
     include Serializer
 
     serialize_with Transferatu::Serializers::Transfer
@@ -10,7 +9,6 @@ module Transferatu::Endpoints
     namespace "/groups/:group/transfers" do
       before do
         content_type :json, charset: 'utf-8'
-        authenticate
         @group = find_group(params[:group])
       end
 

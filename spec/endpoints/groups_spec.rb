@@ -7,6 +7,8 @@ describe Transferatu::Endpoints::Groups do
     Transferatu::Endpoints::Groups
   end
 
+  let(:log_url) { 'https://token:t.8cda5772-ba01-49ec-9431-4391a067a0d3@example.com/logs' }
+
   before do
     @user = create(:user)
     @group = create(:group, user: @user)
@@ -32,11 +34,11 @@ describe Transferatu::Endpoints::Groups do
       header "Content-Type", "application/json"
     end
     it "succeeds" do
-      post "/groups", JSON.generate(name: 'foo')
+      post "/groups", JSON.generate(name: 'foo', log_input_url: log_url)
       last_response.status.should eq(201)
     end
     it "responds with 409 Conflict if group already exists" do
-      post "/groups", JSON.generate(name: @group.name)
+      post "/groups", JSON.generate(name: @group.name, log_input_url: log_url)
       last_response.status.should eq(409)
     end
   end

@@ -26,8 +26,8 @@ gem "committee" # promoted from 'test' in template
 gem "clockwork"
 gem "platform-api"
 gem "fernet"
-gem "fernet-rack"
-gem "attr_secure"
+gem "fernet-rack", git: 'https://github.com/deafbybeheading/fernet-rack', branch: 'encrypt-responses'
+gem "attr_secure", git: "https://github.com/neilmiddleton/attr_secure", branch: "fernet_2_0"
 
 group :development, :test do
   gem "pry-byebug"

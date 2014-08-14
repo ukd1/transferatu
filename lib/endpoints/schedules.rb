@@ -34,7 +34,7 @@ module Transferatu::Endpoints
         respond serialize(schedule)
       end
 
-      delete "/:id" do |id|
+      delete "/:id" do
         schedule = @group.schedules_dataset.present.where(uuid: params[:id]).first
         unless schedule.nil?
           schedule.destroy

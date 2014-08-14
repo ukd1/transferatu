@@ -9,35 +9,88 @@ module Transferatu
       Routes
     end
 
-    # TODO: restore acceptance tests
-    xit "GET /groups" do
-      get "/groups"
-      last_response.status.should eq(200)
-      last_response.body.should eq("[]")
+    def encrypt(payload)
+      Fernet.generate(@user.token, JSON.generate(payload))
     end
 
-    xit "POST /groups/:id" do
-      post "/groups"
-      last_response.status.should eq(201)
-      last_response.body.should eq("{}")
+    def decrypt(payload)
+      JSON.parse(Fernet.verifier(@user.token, payload).message)
     end
 
-    xit "GET /groups/:id" do
-      get "/groups/123"
-      last_response.status.should eq(200)
-      last_response.body.should eq("{}")
+    before do
+      @password = 'hunter2'
+      @user = create(:user, password: @password)
     end
 
-    xit "PATCH /groups/:id" do
-      patch "/groups/123"
-      last_response.status.should eq(200)
-      last_response.body.should eq("{}")
+    describe "when unauthenticated" do
+      it "rejects requests" do
+        get "/groups"
+        expect(last_response.status).to eq(401)
+        response = JSON.parse(last_response.body)
+
+        expect(response["message"]).to match("Unauthorized")
+        expect(response["status"]).to eq(401)
+      end
     end
 
-    xit "DELETE /groups/:id" do
-      delete "/groups/123"
-      last_response.status.should eq(200)
-      last_response.body.should eq("{}")
+    describe "when authenticated" do
+      before do
+        authorize @user.name, @password
+      end
+
+      it "rejects requests with a mismatched request token" do
+        data = encrypt(name: 'group1', log_input_url: 'https://example.com/logs')
+        @user.update(token: SecureRandom.base64(32))
+        post "/groups", data
+        expect(last_response.status).to eq(400)
+      end
+
+      it "GET /groups" do
+        get "/groups"
+        expect(last_response.status).to eq(200)
+        expect(decrypt(last_response.body)).to eq([])
+      end
+
+      it "POST /groups" do
+        data = { name: 'group1', log_input_url: 'https://example.com/logs' }
+        post "/groups", encrypt(data)
+        expect(last_response.status).to eq(201)
+        response = decrypt(last_response.body)
+        data.keys.each do |key|
+          expect(response[key.to_s]).to eq data[key]
+        end
+        group_id = response["uuid"]
+        expect(group_id).to_not be_nil
+        group = Transferatu::Group[group_id]
+        data.keys.each do |key|
+          expect(group.public_send(key)).to eq data[key]
+        end
+      end
+
+      it "GET /groups/:name" do
+        group = create(:group, user: @user)
+        get "/groups/#{group.name}"
+        expect(last_response.status).to eq(200)
+        response = decrypt(last_response.body)
+        %i(name log_input_url).each do |field|
+          expect(response[field.to_s]).to eq(group.public_send(field))
+        end
+      end
+
+      it "DELETE /groups/:name/transfers/:id" do
+        group = create(:group, user: @user)
+        before_deletion = Time.now
+        delete "/groups/#{group.name}"
+        expect(last_response.status).to eq(200)
+        response = decrypt(last_response.body)
+        %i(name log_input_url).each do |field|
+          expect(response[field.to_s]).to eq(group.public_send(field))
+        end
+        group.reload
+        expect(group.deleted?).to be true
+        expect(group.deleted_at).to be > before_deletion
+        expect(group.deleted_at).to be < Time.now
+      end
     end
   end
 end

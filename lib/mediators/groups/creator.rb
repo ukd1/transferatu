@@ -1,7 +1,7 @@
 module Transferatu
   module Mediators::Groups
     class Creator < Mediators::Base
-      def initialize(user: , name:, log_input_url: nil)
+      def initialize(user: , name:, log_input_url:)
         @user = user
         @name = name
         @log_input_url = log_input_url

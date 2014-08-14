@@ -9,14 +9,6 @@ module Transferatu
       let(:log_url)      { 'https://token:t.8cda5772-ba01-49ec-9431-4391a067a0d3@example.com/logs' }
 
       it "creates a new group" do
-        creator = Mediators::Groups::Creator.new(name: name, user: user)
-        g = creator.call
-        expect(g).to_not be_nil
-        expect(g).to be_instance_of(Transferatu::Group)
-        expect(g.name).to eq(name)
-      end
-
-      it "accepts an optional log_client_url" do
         creator = Mediators::Groups::Creator.new(name: name, user: user, log_input_url: log_url)
         g = creator.call
         expect(g).to_not be_nil
@@ -25,16 +17,16 @@ module Transferatu
       end
 
       it "forbids two groups with the same name for the same user" do
-        c1 = Mediators::Groups::Creator.new(name: name, user: user)
+        c1 = Mediators::Groups::Creator.new(name: name, user: user, log_input_url: log_url)
         c1.call
-        c2 = Mediators::Groups::Creator.new(name: name, user: user)
+        c2 = Mediators::Groups::Creator.new(name: name, user: user, log_input_url: log_url)
         expect { c2.call }.to raise_error
       end
 
       it "allows two groups with the same name for different users" do
-        c1 = Mediators::Groups::Creator.new(name: name, user: user)
+        c1 = Mediators::Groups::Creator.new(name: name, user: user, log_input_url: log_url)
         g1 = c1.call
-        c2 = Mediators::Groups::Creator.new(name: name, user: another_user)
+        c2 = Mediators::Groups::Creator.new(name: name, user: another_user, log_input_url: log_url)
         g2 = c2.call
         expect(g1.name).to eq(name)
         expect(g2.name).to eq(name)

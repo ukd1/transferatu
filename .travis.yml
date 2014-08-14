@@ -10,7 +10,5 @@ before_script:
 script: bundle exec rspec
 notifications:
   email: true
-services:
-  - redis-server
 addons:
   postgresql: "9.3"

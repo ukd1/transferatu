@@ -1,18 +1,18 @@
 GIT
+  remote: https://github.com/deafbybeheading/attr_secure
+  revision: 09366b23ea1a8a9845feff2ba8164136eb984596
+  branch: fernet-2.0-support-empty-values
+  specs:
+    attr_secure (0.2.0)
+      fernet (~> 2.0.rc1)
+
+GIT
   remote: https://github.com/deafbybeheading/fernet-rack
   revision: 6a142661a17f299f596aa1e71fb80a8f98ddca5f
   branch: encrypt-responses
   specs:
     fernet-rack (0.6)
       fernet (~> 2.1)
-
-GIT
-  remote: https://github.com/neilmiddleton/attr_secure
-  revision: d7e1d130e4a3eb19dbf944903e08bbfa217e657c
-  branch: fernet_2_0
-  specs:
-    attr_secure (0.2.0)
-      fernet (~> 2.0.rc1)
 
 GEM
   remote: https://rubygems.org/

@@ -27,7 +27,7 @@ gem "clockwork"
 gem "platform-api"
 gem "fernet"
 gem "fernet-rack", git: 'https://github.com/deafbybeheading/fernet-rack', branch: 'encrypt-responses'
-gem "attr_secure", git: "https://github.com/neilmiddleton/attr_secure", branch: "fernet_2_0"
+gem "attr_secure", git: "https://github.com/deafbybeheading/attr_secure", branch: 'fernet-2.0-support-empty-values'
 
 group :development, :test do
   gem "pry-byebug"

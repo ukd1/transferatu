@@ -1,22 +1,28 @@
-require "bundler"
-Bundler.require
+require './config/config'
+require 'fernet'
 
-require './lib/initializer'
+def encrypt(message)
+  Fernet.generate(Config.at_rest_fernet_secret, message)
+end
 
 Sequel.migration do
   up do
-    Transferatu::Transfer.all.each do |xfer|
-      xfer.from_url = xfer.unencrypted_from_url
-      xfer.to_url = xfer.unencrypted_to_url
-      xfer.save
+    self[:transfers].each do |xfer|
+      unencrypted_from_url = xfer[:unencrypted_from_url]
+      unencrypted_to_url = xfer[:unencrypted_to_url]
+      self[:transfers].where(uuid: xfer[:uuid])
+        .update(from_url: encrypt(unencrypted_from_url),
+                to_url: encrypt(unencrypted_to_url))
     end
-    Transferatu::User.all.each do |user|
-      user.token = user.unencrypted_token
-      user.save
+    self[:users].each do |user|
+      unencrypted_token = user[:unencrypted_token]
+      self[:users].where(uuid: user[:uuid])
+        .update(token: encrypt(unencrypted_token))
     end
-    Transferatu::Group.all.each do |group|
-      group.log_input_url = group.unencrypted_log_input_url
-      group.save
+    self[:groups].each do |group|
+      unencrypted_log_input_url = group[:unencrypted_log_input_url]
+      self[:groups].where(uuid: group[:uuid])
+        .update(log_input_url: encrypt(unencrypted_log_input_url))
     end
   end
 

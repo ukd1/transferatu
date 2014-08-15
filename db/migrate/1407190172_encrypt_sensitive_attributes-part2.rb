@@ -2,7 +2,11 @@ require './config/config'
 require 'fernet'
 
 def encrypt(message)
-  Fernet.generate(Config.at_rest_fernet_secret, message)
+  if message.nil? || message.empty?
+    message
+  else
+    Fernet.generate(Config.at_rest_fernet_secret, message)
+  end
 end
 
 Sequel.migration do

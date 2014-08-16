@@ -14,8 +14,6 @@ Sequel.migration do
     end
     alter_table :groups do
       drop_column :unencrypted_log_input_url
-
-      set_column_not_null :log_input_url
     end
   end
 

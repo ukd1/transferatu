@@ -26,7 +26,7 @@ gem "committee" # promoted from 'test' in template
 gem "clockwork"
 gem "platform-api"
 gem "fernet"
-gem "fernet-rack", git: 'https://github.com/deafbybeheading/fernet-rack', branch: 'encrypt-responses'
+gem "fernet-rack", "~> 0.8"
 gem "attr_secure", git: "https://github.com/deafbybeheading/attr_secure", branch: 'fernet-2.0-support-empty-values'
 
 group :development, :test do

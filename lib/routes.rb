@@ -13,6 +13,7 @@ Routes = Rack::Builder.new do
   use Rack::MethodOverride
   use Rack::SSL if Config.force_ssl?
 
+  use Transferatu::Middleware::Health
   use Transferatu::Middleware::Authenticator, store: Transferatu::RequestStore
   use Rack::Fernet, ->(env) do
     unless Transferatu::RequestStore.current_user.nil?

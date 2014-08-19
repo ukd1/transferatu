@@ -52,7 +52,7 @@ RSpec.configure do |config|
   end
 
   config.mock_with :rspec do |c|
-    c.syntax = :should
+    c.syntax = [:should, :expect]
   end
 
   # Run specs in random order to surface order dependencies. If you find an

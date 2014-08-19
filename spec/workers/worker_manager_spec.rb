@@ -44,34 +44,52 @@ module Transferatu
         end
       end
 
-      it "adds workers when needed" do
-        dyno_api.should_receive(:list).with(app_name)
-          .and_return(make_dynos(workers: 3))
-        dyno_api.should_receive(:create).twice
-          .with(app_name, command: WorkerManager::WORK_COMMAND, size: worker_size)
-        manager.top_off_workers
+      context "when not quiesced" do
+        before do
+          expect(AppStatus).to receive(:quiesced?).and_return(false)
+        end
+
+        it "adds workers when needed" do
+          dyno_api.should_receive(:list).with(app_name)
+            .and_return(make_dynos(workers: 3))
+          dyno_api.should_receive(:create).twice
+            .with(app_name, command: WorkerManager::WORK_COMMAND, size: worker_size)
+          manager.top_off_workers
+        end
+
+        it "ignores other processes when calculating needed worker counts" do
+          dyno_api.should_receive(:list).with(app_name)
+            .and_return(make_dynos(workers: 3, others: 5))
+          dyno_api.should_receive(:create).twice
+            .with(app_name, command: WorkerManager::WORK_COMMAND, size: worker_size)
+          manager.top_off_workers
+        end
+
+        it "does not add workers when the appropriate number are running" do
+          dyno_api.should_receive(:list).with(app_name)
+            .and_return(make_dynos(workers: 5))
+          dyno_api.should_not_receive(:create)
+          manager.top_off_workers
+        end
+
+        it "does not add workers when too many are running" do
+          dyno_api.should_receive(:list).with(app_name)
+            .and_return(make_dynos(workers: 7))
+          dyno_api.should_not_receive(:create)
+          manager.top_off_workers
+        end
       end
 
-      it "ignores other processes when calculating needed worker counts" do
-        dyno_api.should_receive(:list).with(app_name)
-          .and_return(make_dynos(workers: 3, others: 5))
-        dyno_api.should_receive(:create).twice
-          .with(app_name, command: WorkerManager::WORK_COMMAND, size: worker_size)
-        manager.top_off_workers
-      end
+      context "when quiesced" do
+        before do
+          expect(AppStatus).to receive(:quiesced?).and_return(true)
+        end
 
-      it "does not add workers when the appropriate number are running" do
-        dyno_api.should_receive(:list).with(app_name)
-          .and_return(make_dynos(workers: 5))
-        dyno_api.should_not_receive(:create)
-        manager.top_off_workers
-      end
-
-      it "does not add workers when too many are running" do
-        dyno_api.should_receive(:list).with(app_name)
-          .and_return(make_dynos(workers: 7))
-        dyno_api.should_not_receive(:create)
-        manager.top_off_workers
+        it "does not add workers" do
+          dyno_api.should_not_receive(:list)
+          dyno_api.should_not_receive(:create)
+          manager.top_off_workers
+        end
       end
     end
   end

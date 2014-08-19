@@ -8,9 +8,11 @@ module Transferatu
     end
 
     def top_off_workers
-      needed_worker_count = Config.worker_count.to_i - running_worker_count
-      needed_worker_count.times do |i|
-        run_worker(Config.worker_size)
+      unless AppStatus.quiesced?
+        needed_worker_count = Config.worker_count.to_i - running_worker_count
+        needed_worker_count.times do |i|
+          run_worker(Config.worker_size)
+        end
       end
     end
 

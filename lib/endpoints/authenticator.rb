@@ -14,12 +14,19 @@ module Transferatu::Middleware
       end
       user, password = auth.credentials
       candidate_user = Transferatu::User.where(name: user, deleted_at: nil).first
-      unless candidate_user && candidate_user.password == password
+      unless candidate_user && time_constant_compare(candidate_user.password, password)
         raise Pliny::Errors::Unauthorized
       end
       @store.current_user = candidate_user
 
       @app.call(env)
+    end
+
+    private
+    def time_constant_compare(a, b)
+      check = a.bytesize ^ b.bytesize
+      a.bytes.zip(b.bytes) { |x,y| check |= x^y }
+      check == 0
     end
   end
 end

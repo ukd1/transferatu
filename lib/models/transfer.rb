@@ -32,6 +32,10 @@ EOF
       self.where(Sequel.~(started_at: nil), canceled_at: nil, finished_at: nil)
     end
 
+    def_dataset_method(:pending) do
+      self.where(started_at: nil, canceled_at: nil, finished_at: nil)
+    end
+
     # Flag transfer as canceled. A canceled transfer will be flagged
     # as failed as soon as possible.
     def cancel

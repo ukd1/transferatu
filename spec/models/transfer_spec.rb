@@ -46,6 +46,27 @@ module Transferatu
       end
     end
 
+    describe ".pending" do
+      before do
+        @pending = create(:transfer)
+        @running = create(:transfer, started_at: Time.now)
+        @canceled = create(:transfer, started_at: Time.now, canceled_at: Time.now + 1)
+        @failed = create(:transfer, started_at: Time.now,
+                         finished_at: Time.now + 1, succeeded: false)
+        @completed = create(:transfer, started_at: Time.now,
+                            finished_at: Time.now + 1, succeeded: true)
+      end
+
+      it "should only include running transfers" do
+        pending = Transfer.pending.all
+        expect(pending).to include(@pending)
+        expect(pending).to_not include(@running)
+        expect(pending).to_not include(@canceled)
+        expect(pending).to_not include(@failed)
+        expect(pending).to_not include(@completed)
+      end
+    end
+
     describe "#cancel" do
       it "flags a transfer as canceled" do
         expect(t.canceled_at).to be_nil

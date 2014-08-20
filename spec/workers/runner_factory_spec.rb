@@ -27,7 +27,7 @@ module Transferatu
             "PostgreSQL 9.3.4 on x86_64-unknown-linux-gnu, compiled by gcc (Ubuntu 4.8.2-16ubuntu6) 4.8.2, 64-bit"
           ].each do |version|
             it "#{if valid; "succeeds"; "fails"; end} with transfer from #{from} (version #{version}) to #{to}" do
-              if from_type == 'pg_dump' && to_type != 'pg_restore'
+              if from_type == 'pg_dump'
                 Sequel.should_receive(:connect).with(from).and_yield(from_conn)
                 from_conn.should_receive(:fetch).with("SELECT version()").and_return(from_result)
                 from_result.should_receive(:get).with(:version).and_return(version)

@@ -9,7 +9,7 @@ module Transferatu
         raise ArgumentError, "S3 transfers not supported"
       end
 
-      pg_root = nil
+      to_version = nil
       logger = transfer.method(:log)
       sink = case to_type
              when 'pg_restore'
@@ -31,20 +31,21 @@ module Transferatu
              else
                raise ArgumentError, "Unkown transfer sink type: #{to_type}"
              end
-      
+
       source = case from_type
                when 'pg_dump'
-                 # N.B.: if the pg_root has already been set, don't
-                 # override it. This is useful when doing direct
-                 # transfer to a newer version, where the target
-                 # version pg_dump may be useful for an upgrade or
-                 # necessary for a downgrade.
-                 if pg_root.nil?
-                   from_version = PGVersion.parse(Sequel.connect(transfer.from_url) do |c|
-                                                    c.fetch("SELECT version()").get(:version)
-                                                  end)
-                   pg_root = "/app/bin/pg/#{from_version.major_minor}"
-                 end
+                 # N.B.: if the pg_root has already been set, only
+                 # override it if the source is of a higher version.
+                 # This can be useful for upgrades and is necessary
+                 # for downgrades.
+                 from_version = PGVersion.parse(Sequel.connect(transfer.from_url) do |c|
+                                                  c.fetch("SELECT version()").get(:version)
+                                                end)
+                 pg_root = if to_version.nil? || from_version > to_version
+                             "/app/bin/pg/#{from_version.major_minor}"
+                           else
+                             "/app/bin/pg/#{to_version.major_minor}"
+                           end
                  PGDumpSource.new(transfer.from_url,
                                   opts: {
                                     no_owner: true,

@@ -8,7 +8,11 @@ module Transferatu
           log.info "Application has been updated; exiting"
           break
         end
-        run_next(worker)
+        if AppStatus.quiesced?
+          sleep 5
+        else
+          run_next(worker)
+        end
       end
     end
 

@@ -57,6 +57,13 @@ describe Transferatu::Schedule do
       expect(scheds.count).to eq(1)
       expect(scheds.first.uuid).to satisfy { |v| [ s1.uuid, s2.uuid ].include? v }
     end
+
+    it "omits schedules that have a recently-created transfer" do
+      s = create(:schedule, hour: 15, dows: [ 3 ], timezone: 'UTC')
+      create(:transfer, schedule: s)
+      scheds = Transferatu::Schedule.pending_for(scheduled_time).all
+      expect(scheds).to be_empty
+    end
   end
 end
 

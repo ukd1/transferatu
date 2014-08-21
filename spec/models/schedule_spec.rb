@@ -50,6 +50,13 @@ describe Transferatu::Schedule do
       expect(scheds.first.uuid).to eq(s.uuid)
     end
 
+    it "obeys an optional limit" do
+      s1 = create(:schedule, hour: 15, dows: [ 3 ], timezone: 'UTC')
+      s2 = create(:schedule, hour: 15, dows: [ 3 ], timezone: 'UTC')
+      scheds = Transferatu::Schedule.pending_for(scheduled_time, limit: 1).all
+      expect(scheds.count).to eq(1)
+      expect(scheds.first.uuid).to satisfy { |v| [ s1.uuid, s2.uuid ].include? v }
+    end
   end
 end
 

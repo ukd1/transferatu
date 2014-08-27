@@ -43,5 +43,6 @@ module Config
     versioning:       'false',
 
     worker_count:     5,
-    worker_size:      '1X'
+    worker_size:      '1X',
+    logplex_procid:   'backups'
 end

@@ -20,14 +20,14 @@ gem "sinatra-router"
 gem "sucker_punch"
 
 # additional gems (not from template)
-gem "pgversion"
+gem "attr_secure", git: "https://github.com/deafbybeheading/attr_secure", branch: 'fernet-2.0-support-empty-values'
 gem "bcrypt"
-gem "committee" # promoted from 'test' in template
 gem "clockwork"
-gem "platform-api"
+gem "committee" # promoted from 'test' in template
 gem "fernet"
 gem "fernet-rack", "~> 0.8"
-gem "attr_secure", git: "https://github.com/deafbybeheading/attr_secure", branch: 'fernet-2.0-support-empty-values'
+gem "pgversion"
+gem "platform-api"
 
 group :development, :test do
   gem "pry-byebug"

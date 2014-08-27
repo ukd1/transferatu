@@ -28,14 +28,14 @@ module Transferatu
           ].each do |version|
             it "#{if valid; "succeeds"; "fails"; end} with transfer from #{from} (version #{version}) to #{to}" do
               if from_type == 'pg_dump'
-                Sequel.should_receive(:connect).with(from).and_yield(from_conn)
-                from_conn.should_receive(:fetch).with("SELECT version()").and_return(from_result)
-                from_result.should_receive(:get).with(:version).and_return(version)
+                expect(Sequel).to receive(:connect).with(from).and_yield(from_conn)
+                expect(from_conn).to receive(:fetch).with("SELECT version()").and_return(from_result)
+                expect(from_result).to receive(:get).with(:version).and_return(version)
               end
               if to_type == 'pg_restore'
-                Sequel.should_receive(:connect).with(to).and_yield(to_conn)
-                to_conn.should_receive(:fetch).with("SELECT version()").and_return(to_result)
-                to_result.should_receive(:get).with(:version).and_return(version)
+                expect(Sequel).to receive(:connect).with(to).and_yield(to_conn)
+                expect(to_conn).to receive(:fetch).with("SELECT version()").and_return(to_result)
+                expect(to_result).to receive(:get).with(:version).and_return(version)
               end
 
               if valid
@@ -81,7 +81,7 @@ module Transferatu
       let(:cmd)    { double(:cmd) }
       
       it "delegates to Open3.popen3 and wraps the result in a ShellFuture" do
-        Open3.should_receive(:popen3).and_return([stdin, stdout, stderr, wthr])
+        expect(Open3).to receive(:popen3).and_return([stdin, stdout, stderr, wthr])
         result = s.run_command(env, cmd)
         expect(result).to be_instance_of(ShellFuture)
         expect(result.stdin).to be stdin
@@ -138,7 +138,7 @@ module Transferatu
       let(:future)   { ShellFuture.new(stdin, stdout, stderr, wthr) }
 
       it "returns the process status" do
-        wthr.stub(:value).and_return(status)
+        allow(wthr).to receive(:value).and_return(status)
         expect(future.wait).to be status
       end
 
@@ -166,12 +166,12 @@ module Transferatu
       let(:future)   { ShellFuture.new(stdin, stdout, stderr, wthr) }
 
       it "cancels the asynchronus process" do
-        Process.should_receive(:kill).with("INT", wthr.pid)
+        expect(Process).to receive(:kill).with("INT", wthr.pid)
         future.cancel
       end
 
       it "ignores dead processes when canceling" do
-        Process.should_receive(:kill).with("INT", wthr.pid).and_raise(Errno::ESRCH)
+        expect(Process).to receive(:kill).with("INT", wthr.pid).and_raise(Errno::ESRCH)
         future.cancel
       end
     end
@@ -196,10 +196,10 @@ module Transferatu
 
     describe "#run_async" do
       before do
-        source.should_receive(:run_command) do |env, command|
+        expect(source).to receive(:run_command) { |env, command|
           expect(command).to include("#{root}/bin/pg_dump", url)
           expect(env["LD_LIBRARY_PATH"]).to eq("#{root}/lib")
-        end.and_return(future)
+        }.and_return(future)
       end
 
       it "returns stdout" do
@@ -209,7 +209,7 @@ module Transferatu
       end
 
       it "collects logs while running" do
-        future.should_receive(:drain_stderr).with(logger)
+        expect(future).to receive(:drain_stderr).with(logger)
         source.run_async
       end
 
@@ -218,15 +218,15 @@ module Transferatu
           source.run_async
         end
         it "returns true when the process succeeds" do
-          future.should_receive(:wait).and_return(success)
+          expect(future).to receive(:wait).and_return(success)
           expect(source.wait).to be true
         end
         it "returns false when the process fails" do
-          future.should_receive(:wait).and_return(failure)
+          expect(future).to receive(:wait).and_return(failure)
           expect(source.wait).to be false
         end
         it "returns false when the process is signaled" do
-          future.should_receive(:wait).and_return(signaled)
+          expect(future).to receive(:wait).and_return(signaled)
           expect(source.wait).to be false
         end
       end
@@ -236,7 +236,7 @@ module Transferatu
           source.run_async
         end
         it "delegates to ShellProcess#cancel" do
-          future.should_receive(:cancel)
+          expect(future).to receive(:cancel)
           source.cancel
         end
       end
@@ -258,9 +258,9 @@ module Transferatu
 
     describe "#run_async" do
       before do
-        sink.should_receive(:run_command) do |command|
+        expect(sink).to receive(:run_command) { |command|
           expect(command).to include('gof3r', 'my-bucket', 'some/key')
-        end.and_return(future)
+        }.and_return(future)
       end
 
       it "returns the target process' stdin" do
@@ -270,8 +270,8 @@ module Transferatu
       end
 
       it "collects logs while running" do
-        future.should_receive(:drain_stdout).with(logger)
-        future.should_receive(:drain_stderr) do |logfn|
+        expect(future).to receive(:drain_stdout).with(logger)
+        expect(future).to receive(:drain_stderr) do |logfn|
           # TODO: we should also verify here that logger is being called
           expect(logfn).to respond_to(:call)
         end
@@ -283,15 +283,15 @@ module Transferatu
           sink.run_async
         end
         it "returns true when the process succeeds" do
-          future.should_receive(:wait).and_return(success)
+          expect(future).to receive(:wait).and_return(success)
           expect(sink.wait).to be true
         end
         it "returns false when the process fails" do
-          future.should_receive(:wait).and_return(failure)
+          expect(future).to receive(:wait).and_return(failure)
           expect(sink.wait).to be false
         end
         it "returns false when the process is signaled" do
-          future.should_receive(:wait).and_return(signaled)
+          expect(future).to receive(:wait).and_return(signaled)
           expect(sink.wait).to be false
         end
       end
@@ -301,7 +301,7 @@ module Transferatu
           sink.run_async
         end
         it "delegates to ShellProcess#cancel" do
-          future.should_receive(:cancel)
+          expect(future).to receive(:cancel)
           sink.cancel
         end
       end
@@ -323,9 +323,9 @@ module Transferatu
 
     describe "#run_async" do
       before do
-        source.should_receive(:run_command) do |command|
+        expect(source).to receive(:run_command) { |command|
           expect(command).to include('gof3r', 'my-bucket', 'some/key')
-        end.and_return(future)
+        }.and_return(future)
       end
 
       it "returns the target process' stdin" do
@@ -335,7 +335,7 @@ module Transferatu
       end
 
       it "collects logs while running" do
-        future.should_receive(:drain_stderr).with(logger)
+        expect(future).to receive(:drain_stderr).with(logger)
         source.run_async
       end
 
@@ -344,15 +344,15 @@ module Transferatu
           source.run_async
         end
         it "returns true when the process succeeds" do
-          future.should_receive(:wait).and_return(success)
+          expect(future).to receive(:wait).and_return(success)
           expect(source.wait).to be true
         end
         it "returns false when the process fails" do
-          future.should_receive(:wait).and_return(failure)
+          expect(future).to receive(:wait).and_return(failure)
           expect(source.wait).to be false
         end
         it "returns false when the process is signaled" do
-          future.should_receive(:wait).and_return(signaled)
+          expect(future).to receive(:wait).and_return(signaled)
           expect(source.wait).to be false
         end
       end
@@ -362,7 +362,7 @@ module Transferatu
           source.run_async
         end
         it "delegates to ShellProcess#cancel" do
-          future.should_receive(:cancel)
+          expect(future).to receive(:cancel)
           source.cancel
         end
       end
@@ -389,10 +389,10 @@ module Transferatu
 
     describe "#run_async" do
       before do
-        sink.should_receive(:run_command) do |env, command|
+        expect(sink).to receive(:run_command) { |env, command|
           expect(command).to include("#{root}/bin/pg_restore", url)
           expect(env["LD_LIBRARY_PATH"]).to eq("#{root}/lib")
-        end.and_return(future)
+        }.and_return(future)
       end
 
       it "returns the target process stdin" do
@@ -402,7 +402,7 @@ module Transferatu
       end
 
       it "collects logs while running" do
-        future.should_receive(:drain_stderr) do |l|
+        expect(future).to receive(:drain_stderr) do |l|
           l.call("hello")
         end
         sink.run_async
@@ -411,13 +411,13 @@ module Transferatu
 
       describe "#wait" do
         it "it returns true when the process succeeds" do
-          future.should_receive(:wait).and_return(success)
+          expect(future).to receive(:wait).and_return(success)
           sink.run_async
           expect(sink.wait).to be true
         end
         it "it returns true when the process fails with comment errors matching warning count" do
-          future.should_receive(:wait).and_return(failure)
-          future.should_receive(:drain_stderr) do |l|
+          expect(future).to receive(:wait).and_return(failure)
+          expect(future).to receive(:drain_stderr) do |l|
             l.call "Command was: COMMENT ON EXTENSION plpgsql IS 'it is okay i guess'"
             l.call "Command was: COMMENT ON EXTENSION pg_stat_statements IS 'a damn fine extension'"
             l.call "WARNING: errors ignored on restore: 2"
@@ -426,8 +426,8 @@ module Transferatu
           expect(sink.wait).to be true
         end
         it "it returns false when process fails with comment errors not matching warning count" do
-          future.should_receive(:wait).and_return(failure)
-          future.should_receive(:drain_stderr) do |l|
+          expect(future).to receive(:wait).and_return(failure)
+          expect(future).to receive(:drain_stderr) do |l|
             l.call "Command was: COMMENT ON EXTENSION plpgsql IS 'hello'"
             l.call "WARNING: errors ignored on restore: 3"
           end
@@ -435,18 +435,18 @@ module Transferatu
           expect(sink.wait).to be false
         end
         it "it returns false when the process fails otherwise" do
-          future.should_receive(:wait).and_return(failure)
+          expect(future).to receive(:wait).and_return(failure)
           sink.run_async
           expect(sink.wait).to be true
         end
         it "it returns false when the process is signaled" do
-          future.should_receive(:wait).and_return(signaled)
+          expect(future).to receive(:wait).and_return(signaled)
           sink.run_async
           expect(sink.wait).to be false
         end
         it "it returns false when process is signaled and has comment errors matching warning count" do
-          future.should_receive(:wait).and_return(signaled)
-          future.should_receive(:drain_stderr) do |l|
+          expect(future).to receive(:wait).and_return(signaled)
+          expect(future).to receive(:drain_stderr) do |l|
             l.call "Command was: COMMENT ON EXTENSION plpgsql IS 'it is okay i guess'"
             l.call "Command was: COMMENT ON EXTENSION pg_stat_statements IS 'a damn fine extension'"
             l.call "WARNING: errors ignored on restore: 2"
@@ -461,7 +461,7 @@ module Transferatu
           sink.run_async
         end
         it "delegates to ShellProcess#cancel" do
-          future.should_receive(:cancel)
+          expect(future).to receive(:cancel)
           sink.cancel
         end
       end

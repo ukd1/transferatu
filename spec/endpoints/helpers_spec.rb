@@ -21,14 +21,14 @@ describe Transferatu::Endpoints::Serializer do
   let(:client)         { SerializerClient.new }
 
   it "invokes the associated serializer" do
-    srlzr_class.should_receive(:new).with(:default).and_return(srlzr_instance)
-    srlzr_instance.should_receive(:serialize).with(some_object)
+    expect(srlzr_class).to receive(:new).with(:default).and_return(srlzr_instance)
+    expect(srlzr_instance).to receive(:serialize).with(some_object)
     client.invoke_serializer(some_object)
   end
 
   it "supports custom serialization flavors" do
-    srlzr_class.should_receive(:new).with(:custom).and_return(srlzr_instance)
-    srlzr_instance.should_receive(:serialize).with(some_object)
+    expect(srlzr_class).to receive(:new).with(:custom).and_return(srlzr_instance)
+    expect(srlzr_instance).to receive(:serialize).with(some_object)
     client.invoke_custom_serializer(some_object)
   end
 end

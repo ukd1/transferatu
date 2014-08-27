@@ -18,14 +18,14 @@ describe Transferatu::Endpoints::Groups do
   describe "GET /groups" do
     it "succeeds" do
       get "/groups"
-      last_response.status.should eq(200)
+      expect(last_response.status).to eq(200)
     end
   end
 
   describe "GET /groups/:name" do
     it "succeeds" do
       get "/groups/#{@group.name}"
-      last_response.status.should eq(200)
+      expect(last_response.status).to eq(200)
     end
   end
 
@@ -35,22 +35,22 @@ describe Transferatu::Endpoints::Groups do
     end
     it "succeeds" do
       post "/groups", JSON.generate(name: 'foo', log_input_url: log_url)
-      last_response.status.should eq(201)
+      expect(last_response.status).to eq(201)
     end
     it "responds with 409 Conflict if group already exists" do
       post "/groups", JSON.generate(name: @group.name, log_input_url: log_url)
-      last_response.status.should eq(409)
+      expect(last_response.status).to eq(409)
     end
   end
 
   describe "DELETE /groups/:name" do
     it "succeeds" do
       delete "/groups/#{@group.name}"
-      last_response.status.should eq(200)
+      expect(last_response.status).to eq(200)
     end
     it "responds with 404 on missing groups" do
       delete "/groups/not-a-real-group"
-      last_response.status.should eq(404)
+      expect(last_response.status).to eq(404)
     end
   end
 end

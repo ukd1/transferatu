@@ -45,14 +45,12 @@ RSpec.configure do |config|
   config.run_all_when_everything_filtered = true
   config.filter_run :focus
 
-  # Enable old rspec syntax for now since some things are tricky with
-  # new syntax; we should revisit this and strip it out
   config.expect_with :rspec do |c|
-    c.syntax = [:should, :expect]
+    c.syntax = :expect
   end
 
   config.mock_with :rspec do |c|
-    c.syntax = [:should, :expect]
+    c.syntax = :expect
   end
 
   # Run specs in random order to surface order dependencies. If you find an

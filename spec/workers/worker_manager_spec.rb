@@ -13,11 +13,11 @@ module Transferatu
 
     describe "#top_off_workers" do
       before do
-        Config.stub(heroku_app_name: app_name,
+        allow(Config).to receive_messages(heroku_app_name: app_name,
                     heroku_api_token: api_token,
                     worker_count: worker_count,
                     worker_size: worker_size)
-        PlatformAPI.should_receive(:connect_oauth).and_return(platform_api)
+        expect(PlatformAPI).to receive(:connect_oauth).and_return(platform_api)
       end
 
       def make_dynos(workers:, others: 0)
@@ -50,32 +50,32 @@ module Transferatu
         end
 
         it "adds workers when needed" do
-          dyno_api.should_receive(:list).with(app_name)
+          expect(dyno_api).to receive(:list).with(app_name)
             .and_return(make_dynos(workers: 3))
-          dyno_api.should_receive(:create).twice
+          expect(dyno_api).to receive(:create).twice
             .with(app_name, command: WorkerManager::WORK_COMMAND, size: worker_size)
           manager.top_off_workers
         end
 
         it "ignores other processes when calculating needed worker counts" do
-          dyno_api.should_receive(:list).with(app_name)
+          expect(dyno_api).to receive(:list).with(app_name)
             .and_return(make_dynos(workers: 3, others: 5))
-          dyno_api.should_receive(:create).twice
+          expect(dyno_api).to receive(:create).twice
             .with(app_name, command: WorkerManager::WORK_COMMAND, size: worker_size)
           manager.top_off_workers
         end
 
         it "does not add workers when the appropriate number are running" do
-          dyno_api.should_receive(:list).with(app_name)
+          expect(dyno_api).to receive(:list).with(app_name)
             .and_return(make_dynos(workers: 5))
-          dyno_api.should_not_receive(:create)
+          expect(dyno_api).not_to receive(:create)
           manager.top_off_workers
         end
 
         it "does not add workers when too many are running" do
-          dyno_api.should_receive(:list).with(app_name)
+          expect(dyno_api).to receive(:list).with(app_name)
             .and_return(make_dynos(workers: 7))
-          dyno_api.should_not_receive(:create)
+          expect(dyno_api).not_to receive(:create)
           manager.top_off_workers
         end
       end
@@ -86,8 +86,8 @@ module Transferatu
         end
 
         it "does not add workers" do
-          dyno_api.should_not_receive(:list)
-          dyno_api.should_not_receive(:create)
+          expect(dyno_api).not_to receive(:list)
+          expect(dyno_api).not_to receive(:create)
           manager.top_off_workers
         end
       end

@@ -206,7 +206,7 @@ module Transferatu
         expect(t.processed_bytes).to eq 12345678
       end
       it "logs a transient message with the updated size" do
-        t.should_receive(:log) do |line, args|
+        expect(t).to receive(:log) do |line, args|
           expect(args[:transient]).to be true
           expect(line).to match(/progress: 12345678/)
         end

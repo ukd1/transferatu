@@ -30,11 +30,11 @@ module Transferatu
     let(:worker)      { Transferatu::TransferWorker.new }
 
     before do
-      worker.stub(:sleep) { |time| sleep 0.05 }
+      allow(worker).to receive(:sleep) { |time| sleep 0.05 }
     end
 
     it "should record success in case of a successful transfer" do
-      RunnerFactory.should_receive(:runner_for).with(transfer).and_return(good_runner)
+      expect(RunnerFactory).to receive(:runner_for).with(transfer).and_return(good_runner)
       worker.perform(transfer)
       transfer.reload
       expect(transfer.in_progress?).to be false
@@ -44,7 +44,7 @@ module Transferatu
     end
 
     it "should record failure in case of a failed transfer" do
-      RunnerFactory.should_receive(:runner_for).with(transfer).and_return(bad_runner)
+      expect(RunnerFactory).to receive(:runner_for).with(transfer).and_return(bad_runner)
       worker.perform(transfer)
       transfer.reload
       expect(transfer.in_progress?).to be false
@@ -60,7 +60,7 @@ module Transferatu
       xfer = transfer
       xfer.update(started_at: Time.now)
       
-      RunnerFactory.should_receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
+      expect(RunnerFactory).to receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
       xfer_th = Thread.new { worker.perform(xfer) }
       xfer.cancel
       xfer_th.join
@@ -77,7 +77,7 @@ module Transferatu
       xfer = transfer
       xfer.update(started_at: Time.now)
 
-      RunnerFactory.should_receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
+      expect(RunnerFactory).to receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
       xfer_th = Thread.new { worker.perform(xfer) }
       sleep SLOW_RUNTIME / 4
       xfer.reload
@@ -96,7 +96,7 @@ module Transferatu
       xfer = transfer
       xfer.update(started_at: Time.now)
 
-      RunnerFactory.should_receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
+      expect(RunnerFactory).to receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
       xfer_th = Thread.new { worker.perform(xfer) }
       sleep SLOW_RUNTIME / 4
       xfer_th.join

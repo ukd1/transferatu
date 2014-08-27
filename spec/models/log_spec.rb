@@ -16,7 +16,7 @@ describe Transferatu::Log do
   describe "#log" do
     it "creates a log message" do
       message = messages.first
-      Transferatu::Log.should_receive(:create)
+      expect(Transferatu::Log).to receive(:create)
         .with(message: message,
               level: "warning",
               foreign_uuid: loggable.uuid)
@@ -24,7 +24,7 @@ describe Transferatu::Log do
     end
     it "defaults to INFO level" do
       message = messages.first
-      Transferatu::Log.should_receive(:create)
+      expect(Transferatu::Log).to receive(:create)
         .with(message: message,
               level: "info",
               foreign_uuid: loggable.uuid)

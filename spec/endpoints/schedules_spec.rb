@@ -17,7 +17,7 @@ module Transferatu::Endpoints
     describe "GET /groups/:name/schedules" do
       it "succeeds" do
         get "/groups/#{@group.name}/schedules"
-        last_response.status.should eq(200)
+        expect(last_response.status).to eq(200)
       end
     end
 
@@ -26,7 +26,7 @@ module Transferatu::Endpoints
 
       it "succeeds" do
         get "/groups/#{@group.name}/schedules/#{schedule.uuid}"
-        last_response.status.should eq(200)
+        expect(last_response.status).to eq(200)
       end
     end
 
@@ -42,7 +42,7 @@ module Transferatu::Endpoints
                                                  days: ['Sunday', 'Tuesday', 'Friday'],
                                                  timezone: 'America/Los_Angeles'
                                                )
-        last_response.status.should eq(201)
+        expect(last_response.status).to eq(201)
       end
     end
 

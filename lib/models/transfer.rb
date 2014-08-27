@@ -103,8 +103,8 @@ EOF
 
     # Log a message relating to this transfer
     def log(message, level: :info, transient: false)
-      unless level == :internal || group.log_input_url.nil?
-        # send to log endpoint with url
+      unless level == :internal
+        group.log message
       end
       unless transient
         super(message, level: level)

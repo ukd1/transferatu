@@ -29,6 +29,7 @@ gem "fernet-rack", "~> 0.8"
 gem "lpxc"
 gem "pgversion"
 gem "platform-api"
+gem "rest-client"
 
 group :development, :test do
   gem "pry-byebug"

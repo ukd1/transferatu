@@ -6,7 +6,7 @@ module Transferatu
       def initialize(group:,
                           from_type:, from_url:, from_name: nil,
                           to_type:, to_url:, to_name: nil,
-                          options:)
+                          options:, schedule: nil)
         @group = group
         @from_type = from_type
         @from_url = from_url
@@ -15,6 +15,7 @@ module Transferatu
         @to_url = to_url
         @to_name = to_name
         @options = options
+        @schedule = schedule
       end
 
       def call
@@ -52,7 +53,7 @@ module Transferatu
           Transfer.create(group: @group,
                           from_type: @from_type, from_url: @from_url, from_name: @from_name,
                           to_type: @to_type, to_url: @to_url, to_name: @to_name,
-                          options: @options)
+                          options: @options, schedule: @schedule)
         rescue StandardError => e
           puts e.inspect
         end

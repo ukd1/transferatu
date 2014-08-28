@@ -4,6 +4,7 @@ module Transferatu
   describe Mediators::Transfers::Creator do
     describe ".call" do
       let(:group)     { create(:group, name: 'foo') }
+      let(:schedule)  { create(:schedule, name: 'bar', group: group) }
       let(:from_type) { 'pg_dump' }
       let(:from_url)  { 'postgres:///test1' }
       let(:to_type)   { 'pg_restore' }
@@ -85,6 +86,31 @@ module Transferatu
                                                       options: opts)
           expect { creator.call }.to raise_error(Mediators::Transfers::InvalidTransferError)
         end
+      end
+
+      it "accepts an optional schedule to tie the transfer to" do
+        creator = Mediators::Transfers::Creator.new(schedule: schedule,
+                                                    group: group,
+                                                    from_type: 'pg_dump',
+                                                    from_url: from_url,
+                                                    to_type: 'gof3r',
+                                                    to_url: 'auto',
+                                                    options: opts)
+        t = creator.call
+        expect(t).to be_instance_of(Transferatu::Transfer)
+        expect(t.schedule).to eq(schedule)
+      end
+
+      it "rejects a new transfer with a mimsatched schedule group" do
+        schedule_for_other_group = create(:schedule)
+        creator = Mediators::Transfers::Creator.new(schedule: schedule_for_other_group,
+                                                    group: group,
+                                                    from_type: 'pg_dump',
+                                                    from_url: from_url,
+                                                    to_type: 'gof3r',
+                                                    to_url: 'auto',
+                                                    options: opts)
+        expect { creator.call }.to raise_error(Mediators::Transfers::InvalidTransferError)
       end
     end
   end

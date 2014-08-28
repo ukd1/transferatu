@@ -26,6 +26,17 @@ module Clockwork
                :"sample#active_xfer_count" => active_xfer_count)
   end
 
+  every(15.minutes, "run-scheduled-transfers") do
+    # This only really needs to run once an hour, but no harm comes
+    # from running it more frequently, so let's try several times an
+    # hour to avoid problems
+    schedule_time = Time.now
+    resolver = Transferatu::ScheduleResolver.new
+    processor = Transferatu::ScheduleProcessor.new(resolver)
+    manager =  Transferatu::ScheduleManager.new(processor)
+    manager.run_schedules(scheduled_time)
+  end
+
   every(4.hours, "mark-restart") do
     Transferatu::AppStatus.mark_update
   end

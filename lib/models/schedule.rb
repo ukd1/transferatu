@@ -6,6 +6,10 @@ module Transferatu
     many_to_one :group
     one_to_many :transfers
 
+    def mark_executed
+      update(last_scheduled_at: Time.now)
+    end
+
     # Schedules that are expected to start a transfer at the given
     # time and have not started any transfers in the twelve hours
     # before this time

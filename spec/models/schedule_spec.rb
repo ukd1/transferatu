@@ -1,6 +1,15 @@
 require "spec_helper"
 
 describe Transferatu::Schedule do
+  describe "#mark_executed" do
+    it "flags the schedule as having been executed at the given time" do
+      before = Time.now
+      s = create(:schedule, hour: 15, dows: [ 3 ], timezone: 'UTC')
+      s.mark_executed
+      expect(s.last_scheduled_at).to be > before
+    end
+  end
+
   describe ".pending_for" do
     let(:scheduled_time) { Time.new(2014, 8, 20, 15, 0, 0, 0) } # this is a Wednesday, dow 3
 

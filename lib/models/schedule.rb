@@ -18,13 +18,12 @@ module Transferatu
 SELECT
   s.*
 FROM
-  schedules s INNER JOIN groups g ON s.group_id = g.uuid
-    LEFT OUTER JOIN transfers t ON t.schedule_id = s.uuid
-      AND t.created_at > (timestamptz :time - interval '12 hours')
+  schedules s
 WHERE
   ARRAY[extract(dow from (:time at time zone timezone)::timestamptz)::smallint] && dows
     AND hour = extract(hour from (:time at time zone timezone)::timestamptz)
-    AND t.uuid IS NULL
+    AND (s.last_scheduled_at IS NULL
+          OR s.last_scheduled_at < (timestamptz :time - interval '12 hours'))
     AND s.deleted_at IS NULL
 LIMIT
   :limit

@@ -16,18 +16,37 @@ module Transferatu
                       } }
 
     describe "#process" do
-      it "creates transfers for schedules that resolve" do
-        expect(resolver).to receive(:resolve).with(schedule).and_return(xfer_info)
-        expect(Transferatu::Mediators::Transfers::Creator).to receive(:run)
-          .with(group: schedule.group, schedule: schedule,
-                from_type: xfer_info["from_type"],
-                from_url:  xfer_info["from_url"],
-                from_name: xfer_info["from_name"],
-                to_type:   xfer_info["to_type"],
-                to_url:    xfer_info["to_url"],
-                to_name:   xfer_info["to_name"],
-                options:   xfer_info["options"])
-        processor.process(schedule)
+      context "with a transfer that resolves" do
+        before do
+          expect(resolver).to receive(:resolve).with(schedule).and_return(xfer_info)
+        end
+
+        it "creates transfers for the schedule" do
+          expect(Transferatu::Mediators::Transfers::Creator).to receive(:run)
+            .with(group: schedule.group, schedule: schedule,
+                  from_type: xfer_info["from_type"],
+                  from_url:  xfer_info["from_url"],
+                  from_name: xfer_info["from_name"],
+                  to_type:   xfer_info["to_type"],
+                  to_url:    xfer_info["to_url"],
+                  to_name:   xfer_info["to_name"],
+                  options:   xfer_info["options"])
+          processor.process(schedule)
+        end
+
+        it "flags schedule as executed" do
+          allow(Transferatu::Mediators::Transfers::Creator).to receive(:run)
+          before = Time.now
+          processor.process(schedule)
+          expect(schedule.last_scheduled_at).to be > before
+        end
+
+        it "does not flag the schedule as executed if its transfer fails to be created" do
+          expect(Transferatu::Mediators::Transfers::Creator).to receive(:run)
+            .and_raise(StandardError)
+          processor.process(schedule)
+          expect(schedule.last_scheduled_at).to be_nil
+        end
       end
 
       it "logs the failure to the group for schedules that fail to resolve" do

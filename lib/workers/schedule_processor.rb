@@ -14,19 +14,22 @@ module Transferatu
         schedule.destroy
         return
       end
-      Transferatu::Mediators::Transfers::Creator
-        .run(
-             schedule:  schedule,
-             group:     schedule.group,
-             from_type: data["from_type"],
-             from_url:  data["from_url"],
-             from_name: data["from_name"],
-             to_type:   data["to_type"],
-             to_url:    data["to_url"],
-             to_name:   data["to_name"],
-             options:   data["options"] || {}
-            )
-      schedule.group.log "Created scheduled transfer for #{schedule.name}"
+      schedule.db.transaction do
+        Transferatu::Mediators::Transfers::Creator
+          .run(
+               schedule:  schedule,
+               group:     schedule.group,
+               from_type: data["from_type"],
+               from_url:  data["from_url"],
+               from_name: data["from_name"],
+               to_type:   data["to_type"],
+               to_url:    data["to_url"],
+               to_name:   data["to_name"],
+               options:   data["options"] || {}
+              )
+        schedule.mark_executed
+        schedule.group.log "Created scheduled transfer for #{schedule.name}"
+      end
     rescue StandardError => e
       schedule.group.log "Could not create scheduled transfer for #{schedule.name}: #{e.message}"
     end

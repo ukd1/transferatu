@@ -30,11 +30,16 @@ module Clockwork
     # This only really needs to run once an hour, but no harm comes
     # from running it more frequently, so let's try several times an
     # hour to avoid problems
+    #
+    # N.B.: If this becomes too heavyweight, we may want to pull it
+    # out into its own Procfile entry instead of using Clockwork
     schedule_time = Time.now
     resolver = Transferatu::ScheduleResolver.new
     processor = Transferatu::ScheduleProcessor.new(resolver)
     manager =  Transferatu::ScheduleManager.new(processor)
+    logger.log "Starting scheduled transfers for #{scheduled_time}"
     manager.run_schedules(scheduled_time)
+    logger.log "Finished scheduled transfers for #{scheduled_time}"
   end
 
   every(4.hours, "mark-restart") do

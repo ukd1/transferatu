@@ -21,6 +21,7 @@ WHERE
   ARRAY[extract(dow from (:time at time zone timezone)::timestamptz)::smallint] && dows
     AND hour = extract(hour from (:time at time zone timezone)::timestamptz)
     AND t.uuid IS NULL
+    AND s.deleted_at IS NULL
 LIMIT
   :limit
 EOF

@@ -64,6 +64,13 @@ describe Transferatu::Schedule do
       scheds = Transferatu::Schedule.pending_for(scheduled_time).all
       expect(scheds).to be_empty
     end
+
+    it "omits deleted schedules" do
+      s = create(:schedule, hour: 15, dows: [ 3 ], timezone: 'UTC')
+      s.destroy
+      scheds = Transferatu::Schedule.pending_for(scheduled_time).all
+      expect(scheds).to be_empty
+    end
   end
 end
 

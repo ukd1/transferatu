@@ -25,12 +25,9 @@ module Transferatu
         "{}"
       end
 
-      def self.schema
-        @@schema ||= File.read("docs/schema.json")
-      end
-
       use Committee::Middleware::RequestValidation,
-          schema: schema, strict: true
+        schema: JSON.parse(File.read("docs/schema.json")),
+        strict: false
 
       helpers do
         def data

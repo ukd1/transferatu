@@ -9,14 +9,6 @@ module Transferatu
       Routes
     end
 
-    def encrypt(payload)
-      Fernet.generate(@user.token, JSON.generate(payload))
-    end
-
-    def decrypt(payload)
-      JSON.parse(Fernet.verifier(@user.token, payload).message)
-    end
-
     let(:request_data) {
       {
         from_url: 'postgres:///test1', from_type: 'pg_dump', from_name: 'ezra',
@@ -46,23 +38,16 @@ module Transferatu
         authorize @user.name, @password
       end
 
-      it "rejects requests with a mismatched request token" do
-        data = encrypt(request_data)
-        @user.update(token: SecureRandom.base64(32))
-        post "/groups/#{@group.name}/transfers", data
-        expect(last_response.status).to eq(400)
-      end
-
       it "GET /groups/:name/transfers" do
         get "/groups/#{@group.name}/transfers"
         expect(last_response.status).to eq(200)
-        expect(decrypt(last_response.body)).to eq([])
+        expect(JSON.parse(last_response.body)).to eq([])
       end
 
       it "POST /groups/:name/transfers" do
-        post "/groups/#{@group.name}/transfers", encrypt(request_data)
+        post "/groups/#{@group.name}/transfers", request_data
         expect(last_response.status).to eq(201)
-        response = decrypt(last_response.body)
+        response = JSON.parse(last_response.body)
         request_data.keys.each do |key|
           expect(response[key.to_s]).to eq request_data[key]
         end
@@ -78,7 +63,7 @@ module Transferatu
         xfer = create(:transfer, group: @group)
         get "/groups/#{@group.name}/transfers/#{xfer.uuid}"
         expect(last_response.status).to eq(200)
-        response = decrypt(last_response.body)
+        response = JSON.parse(last_response.body)
         %i(from_url from_name from_type to_url to_name to_type).each do |field|
           expect(response[field.to_s]).to eq(xfer.public_send(field))
         end
@@ -89,7 +74,7 @@ module Transferatu
         before_deletion = Time.now
         delete "/groups/#{@group.name}/transfers/#{xfer.uuid}"
         expect(last_response.status).to eq(200)
-        response = decrypt(last_response.body)
+        response = JSON.parse(last_response.body)
         %i(from_url from_name from_type to_url to_name to_type).each do |field|
           expect(response[field.to_s]).to eq(xfer.public_send(field))
         end

@@ -9,14 +9,6 @@ module Transferatu
       Routes
     end
 
-    def encrypt(payload)
-      Fernet.generate(@user.token, JSON.generate(payload))
-    end
-
-    def decrypt(payload)
-      JSON.parse(Fernet.verifier(@user.token, payload).message)
-    end
-
     before do
       @password = 'hunter2'
       @user = create(:user, password: @password)
@@ -49,23 +41,16 @@ module Transferatu
         authorize @user.name, @password
       end
 
-      it "rejects requests with a mismatched request token" do
-        data = encrypt(hello: 'world')
-        @user.update(token: SecureRandom.base64(32))
-        post "/groups/#{@group.name}/schedules", data
-        expect(last_response.status).to eq(400)
-      end
-
       it "GET /groups/:name/schedules" do
         get "/groups/#{@group.name}/schedules"
         expect(last_response.status).to eq(200)
-        expect(decrypt(last_response.body)).to eq([])
+        expect(JSON.parse(last_response.body)).to eq([])
       end
 
       it "POST /groups/:name/schedules" do
-        post "/groups/#{@group.name}/schedules", encrypt(request_data)
+        post "/groups/#{@group.name}/schedules", request_data
         expect(last_response.status).to eq(201)
-        response = decrypt(last_response.body)
+        response = JSON.parse(last_response.body)
         request_data.keys.reject { |k| k == :callback_url }.each do |key|
           expect(response[key.to_s]).to eq request_data[key]
         end
@@ -82,7 +67,7 @@ module Transferatu
         sched = create(:schedule, group: @group)
         get "/groups/#{@group.name}/schedules/#{sched.uuid}"
         expect(last_response.status).to eq(200)
-        response = decrypt(last_response.body)
+        response = JSON.parse(last_response.body)
         %i(name hour timezone).each do |field|
           expect(response[field.to_s]).to eq(sched.public_send(field))
         end
@@ -94,7 +79,7 @@ module Transferatu
         before_deletion = Time.now
         delete "/groups/#{@group.name}/schedules/#{sched.uuid}"
         expect(last_response.status).to eq(200)
-        response = decrypt(last_response.body)
+        response = JSON.parse(last_response.body)
         %i(name hour timezone).each do |field|
           expect(response[field.to_s]).to eq(sched.public_send(field))
         end

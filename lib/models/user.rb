@@ -8,7 +8,6 @@ module Transferatu
 
     one_to_many :groups
 
-    attr_secure :token, :secret => Config.at_rest_fernet_secret
     attr_secure :callback_password, :secret => Config.at_rest_fernet_secret
 
     def password

@@ -9,25 +9,15 @@ module Transferatu
       endpoint = resource(schedule.callback_url,
                           schedule.group.user.name,
                           schedule.group.user.callback_password)
-      encrypted_result = begin
-                           encrypted_result = endpoint.get
-                         rescue RestClient::Gone, RestClient::ResourceNotFound => e
-                           return nil
-                         end
-      result = decrypt(schedule.group.user.token, encrypted_result)
+      result = begin
+                 endpoint.get
+               rescue RestClient::Gone, RestClient::ResourceNotFound => e
+                 return nil
+               end
       JSON.parse(result)
     end
 
     private
-
-    def decrypt(key, message)
-      verifier = Fernet.verifier(key, message, ttl: 180)
-      if verifier.valid?
-        verifier.message
-      else
-        raise StandardError, "Could not decrypt callback response"
-      end
-    end
 
     def resource(callback_url, user, password)
       RestClient::Resource.new(callback_url,

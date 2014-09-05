@@ -9,14 +9,6 @@ module Transferatu
       Routes
     end
 
-    def encrypt(payload)
-      Fernet.generate(@user.token, JSON.generate(payload))
-    end
-
-    def decrypt(payload)
-      JSON.parse(Fernet.verifier(@user.token, payload).message)
-    end
-
     before do
       @password = 'hunter2'
       @user = create(:user, password: @password)
@@ -38,24 +30,17 @@ module Transferatu
         authorize @user.name, @password
       end
 
-      it "rejects requests with a mismatched request token" do
-        data = encrypt(name: 'group1', log_input_url: 'https://example.com/logs')
-        @user.update(token: SecureRandom.base64(32))
-        post "/groups", data
-        expect(last_response.status).to eq(400)
-      end
-
       it "GET /groups" do
         get "/groups"
         expect(last_response.status).to eq(200)
-        expect(decrypt(last_response.body)).to eq([])
+        expect(JSON.parse(last_response.body)).to eq([])
       end
 
       it "POST /groups" do
         data = { name: 'group1', log_input_url: 'https://example.com/logs' }
-        post "/groups", encrypt(data)
+        post "/groups", data
         expect(last_response.status).to eq(201)
-        response = decrypt(last_response.body)
+        response = JSON.parse(last_response.body)
         data.keys.each do |key|
           expect(response[key.to_s]).to eq data[key]
         end
@@ -71,7 +56,7 @@ module Transferatu
         group = create(:group, user: @user)
         get "/groups/#{group.name}"
         expect(last_response.status).to eq(200)
-        response = decrypt(last_response.body)
+        response = JSON.parse(last_response.body)
         %i(name log_input_url).each do |field|
           expect(response[field.to_s]).to eq(group.public_send(field))
         end
@@ -82,7 +67,7 @@ module Transferatu
         before_deletion = Time.now
         delete "/groups/#{group.name}"
         expect(last_response.status).to eq(200)
-        response = decrypt(last_response.body)
+        response = JSON.parse(last_response.body)
         %i(name log_input_url).each do |field|
           expect(response[field.to_s]).to eq(group.public_send(field))
         end

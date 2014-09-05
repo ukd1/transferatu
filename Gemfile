@@ -25,7 +25,6 @@ gem "bcrypt"
 gem "clockwork"
 gem "committee" # promoted from 'test' in template
 gem "fernet"
-gem "fernet-rack", "~> 0.8"
 gem "lpxc"
 gem "pgversion"
 gem "platform-api"

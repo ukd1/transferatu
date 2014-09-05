@@ -34,8 +34,7 @@ module Transferatu
       end
 
       it "returns the decrypted transfer data from the callback when successful" do
-        message = Fernet.generate(schedule.group.user.token, JSON.generate(xfer_info))
-        expect(resource).to receive(:get).and_return(message)
+        expect(resource).to receive(:get).and_return(JSON.generate(xfer_info))
         resolved = resolver.resolve(schedule)
         expect(resolved).to eq(xfer_info)
       end

@@ -34,7 +34,6 @@ FactoryGirl.define do
 
   factory :user, class: Transferatu::User do
     sequence(:name)          { |i| "user-#{i}" }
-    sequence(:token)         { |i| SecureRandom.base64(32) }
     sequence(:password_hash) { |i| "bogus-hash-#{i}" } # don't bother with bcrypt unless we need it
   end
 

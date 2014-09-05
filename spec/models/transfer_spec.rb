@@ -212,6 +212,12 @@ module Transferatu
         end
         t.mark_progress(12345678)
       end
+      it "updates updated_at even when no other progress has been made" do
+        t.mark_progress(12345678)
+        before_update = Time.now
+        t.mark_progress(12345678)
+        expect(t.updated_at).to be > before_update
+      end
     end
   end
 end

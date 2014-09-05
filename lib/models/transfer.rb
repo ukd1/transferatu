@@ -97,7 +97,13 @@ EOF
     # after a transfer finishes, since progress reporting is
     # asynchronous.
     def mark_progress(bytes)
-      self.update(processed_bytes: bytes)
+      # N.B.: we do *not* use update here to ensure that we trigger an
+      # +updated_at+ change even when we've made no other
+      # progress. This helps clarify the distinction between "still
+      # running but has not yet processed any more data" and "it's an
+      # ex-transfer, pining for the fjords".
+      self.processed_bytes = bytes
+      self.save
       self.log("progress: #{bytes}", transient: true)
     end
 

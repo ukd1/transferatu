@@ -87,10 +87,10 @@ EOF
     end
 
     # Mark transfer as deleted, and cancel it if it is in progress
-   def after_destroy
-     cancel if in_progress?
-     super
-   end
+    def after_destroy
+      cancel if in_progress?
+      super
+    end
 
     # Update the transfer to indicate the number of +bytes+ that have
     # been processed so far. Note that this may be called (shortly)

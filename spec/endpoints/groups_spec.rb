@@ -41,6 +41,16 @@ describe Transferatu::Endpoints::Groups do
       post "/groups", JSON.generate(name: @group.name, log_input_url: log_url)
       expect(last_response.status).to eq(409)
     end
+    it "undeletes existing groups when there is a conflict" do
+      @group.destroy
+      expect(@group.deleted?).to be true
+      other_log_url = 'https://token:foo@example.com/logs'
+      post "/groups", JSON.generate(name: @group.name, log_input_url: other_log_url)
+      expect(last_response.status).to eq(201)
+      @group.reload
+      expect(@group.deleted?).to be false
+      expect(@group.log_input_url).to eq(other_log_url)
+    end
   end
 
   describe "DELETE /groups/:name" do

@@ -33,7 +33,7 @@ module Clockwork
     #
     # N.B.: If this becomes too heavyweight, we may want to pull it
     # out into its own Procfile entry instead of using Clockwork
-    schedule_time = Time.now
+    scheduled_time = Time.now
     resolver = Transferatu::ScheduleResolver.new
     processor = Transferatu::ScheduleProcessor.new(resolver)
     manager =  Transferatu::ScheduleManager.new(processor)

@@ -37,7 +37,7 @@ module Transferatu
       end
 
       it "POST /groups" do
-        data = { name: 'group1', log_input_url: 'https://example.com/logs' }
+        data = { name: 'group1', log_input_url: 'https://example.com/logs', backup_limit: 13 }
         post "/groups", data
         expect(last_response.status).to eq(201)
         response = JSON.parse(last_response.body)
@@ -57,7 +57,7 @@ module Transferatu
         get "/groups/#{group.name}"
         expect(last_response.status).to eq(200)
         response = JSON.parse(last_response.body)
-        %i(name log_input_url).each do |field|
+        %i(name log_input_url backup_limit).each do |field|
           expect(response[field.to_s]).to eq(group.public_send(field))
         end
       end
@@ -68,7 +68,7 @@ module Transferatu
         delete "/groups/#{group.name}"
         expect(last_response.status).to eq(200)
         response = JSON.parse(last_response.body)
-        %i(name log_input_url).each do |field|
+        %i(name log_input_url backup_limit).each do |field|
           expect(response[field.to_s]).to eq(group.public_send(field))
         end
         group.reload

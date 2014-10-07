@@ -7,13 +7,17 @@ module Transferatu
       let(:another_user) { create(:user) }
       let(:name)         { 'default' }
       let(:log_url)      { 'https://token:t.8cda5772-ba01-49ec-9431-4391a067a0d3@example.com/logs' }
+      let(:backup_limit) { 13 }
 
       it "creates a new group" do
-        creator = Mediators::Groups::Creator.new(name: name, user: user, log_input_url: log_url)
+        creator = Mediators::Groups::Creator.new(name: name, user: user,
+                                                 log_input_url: log_url,
+                                                 backup_limit: backup_limit)
         g = creator.call
         expect(g).to_not be_nil
         expect(g).to be_instance_of(Transferatu::Group)
         expect(g.log_input_url).to eq(log_url)
+        expect(g.backup_limit).to eq(backup_limit)
       end
 
       it "forbids two groups with the same name for the same user" do
@@ -36,12 +40,16 @@ module Transferatu
         old_g = create(:group, user: user, log_input_url: log_url)
         old_g.delete
         new_log_url = "https://token:passw0rd@example.com/logs"
-        creator = Mediators::Groups::Creator.new(name: name, user: user, log_input_url: new_log_url)
+        new_backup_limit = 99
+        creator = Mediators::Groups::Creator.new(name: name, user: user,
+                                                 log_input_url: new_log_url,
+                                                 backup_limit: new_backup_limit)
         g = creator.call
         expect(g).to_not be_nil
         expect(g).to be_instance_of(Transferatu::Group)
         expect(g.name).to eq(name)
         expect(g.log_input_url).to eq(new_log_url)
+        expect(g.backup_limit).to eq(new_backup_limit)
       end
 
       it "does not undelete a group of the same name belonging to a different user" do

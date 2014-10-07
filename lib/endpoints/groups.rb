@@ -22,6 +22,7 @@ module Transferatu::Endpoints
                   user: current_user,
                   name: data["name"],
                   log_input_url: data["log_input_url"],
+                  backup_limit: data["backup_limit"]
                 )
           respond serialize(group), status: 201
         rescue Sequel::UniqueConstraintViolation => e

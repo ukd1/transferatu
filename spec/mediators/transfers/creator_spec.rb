@@ -112,6 +112,29 @@ module Transferatu
                                                     options: opts)
         expect { creator.call }.to raise_error(Mediators::Transfers::InvalidTransferError)
       end
+
+      it "rejects a new backup when over the backup_limit" do
+        group.update(backup_limit: 0)
+        creator = Mediators::Transfers::Creator.new(group: group,
+                                                    from_type: 'pg_dump',
+                                                    from_url: from_url,
+                                                    to_type: 'gof3r',
+                                                    to_url: 'auto',
+                                                    options: opts)
+        expect { creator.call }.to raise_error(Mediators::Transfers::InvalidTransferError)
+      end
+
+      it "ignores the backup limit when referencing a schedule" do
+        creator = Mediators::Transfers::Creator.new(schedule: schedule,
+                                                    group: group,
+                                                    from_type: 'pg_dump',
+                                                    from_url: from_url,
+                                                    to_type: 'gof3r',
+                                                    to_url: 'auto',
+                                                    options: opts)
+        t = creator.call
+        expect(t).to be_instance_of(Transferatu::Transfer)
+      end
     end
   end
 end

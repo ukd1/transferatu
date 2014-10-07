@@ -9,6 +9,10 @@ module Transferatu
 
     attr_secure :log_input_url, :secret => Config.at_rest_fernet_secret
 
+    def active_backups
+      self.transfers_dataset.where(to_type: 'gof3r', deleted_at: nil)
+    end
+
     def log(message)
       # N.B.: we leak two threads per logplex endpoint here due to
       # the structure of lpxc, but given the low number of endpoints,

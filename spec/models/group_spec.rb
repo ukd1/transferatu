@@ -24,4 +24,19 @@ describe Transferatu::Group do
       end
     end
   end
+
+  describe "#active_backups" do
+    let(:group) { create(:group) }
+
+    it "tracks active backups" do
+      create(:transfer, group: group)
+      expect(group.active_backups.count).to eq(1)
+    end
+
+    it "excludes deleted backups" do
+      xfer = create(:transfer, group: group)
+      xfer.destroy
+      expect(group.active_backups.count).to eq(0)
+    end
+  end
 end

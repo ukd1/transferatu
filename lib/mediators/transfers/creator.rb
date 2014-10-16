@@ -30,7 +30,7 @@ module Transferatu
           end
           if @to_url == 'auto'
             bucket = Config.s3_bucket_name
-            key = "#{URI.encode(@group.name)}/#{Time.new.utc.iso8601}"
+            key = "#{URI.encode(@group.name)}/#{Time.new.utc.iso8601}/#{SecureRandom.uuid}"
             @to_url = "https://#{bucket}.s3.amazonaws.com/#{key}"
           else
             raise InvalidTransferError, "to_url must be 'auto' for transfers targeting gof3r"

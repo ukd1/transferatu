@@ -28,6 +28,8 @@ module Transferatu
                options:   data["options"] || {}
               )
         schedule.mark_executed
+        Transferatu::Mediators::Schedules::Expirer
+          .run(schedule, Time.now)
         schedule.group.log "Created scheduled transfer for #{schedule.name}"
       end
     rescue StandardError => e

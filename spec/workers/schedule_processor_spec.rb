@@ -34,6 +34,15 @@ module Transferatu
           processor.process(schedule)
         end
 
+        it "runs the expirer" do
+          before = Time.now
+          expect(Transferatu::Mediators::Schedules::Expirer).to receive(:run) do |sched, time|
+            expect(sched).to be schedule
+            expect(time).to be > before
+          end
+          processor.process(schedule)
+        end
+
         it "flags schedule as executed" do
           allow(Transferatu::Mediators::Transfers::Creator).to receive(:run)
           before = Time.now
@@ -44,6 +53,7 @@ module Transferatu
         it "does not flag the schedule as executed if its transfer fails to be created" do
           expect(Transferatu::Mediators::Transfers::Creator).to receive(:run)
             .and_raise(StandardError)
+          expect(Transferatu::Mediators::Schedules::Expirer).to_not receive(:run)
           processor.process(schedule)
           expect(schedule.last_scheduled_at).to be_nil
         end
@@ -52,6 +62,7 @@ module Transferatu
       it "logs the failure to the group for schedules that fail to resolve" do
         expect(resolver).to receive(:resolve).with(schedule).and_raise StandardError
         expect(Transferatu::Mediators::Transfers::Creator).to_not receive(:run)
+        expect(Transferatu::Mediators::Schedules::Expirer).to_not receive(:run)
         expect(schedule.group).to receive(:log).with /could not create.*#{schedule.name}/i
         processor.process(schedule)
       end

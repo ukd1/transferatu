@@ -1,6 +1,12 @@
 module Transferatu
   class TransferWorker
+
+    def initialize(status)
+      @status = status
+    end
+
     def perform(transfer)
+      @status.update(transfer: transfer)
       runner = RunnerFactory.runner_for(transfer)
 
       progress_thr = Thread.new do
@@ -12,6 +18,8 @@ module Transferatu
             break
           end
           transfer.mark_progress(runner.processed_bytes)
+          # Nothing to change, but we want to update updated_at
+          @status.save
           sleep 5
         end
         transfer.mark_progress(runner.processed_bytes)
@@ -32,6 +40,17 @@ module Transferatu
       end
 
       progress_thr.join
+    ensure
+      @status.update(transfer: nil)
+    end
+
+    def wait
+      # randomize sleep to avoid lock-stepping workers into a single
+      # sequence
+      sleep 1 + 4 * rand
+      # See above: we want to make sure we show progress when there's
+      # nothing to do.
+      @status.save
     end
   end
 end

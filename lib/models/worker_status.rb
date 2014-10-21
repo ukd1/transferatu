@@ -2,6 +2,8 @@ module Transferatu
   class WorkerStatus < Sequel::Model
     plugin :timestamps
 
+    many_to_one :transfer
+
     def before_create
       if dyno_name.nil?
         self.dyno_name = ENV['DYNO']

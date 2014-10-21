@@ -2,7 +2,8 @@ module Transferatu
   module TransferSupervisor
     def self.run
       started_at = Time.now
-      worker = TransferWorker.new
+      status = Transferatu::WorkerStatus.create
+      worker = TransferWorker.new(status)
       loop do
         if AppStatus.updated_at > started_at
           log.info "Application has been updated; exiting"
@@ -21,9 +22,7 @@ module Transferatu
       if transfer
         worker.perform(transfer)
       else
-        # randomize sleep to avoid lock-stepping workers into a single
-        # sequence
-        sleep 1 + 4 * rand
+        worker.wait
       end
     end
   end

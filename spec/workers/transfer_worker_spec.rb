@@ -63,7 +63,10 @@ module Transferatu
         xfer = transfer
         xfer.update(started_at: Time.now)
 
-        expect(RunnerFactory).to receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
+        expect(RunnerFactory).to receive(:runner_for) do |t|
+          expect(t.uuid).to eq xfer.uuid
+          slow_runner
+        end
         xfer_th = Thread.new { worker.perform(xfer) }
         xfer.cancel
         xfer_th.join
@@ -80,7 +83,10 @@ module Transferatu
         xfer = transfer
         xfer.update(started_at: Time.now)
 
-        expect(RunnerFactory).to receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
+        expect(RunnerFactory).to receive(:runner_for) do |t|
+          expect(t.uuid).to eq xfer.uuid
+          slow_runner
+        end
         xfer_th = Thread.new { worker.perform(xfer) }
         sleep SLOW_RUNTIME / 4
         xfer.reload
@@ -99,7 +105,10 @@ module Transferatu
         xfer = transfer
         xfer.update(started_at: Time.now)
 
-        expect(RunnerFactory).to receive(:runner_for) { |t| t.uuid == xfer.uuid }.and_return(slow_runner)
+        expect(RunnerFactory).to receive(:runner_for) do |t|
+          expect(t.uuid).to eq xfer.uuid
+          slow_runner
+        end
         xfer_th = Thread.new { worker.perform(xfer) }
         sleep SLOW_RUNTIME / 4
         xfer_th.join

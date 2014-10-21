@@ -46,4 +46,15 @@ FactoryGirl.define do
     sequence(:dows)         { |i| (0..6).reject { |j| i % (j + 1) < 1 }.each_slice(4).first }
     timezone
   end
+
+  factory :worker_status, class: Transferatu::WorkerStatus do
+    # N.B.: We have to assign a UUID here, because this is taken from
+    # the heroku dyno hostname; we do *not* autogenerate uuids for
+    # WorkerStatus in the database. In contrast to the tortuous
+    # mangling above to avoid randomness for days of week, we leave
+    # the uuid random because we treat it as a black box anyway.
+    uuid      { SecureRandom.uuid }
+    host      { |i| 4.times.map { |i| i % 256 }.join('.') }
+    dyno_name { |i| "run.#{i}" }
+  end
 end

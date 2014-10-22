@@ -11,7 +11,7 @@ module Transferatu
 
     let(:manager)       { WorkerManager.new }
 
-    describe "#top_off_workers" do
+    describe "#check_workers" do
       before do
         allow(Config).to receive_messages(heroku_app_name: app_name,
                     heroku_api_token: api_token,
@@ -23,9 +23,7 @@ module Transferatu
       def make_dynos(workers:, others: 0)
         template = {
           "attach_url" => "rendezvous://rendezvous.runtime.heroku.com:5000/1234",
-          "command" => "<replace-me>",
           "created_at" => "2012-01-01T12:00:00Z",
-          "id" => "01234567-89ab-cdef-0123-456789abcdef",
           "name" => "run.1",
           "release" => { "id" => "01234567-89ab-cdef-0123-456789abcdef", "version" => 11 },
           "size" => "1X",
@@ -35,11 +33,15 @@ module Transferatu
         }
         (workers + others).times.map do |i|
           dyno = template.clone
-          dyno["command"] = if i < workers
-                              WorkerManager::WORK_COMMAND
-                            else
-                              "sleep #{i}"
-                            end
+          dyno["id"] = SecureRandom.uuid
+          if i < workers
+            dyno["command"] = WorkerManager::WORK_COMMAND
+            dyno["name"] = "run.#{i}"
+          else
+            dyno["command"] = "sleep #{i}"
+            dyno["name"] = "worker.#{i}"
+          end
+          create(:worker_status, dyno_name: dyno["name"], uuid: dyno["id"])
           dyno
         end
       end
@@ -54,7 +56,7 @@ module Transferatu
             .and_return(make_dynos(workers: 3))
           expect(dyno_api).to receive(:create).twice
             .with(app_name, command: WorkerManager::WORK_COMMAND, size: worker_size)
-          manager.top_off_workers
+          manager.check_workers
         end
 
         it "ignores other processes when calculating needed worker counts" do
@@ -62,21 +64,66 @@ module Transferatu
             .and_return(make_dynos(workers: 3, others: 5))
           expect(dyno_api).to receive(:create).twice
             .with(app_name, command: WorkerManager::WORK_COMMAND, size: worker_size)
-          manager.top_off_workers
+          manager.check_workers
         end
 
         it "does not add workers when the appropriate number are running" do
           expect(dyno_api).to receive(:list).with(app_name)
             .and_return(make_dynos(workers: 5))
           expect(dyno_api).not_to receive(:create)
-          manager.top_off_workers
+          manager.check_workers
         end
 
         it "does not add workers when too many are running" do
           expect(dyno_api).to receive(:list).with(app_name)
             .and_return(make_dynos(workers: 7))
           expect(dyno_api).not_to receive(:create)
-          manager.top_off_workers
+          manager.check_workers
+        end
+
+        it "replaces workers that have never made progress and are older than five minutes" do
+          dynos = make_dynos(workers: 5)
+          expect(dyno_api).to receive(:list).with(app_name)
+            .and_return(dynos)
+          bad_dyno = dynos.first
+          expect(dyno_api).to receive(:restart).with(app_name, bad_dyno["id"])
+          expect(dyno_api).to receive(:create)
+            .with(app_name, command: WorkerManager::WORK_COMMAND, size: worker_size)
+
+          WorkerStatus.where(uuid: bad_dyno["id"]).update(created_at: Time.now - 4.hours)
+
+          manager.check_workers
+        end
+
+        it "replaces workers that have not made progress in more than five minutes" do
+          dynos = make_dynos(workers: 5)
+          expect(dyno_api).to receive(:list).with(app_name).and_return(dynos)
+          bad_dyno = dynos.first
+          expect(dyno_api).to receive(:restart).with(app_name, bad_dyno["id"])
+          expect(dyno_api).to receive(:create)
+            .with(app_name, command: WorkerManager::WORK_COMMAND, size: worker_size)
+
+          WorkerStatus.where(uuid: bad_dyno["id"])
+            .update(created_at: Time.now - 4.hours,
+                    updated_at: Time.now - 4.hours)
+
+          manager.check_workers
+        end
+
+        it "replaces worker running a transfer that has not made progress in more than five minutes" do
+          dynos = make_dynos(workers: 5)
+          expect(dyno_api).to receive(:list).with(app_name).and_return(dynos)
+          bad_dyno = dynos.first
+          expect(dyno_api).to receive(:restart).with(app_name, bad_dyno["id"])
+          expect(dyno_api).to receive(:create)
+            .with(app_name, command: WorkerManager::WORK_COMMAND, size: worker_size)
+
+          status = WorkerStatus[bad_dyno["id"]]
+          bad_transfer = create(:transfer)
+          status.update(transfer: bad_transfer)
+          Transfer.where(uuid: bad_transfer.uuid).update(updated_at: Time.now - 4.hours)
+
+          manager.check_workers
         end
       end
 
@@ -88,7 +135,7 @@ module Transferatu
         it "does not add workers" do
           expect(dyno_api).not_to receive(:list)
           expect(dyno_api).not_to receive(:create)
-          manager.top_off_workers
+          manager.check_workers
         end
       end
     end

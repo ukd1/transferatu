@@ -16,7 +16,7 @@ module Clockwork
   logger = LogStub.new
 
   every(1.minute, "top-off-workers") do
-    Transferatu::WorkerManager.new.top_off_workers
+    Transferatu::WorkerManager.new.check_workers
   end
 
   every(1.minute, "log-metrics") do

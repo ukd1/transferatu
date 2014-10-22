@@ -7,12 +7,30 @@ module Transferatu
       @heroku_app_name = Config.heroku_app_name
     end
 
-    def top_off_workers
-      unless AppStatus.quiesced?
-        needed_worker_count = Config.worker_count.to_i - running_worker_count
-        needed_worker_count.times do |i|
-          run_worker(Config.worker_size)
-        end
+    def check_workers
+      return if AppStatus.quiesced?
+      existing_workers = running_workers
+      existing_statuses = WorkerStatus.check(*existing_workers.map { |w| w['name'] }).all
+
+      # for each worker, make sure that it's "making progress"; ensure:
+      #  - the worker was updated or created recently
+      #  - if the worker has a transfer, that transfer has been updated recently
+      failed = existing_statuses.select do |status|
+        expect_progress_since = Time.now - 5.minutes
+        worker_last_progress_at = status.updated_at || status.created_at
+        transfer = status.transfer
+        (worker_last_progress_at < expect_progress_since) ||
+          (transfer && transfer.updated_at < expect_progress_since)
+      end
+
+      failed.each do |status|
+        kill_worker(status.uuid)
+      end
+
+      needed_worker_count = Config.worker_count.to_i - (existing_workers.count - failed.count)
+
+      needed_worker_count.times do |i|
+        run_worker(Config.worker_size)
       end
     end
 
@@ -26,10 +44,13 @@ module Transferatu
       )
     end
 
-    def running_worker_count
+    def kill_worker(uuid)
+      @heroku.dyno.restart(@heroku_app_name, uuid)
+    end
+
+    def running_workers
       @heroku.dyno.list(@heroku_app_name)
         .select { |process| process['command'] == WORK_COMMAND }
-        .count
     end
   end
 end

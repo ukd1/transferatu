@@ -1,6 +1,33 @@
 require "spec_helper"
 
 describe Transferatu::WorkerStatus do
+  describe ".check" do
+    let(:included1) { 'run.1' }
+    let(:included2) { 'run.2' }
+    let(:excluded1) { 'run.3' }
+    let(:excluded2) { 'run.4' }
+
+    it "lists the latest status for each dyno name" do
+      d1 = create(:worker_status, dyno_name: 'run.1', created_at: Time.now - 1.hour)
+      old_d1 = create(:worker_status, dyno_name: 'run.1', created_at: Time.now - 25.hours)
+      d2 = create(:worker_status, dyno_name: 'run.2', created_at: Time.now - 1.hour)
+      old_d2 = create(:worker_status, dyno_name: 'run.2', created_at: Time.now - 49.hours)
+
+      statuses = Transferatu::WorkerStatus.check(included1, included2).all
+
+      expect(statuses).to include(d1)
+      expect(statuses).to include(d2)
+    end
+
+    it "ignores unknown dyno names" do
+      create(:worker_status, dyno_name: excluded1)
+      create(:worker_status, dyno_name: excluded2)
+
+      statuses = Transferatu::WorkerStatus.check(included1, included2).all
+      expect(statuses).to be_empty
+    end
+  end
+
   describe "#dyno_name" do
     it "is not overridden if set" do
       name = 'elvis'

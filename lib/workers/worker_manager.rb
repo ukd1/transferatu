@@ -1,5 +1,7 @@
 module Transferatu
   class WorkerManager
+    include Pliny::Log
+
     WORK_COMMAND = "bundle exec rake transfers:run"
 
     def initialize
@@ -23,13 +25,19 @@ module Transferatu
           (transfer && transfer.updated_at < expect_progress_since)
       end
 
+      log "found #{failed.count} failed workers"
+
       failed.each do |status|
+        log "killing worker dyno #{status.dyno_name} via uuid #{status.uuid}"
         kill_worker(status.uuid)
       end
 
       needed_worker_count = Config.worker_count.to_i - (existing_workers.count - failed.count)
 
+      log "need #{needed_worker_count} more workers"
+
       needed_worker_count.times do |i|
+        log "starting #{Config.worker_size} worker"
         run_worker(Config.worker_size)
       end
     end

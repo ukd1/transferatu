@@ -124,6 +124,24 @@ module Transferatu
 
           manager.check_workers
         end
+
+        it "flags transfers of killed workers as failed" do
+          dynos = make_dynos(workers: 1)
+          expect(dyno_api).to receive(:list).with(app_name).and_return(dynos)
+          bad_dyno = dynos.first
+          allow(dyno_api).to receive(:restart)
+          allow(dyno_api).to receive(:create)
+
+          bad_transfer = create(:transfer)
+          WorkerStatus.where(dyno_name: bad_dyno["name"]).update(transfer_id: bad_transfer.uuid)
+          Transfer.where(uuid: bad_transfer.uuid).update(updated_at: Time.now - 4.hours)
+
+          manager.check_workers
+
+          bad_transfer.reload
+          expect(bad_transfer.failed?).to be true
+          expect(bad_transfer.logs.find { |l| l.message =~ /aborting stuck transfer/ }).not_to be_nil
+        end
       end
 
       context "when quiesced" do

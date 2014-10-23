@@ -31,6 +31,10 @@ module Transferatu
         Pliny.log(method: 'WorkerManager#check_workers', step: 'killing-failed',
                   name: status.dyno_name,
                   uuid: status.uuid) do
+          if status.transfer
+            status.transfer.log "aborting stuck transfer"
+            status.transfer.fail
+          end
           kill_worker(status.dyno_name)
         end
       end

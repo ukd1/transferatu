@@ -31,7 +31,7 @@ module Transferatu
         Pliny.log(method: 'WorkerManager#check_workers', step: 'killing-failed',
                   name: status.dyno_name,
                   uuid: status.uuid) do
-          kill_worker(status.uuid)
+          kill_worker(status.dyno_name)
         end
       end
 

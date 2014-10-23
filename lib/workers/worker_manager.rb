@@ -25,20 +25,24 @@ module Transferatu
           (transfer && transfer.updated_at < expect_progress_since)
       end
 
-      log "found #{failed.count} failed workers"
+      Pliny.log(method: 'WorkerManager#check_workers', failed_workers: failed.count)
 
       failed.each do |status|
-        log "killing worker dyno #{status.dyno_name} via uuid #{status.uuid}"
-        kill_worker(status.uuid)
+        Pliny.log(method: 'WorkerManager#check_workers', step: 'killing-failed',
+                  name: status.dyno_name,
+                  uuid: status.uuid) do
+          kill_worker(status.uuid)
+        end
       end
 
       needed_worker_count = Config.worker_count.to_i - (existing_workers.count - failed.count)
 
-      log "need #{needed_worker_count} more workers"
+      Pliny.log(method: 'WorkerManager#check_workers', needed_workers: needed_worker_count)
 
       needed_worker_count.times do |i|
-        log "starting #{Config.worker_size} worker"
-        run_worker(Config.worker_size)
+        Pliny.log(method: 'WorkerManager#check_workers', step: 'starting-new') do
+          run_worker(Config.worker_size)
+        end
       end
     end
 

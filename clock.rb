@@ -6,24 +6,19 @@ require "clockwork"
 
 $stdout.sync = true
 
-class LogStub
-  # Pliny does not make it easy to log without actually including the
-  # module right now, so we have this as a workaround
-  include Pliny::Log
-end
-
 module Clockwork
-  logger = LogStub.new
 
   every(1.minute, "top-off-workers") do
-    Transferatu::WorkerManager.new.check_workers
+    Pliny.log(task: 'top-off-workers') do
+      Transferatu::WorkerManager.new.check_workers
+    end
   end
 
   every(1.minute, "log-metrics") do
     pending_xfer_count = Transferatu::Transfer.pending.count
     active_xfer_count = Transferatu::Transfer.in_progress.count
-    logger.log(:"sample#pending_xfer_count" => pending_xfer_count,
-               :"sample#active_xfer_count" => active_xfer_count)
+    Pliny.log(:"sample#pending_xfer_count" => pending_xfer_count,
+              :"sample#active_xfer_count" => active_xfer_count)
   end
 
   every(15.minutes, "run-scheduled-transfers") do
@@ -37,9 +32,9 @@ module Clockwork
     resolver = Transferatu::ScheduleResolver.new
     processor = Transferatu::ScheduleProcessor.new(resolver)
     manager =  Transferatu::ScheduleManager.new(processor)
-    logger.log "Starting scheduled transfers for #{scheduled_time}"
-    manager.run_schedules(scheduled_time)
-    logger.log "Finished scheduled transfers for #{scheduled_time}"
+    Pliny.log(task: 'run-scheduled-transfers', scheduled_for: scheduled_time) do
+      manager.run_schedules(scheduled_time)
+    end
   end
 
   every(4.hours, "mark-restart") do

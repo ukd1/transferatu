@@ -6,7 +6,7 @@ module Transferatu
       worker = TransferWorker.new(status)
       loop do
         if AppStatus.updated_at > started_at
-          log.info "Application has been updated; exiting"
+          Pliny.log(method: 'TransferSupervisor.run', step: 'stale-worker-exiting')
           break
         end
         if AppStatus.quiesced?

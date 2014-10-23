@@ -10,6 +10,9 @@ module Transferatu
           break
         end
         if AppStatus.quiesced?
+          # update status even when quiesced so we don't go around
+          # killing innocent workers
+          status.save
           sleep 5
         else
           run_next(worker)

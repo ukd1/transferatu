@@ -5,7 +5,7 @@ module Transferatu
     describe ".call" do
       let(:schedule)    { create(:schedule) }
       let(:expire_time) { Time.new(2001, 1, 1, 12, 0, 0, 0) }
-      let(:expirer)     { Mediators::Schedules::Expirer.new(schedule, expire_time) }
+      let(:expirer)     { Mediators::Schedules::Expirer.new(schedule: schedule, expire_at: expire_time) }
 
       it "ignores everything newer than one week" do
         xfers = []

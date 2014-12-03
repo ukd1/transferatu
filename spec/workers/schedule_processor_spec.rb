@@ -36,9 +36,9 @@ module Transferatu
 
         it "runs the expirer" do
           before = Time.now
-          expect(Transferatu::Mediators::Schedules::Expirer).to receive(:run) do |sched, time|
-            expect(sched).to be schedule
-            expect(time).to be > before
+          expect(Transferatu::Mediators::Schedules::Expirer).to receive(:run) do |opts|
+            expect(opts[:schedule]).to be schedule
+            expect(opts[:expire_at]).to be > before
           end
           processor.process(schedule)
         end

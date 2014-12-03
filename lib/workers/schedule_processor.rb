@@ -29,7 +29,10 @@ module Transferatu
               )
         schedule.mark_executed
         Transferatu::Mediators::Schedules::Expirer
-          .run(schedule, Time.now)
+          .run(
+               schedule: schedule,
+               expire_at: Time.now
+              )
         schedule.group.log "Created scheduled transfer for #{schedule.name}"
       end
     rescue StandardError => e

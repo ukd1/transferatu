@@ -28,7 +28,7 @@ module Transferatu::Middleware
       # TODO: also ensure transfers do not stay in 'pending' for too
       # long, although that can also depend on worker availability
       Transferatu::Transfer.in_progress.all? do |xfer|
-        Time.now - xfer.updated_at < 5.minutes
+        (xfer.updated_at || xfer.started_at) > Time.now - 5.minutes
       end
     end
   end

@@ -21,6 +21,7 @@ gem "sucker_punch"
 
 # additional gems (not from template)
 gem "attr_secure", git: "https://github.com/deafbybeheading/attr_secure", branch: 'fernet-2.0-support-empty-values'
+gem "aws-sdk-core"
 gem "bcrypt"
 gem "clockwork"
 gem "committee" # promoted from 'test' in template

@@ -17,6 +17,8 @@ module Config
   mandatory \
     :database_url,
     :s3_bucket_name,
+    :aws_access_key_id,
+    :aws_secret_access_key,
     :heroku_api_token,
     :heroku_app_name,
     :at_rest_fernet_secret

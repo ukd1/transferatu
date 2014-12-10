@@ -15,8 +15,14 @@ GEM
       minitest (~> 5.1)
       thread_safe (~> 0.1)
       tzinfo (~> 1.1)
+    aws-sdk-core (2.0.13)
+      builder (~> 3.0)
+      jmespath (~> 1.0)
+      multi_json (~> 1.0)
+      multi_xml (~> 0.5)
     backports (3.6.0)
     bcrypt (3.1.7)
+    builder (3.2.2)
     byebug (2.7.0)
       columnize (~> 0.3)
       debugger-linecache (~> 1.2)
@@ -52,6 +58,8 @@ GEM
       netrc
     http_accept (0.1.5)
     i18n (0.6.11)
+    jmespath (1.0.2)
+      multi_json (~> 1.0)
     json (1.8.1)
     json_schema (0.2.0)
     lpxc (0.0.8)
@@ -60,6 +68,7 @@ GEM
     minitest (5.4.1)
     moneta (0.8.0)
     multi_json (1.10.1)
+    multi_xml (0.5.5)
     netrc (0.7.7)
     oj (2.9.0)
     pg (0.17.1)
@@ -153,6 +162,7 @@ PLATFORMS
 
 DEPENDENCIES
   attr_secure!
+  aws-sdk-core
   bcrypt
   clockwork
   committee

@@ -83,6 +83,27 @@ module Transferatu
         expect(xfer.deleted_at).to be > before_deletion
         expect(xfer.deleted_at).to be < Time.now
       end
+
+      it "POST /groups/:name/transfers/:id/actions/public-url" do
+        pub_url = "https://example.com/transfers/123?signature=trustme"
+        ttl = 5.minutes
+        xfer = create(:transfer, group: @group)
+        xfer.complete
+        allow(Transferatu::Mediators::Transfers::PublicUrlor)
+          .to receive(:run).and_return(pub_url)
+
+        before = Time.now
+        post "/groups/#{@group.name}/transfers/#{xfer.uuid}/actions/public-url", { ttl: ttl }
+        after = Time.now
+
+        expect(last_response.status).to eq(201)
+        response = JSON.parse(last_response.body)
+        expires_at = Time.parse(response["expires_at"])
+        expect(expires_at).to be_within(1.second).of(before + ttl)
+        expect(expires_at).to be <= (after + ttl)
+        expect(response["url"]).to eq(pub_url)
+      end
+
     end
   end
 end

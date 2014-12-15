@@ -76,24 +76,22 @@ module Transferatu::Endpoints
         header "Content-Type", "application/json"
       end
       it "creates a transfer" do
-        post "/groups/#{@group.name}/transfers", JSON.generate(
-                                                 from_type: 'pg_dump',
-                                                 from_url:  'postgres:///test1',
-                                                 to_type:   'pg_restore',
-                                                 to_url:    'postgres:///test2'
-                                               )
+        post "/groups/#{@group.name}/transfers",
+          JSON.generate(from_type: 'pg_dump',
+                        from_url:  'postgres:///test1',
+                        to_type:   'pg_restore',
+                        to_url:    'postgres:///test2')
         expect(last_response.status).to eq(201)
       end
 
       it "accepts optional from_name and to_name values" do
-        post "/groups/#{@group.name}/transfers", JSON.generate(
-                                                 from_type: 'pg_dump',
-                                                 from_url:  'postgres:///test1',
-                                                 from_name: 'arthur',
-                                                 to_type:   'pg_restore',
-                                                 to_url:    'postgres:///test2',
-                                                 to_name:   'esther'
-                                               )
+        post "/groups/#{@group.name}/transfers",
+          JSON.generate(from_type: 'pg_dump',
+                        from_url:  'postgres:///test1',
+                        from_name: 'arthur',
+                        to_type:   'pg_restore',
+                        to_url:    'postgres:///test2',
+                        to_name:   'esther')
         expect(last_response.status).to eq(201)
       end
     end
@@ -109,6 +107,25 @@ module Transferatu::Endpoints
       it "deletes a transfer by its numeric id" do
         delete "/groups/#{@group.name}/transfers/#{xfer.transfer_num}"
         expect(last_response.status).to eq(200)
+      end
+    end
+
+    describe "POST /groups/:name/transfers/:id/actions/public-url" do
+      let(:xfer)    { create(:transfer, group: @group) }
+      let(:ttl)     { 5.minutes }
+      let(:pub_url) { "https://example.com/my-transfer?secret=foo" }
+
+      before do
+        xfer.complete
+        allow(Transferatu::Mediators::Transfers::PublicUrlor)
+          .to receive(:run).with(ttl: ttl, transfer: xfer).and_return(pub_url)
+        header "Content-Type", "application/json"
+      end
+
+      it "creates a public url for a to-gof3r transfer" do
+        post "/groups/#{@group.name}/transfers/#{xfer.uuid}/actions/public-url",
+          JSON.generate(ttl: ttl)
+        expect(last_response.status).to eq(201)
       end
     end
   end

@@ -29,9 +29,11 @@ module Transferatu::Endpoints
                    group.transfers_dataset.where(uuid: id)
                  end.first
           if xfer.nil?
-            raise Pliny::Errors::NotFound, "transfer #{id} for group #{group.name} does not exist"
+            raise Pliny::Errors::NotFound,
+              "transfer #{id} for group #{group.name} does not exist"
           elsif xfer.deleted?
-            raise Pliny::Errors::Gone, "transfer #{id} for group #{group.name} destroyed at #{xfer.deleted_at}"
+            raise Pliny::Errors::Gone,
+              "transfer #{id} for group #{group.name} destroyed at #{xfer.deleted_at}"
           else
             xfer
           end
@@ -72,6 +74,23 @@ module Transferatu::Endpoints
         transfer = find_transfer(@group, params[:id])
         transfer.destroy
         respond serialize(transfer)
+      end
+
+      post "/:id/actions/public-url" do
+        transfer = find_transfer(@group, params[:id])
+        ttl = if data.has_key? 'ttl'
+                data["ttl"].to_i
+              else
+                10.minutes
+              end
+        # Technically we'll have a few seconds longer, but the
+        # underlying API takes a TTL too, and not a duration, so
+        # there's no easy way to get around that.
+        expires_at = Time.now + ttl
+        url = Transferatu::Mediators::Transfers::PublicUrlor
+          .run(transfer: transfer, ttl: ttl)
+        # TODO: figure out how this fits in with proper serialization
+        respond({ expires_at: expires_at, url: url }, status: 201)
       end
     end
   end

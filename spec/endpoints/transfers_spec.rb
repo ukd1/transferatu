@@ -128,5 +128,30 @@ module Transferatu::Endpoints
         expect(last_response.status).to eq(201)
       end
     end
+
+    describe "POST /groups/:name/transfers/actions/cancel" do
+      let(:xfer)    { create(:transfer, group: @group) }
+
+      before do
+        header "Content-Type", "application/json"
+      end
+
+      it "cancels a pending transfer" do
+        post "/groups/#{@group.name}/transfers/#{xfer.uuid}/actions/cancel"
+        expect(last_response.status).to eq(201)
+      end
+
+      it "cancels an in-progress transfer" do
+        xfer.update(started_at: Time.now)
+        post "/groups/#{@group.name}/transfers/#{xfer.uuid}/actions/cancel"
+        expect(last_response.status).to eq(201)
+      end
+
+      it "refuses to cancel a completed transfer" do
+        xfer.complete
+        post "/groups/#{@group.name}/transfers/#{xfer.uuid}/actions/cancel"
+        expect(last_response.status).to eq(400)
+      end
+    end
   end
 end

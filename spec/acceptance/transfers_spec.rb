@@ -99,11 +99,29 @@ module Transferatu
         expect(last_response.status).to eq(201)
         response = JSON.parse(last_response.body)
         expires_at = Time.parse(response["expires_at"])
+        # N.B.: the expiration time will be truncated by JSON
+        # timestamp formatting, so it could appear to preceed the
+        # before timestamp
         expect(expires_at).to be_within(1.second).of(before + ttl)
         expect(expires_at).to be <= (after + ttl)
         expect(response["url"]).to eq(pub_url)
       end
 
+      it "POST /groups/:name/transfers/:id/actions/cancel" do
+        xfer = create(:transfer, group: @group)
+
+        before = Time.now
+        post "/groups/#{@group.name}/transfers/#{xfer.uuid}/actions/cancel"
+        after = Time.now
+
+        expect(last_response.status).to eq(201)
+        response = JSON.parse(last_response.body)
+        canceled_at = Time.parse(response["canceled_at"])
+        expect(canceled_at).to be_within(1.second).of(before)
+        expect(canceled_at).to be <= after
+
+        expect(xfer.canceled?).to be true
+      end
     end
   end
 end

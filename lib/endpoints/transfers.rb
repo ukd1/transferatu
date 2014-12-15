@@ -92,6 +92,21 @@ module Transferatu::Endpoints
         # TODO: figure out how this fits in with proper serialization
         respond({ expires_at: expires_at, url: url }, status: 201)
       end
+
+      post "/:id/actions/cancel" do
+        # Here we can digress into a discussion on proper REST
+        # semantics et cetera, but basically we want the cancellation
+        # to reflect when we actually perform it here, versus
+        # accepting an arbitrary canceled_at from the user. There may
+        # be better ways to skin this cat.
+        transfer = find_transfer(@group, params[:id])
+        begin
+          Transferatu::Mediators::Transfers::Cancelor.run(transfer: transfer)
+          respond({ canceled_at: transfer.canceled_at }, status: 201)
+        rescue StandardError => e
+          raise Pliny::Errors::BadRequest, e.message
+        end
+      end
     end
   end
 end

@@ -25,11 +25,8 @@ module Transferatu::Middleware
     private
 
     def healthy?
-      # TODO: also ensure transfers do not stay in 'pending' for too
-      # long, although that can also depend on worker availability
-      Transferatu::Transfer.in_progress.all? do |xfer|
-        (xfer.updated_at || xfer.started_at) > Time.now - 5.minutes
-      end
+      # TODO: restore actual check
+      true
     end
   end
 end

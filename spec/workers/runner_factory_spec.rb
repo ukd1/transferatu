@@ -79,7 +79,7 @@ module Transferatu
       let(:wthr)   { double(:wthr) }
       let(:env)    { double(:env) }
       let(:cmd)    { double(:cmd) }
-      
+
       it "delegates to Open3.popen3 and wraps the result in a ShellFuture" do
         expect(Open3).to receive(:popen3).and_return([stdin, stdout, stderr, wthr])
         result = s.run_command(env, cmd)
@@ -410,12 +410,12 @@ module Transferatu
       end
 
       describe "#wait" do
-        it "it returns true when the process succeeds" do
+        it "returns true when the process succeeds" do
           expect(future).to receive(:wait).and_return(success)
           sink.run_async
           expect(sink.wait).to be true
         end
-        it "it returns true when the process fails with comment errors matching warning count" do
+        it "returns true when the process fails with comment errors matching warning count" do
           expect(future).to receive(:wait).and_return(failure)
           expect(future).to receive(:drain_stderr) do |l|
             l.call "Command was: COMMENT ON EXTENSION plpgsql IS 'it is okay i guess'"
@@ -425,7 +425,7 @@ module Transferatu
           sink.run_async
           expect(sink.wait).to be true
         end
-        it "it returns false when process fails with comment errors not matching warning count" do
+        it "returns false when process fails with comment errors not matching warning count" do
           expect(future).to receive(:wait).and_return(failure)
           expect(future).to receive(:drain_stderr) do |l|
             l.call "Command was: COMMENT ON EXTENSION plpgsql IS 'hello'"
@@ -434,17 +434,45 @@ module Transferatu
           sink.run_async
           expect(sink.wait).to be false
         end
-        it "it returns false when the process fails otherwise" do
+        it "returns true when process fails with PL/pgSQL failure matching warning count" do
+          expect(future).to receive(:wait).and_return(failure)
+          expect(future).to receive(:drain_stderr) do |l|
+            l.call "Command was: CREATE OR REPLACE PROCEDURAL LANGUAGE plpgsql;"
+            l.call "WARNING: errors ignored on restore: 1"
+          end
+          sink.run_async
+          expect(sink.wait).to be true
+        end
+        it "returns false when process fails with PL/pgSQL failure not matching warning count" do
+          expect(future).to receive(:wait).and_return(failure)
+          expect(future).to receive(:drain_stderr) do |l|
+            l.call "Command was: CREATE OR REPLACE PROCEDURAL LANGUAGE plpgsql;"
+            l.call "WARNING: errors ignored on restore: 2"
+          end
+          sink.run_async
+          expect(sink.wait).to be false
+        end
+        it "returns true when the process fails with comment plus PL/pgSQL errors matching warning count" do
+          expect(future).to receive(:wait).and_return(failure)
+          expect(future).to receive(:drain_stderr) do |l|
+            l.call "Command was: COMMENT ON EXTENSION pg_stat_statements IS 'a damn fine extension'"
+            l.call "Command was: CREATE OR REPLACE PROCEDURAL LANGUAGE plpgsql;"
+            l.call "WARNING: errors ignored on restore: 2"
+          end
+          sink.run_async
+          expect(sink.wait).to be true
+        end
+        it "returns false when the process fails otherwise" do
           expect(future).to receive(:wait).and_return(failure)
           sink.run_async
           expect(sink.wait).to be true
         end
-        it "it returns false when the process is signaled" do
+        it "returns false when the process is signaled" do
           expect(future).to receive(:wait).and_return(signaled)
           sink.run_async
           expect(sink.wait).to be false
         end
-        it "it returns false when process is signaled and has comment errors matching warning count" do
+        it "returns false when process is signaled and has comment errors matching warning count" do
           expect(future).to receive(:wait).and_return(signaled)
           expect(future).to receive(:drain_stderr) do |l|
             l.call "Command was: COMMENT ON EXTENSION plpgsql IS 'it is okay i guess'"

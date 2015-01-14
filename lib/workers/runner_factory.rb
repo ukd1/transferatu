@@ -246,10 +246,17 @@ module Transferatu
       # pg_restore. This is pretty gross (e.g., it does not work with
       # a localized pg_restore), but safer.
       @failed_extension_comment_count = 0
+      @failed_plpgsql_create = false
       @pg_restore_error_count = 0
       @future.drain_stderr(->(line) do
                              if line =~ /\ACommand was: COMMENT ON EXTENSION /
                                @failed_extension_comment_count += 1
+                             elsif line == 'Command was: CREATE OR REPLACE PROCEDURAL LANGUAGE plpgsql;'
+                               # N.B.: we do a boolean flag here instead of a count so that
+                               # if for whatever crazy reason we see this multiple tiimes, it
+                               # should fail to match the error count and the overall transfer
+                               # will rightly fail.
+                               @failed_plpgsql_create = true
                              elsif line =~ /\AWARNING: errors ignored on restore: (\d+)/
                                @pg_restore_error_count = $1.to_i
                              end
@@ -262,8 +269,17 @@ module Transferatu
       @logger.call "waiting for restore to complete"
       result = @future.wait
       @logger.call "restore done"
-      result.success? == true ||
-        (result.exitstatus == 1 && @failed_extension_comment_count == @pg_restore_error_count)
+      return true if result.success? == true
+
+      if result.exitstatus == 1
+        expected_err_count = @failed_extension_comment_count
+        if @failed_plpgsql_create
+          expected_err_count += 1
+        end
+        return expected_err_count == @pg_restore_error_count
+      else
+        return false
+      end
     end
   end
 

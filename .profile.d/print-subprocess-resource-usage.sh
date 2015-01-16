@@ -9,7 +9,7 @@ print_stats() {
     done
 }
 
-if [[ "$DYNO" == run* ]]
+if [[ "$DYNO" == run* && ! -t 1 ]]
 then
     print_stats &
 fi

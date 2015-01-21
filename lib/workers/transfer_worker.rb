@@ -9,18 +9,25 @@ module Transferatu
       @status.update(transfer: transfer)
       runner = RunnerFactory.runner_for(transfer)
 
+      # Sequel model objects are not safe for concurrent access, so
+      # make sure we give the progress thread its own copy
+      xfer_id = transfer.uuid
       progress_thr = Thread.new do
-        while transfer.in_progress?
-          if transfer.canceled?
+        xfer = Transfer[xfer_id]
+        loop do
+          break unless xfer.in_progress?
+          if xfer.canceled?
             runner.cancel
             break
           end
-          transfer.mark_progress(runner.processed_bytes)
-          # Nothing to change, but we want to update updated_at
+          xfer.mark_progress(runner.processed_bytes)
+          # Nothing to change, but we want to update updated_at to
+          # report in
           @status.save
           sleep 5
+          xfer.reload
         end
-        transfer.mark_progress(runner.processed_bytes)
+        xfer.mark_progress(runner.processed_bytes)
       end
 
       begin

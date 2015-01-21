@@ -10,8 +10,6 @@ module Transferatu
       runner = RunnerFactory.runner_for(transfer)
 
       progress_thr = Thread.new do
-        # Because of the threading model, we can update the value in the other
-        # thread and read it out and update the DB here. Thanks, GIL!
         while transfer.in_progress?
           if transfer.canceled?
             runner.cancel

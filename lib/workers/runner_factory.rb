@@ -10,7 +10,7 @@ module Transferatu
       end
 
       to_version = nil
-      logger = transfer.method(:log)
+      logger = ThreadSafeLogger.new(transfer).method(:log)
       sink = case to_type
              when 'pg_restore'
                to_version = PGVersion.parse(Sequel.connect(transfer.to_url) do |c|

@@ -7,6 +7,19 @@ module Transferatu
     end
   end
 
+  class ThreadSafeLogger
+    def initialize(model)
+      @model = model.clone
+      @mutex = Mutex.new
+    end
+
+    def log(line, opts: {})
+      @mutex.synchronize do
+        @model.log(line, opts)
+      end
+    end
+  end
+
   module Loggable
     def log(msg, level: :info)
       if block_given?

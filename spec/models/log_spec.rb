@@ -1,10 +1,10 @@
 require "spec_helper"
 
 describe Transferatu::Log do
-  let(:loggable) { class DummyLoggable
+  let(:loggable) { Class.new do
                      include Transferatu::Loggable
                      def uuid; "b367f1c7-7f4b-4a1a-9726-bb606ae22737"; end
-                   end; DummyLoggable.new }
+                   end.new }
   let(:messages) {
     [ "Stardate 43125.8. We have entered a spectacular binary star system in",
       "the Kavis Alpha sector on a most critical mission of astrophysical research.",
@@ -49,5 +49,29 @@ describe Transferatu::Log do
         expect(logged.message).to eq(expected.message)
       end
     end
+  end
+end
+
+describe Transferatu::ThreadSafeLogger do
+  let!(:lines)   { [] }
+  let(:loggable) { Class.new do
+                     include Transferatu::Loggable
+                     def initialize(lines); @lines = lines; end
+                     def uuid; "b376f1c7-74fb-aa41-9276-bb660ae22773"; end
+                     def log(line, opts)
+                       @lines << line
+                       super
+                     end
+                   end.new(lines) }
+  let(:logger)   { Transferatu::ThreadSafeLogger.new(loggable) }
+
+  it "is safe for concurrent access from multiple threads" do
+    # this is really only a smoke test
+    10.times.map do |i|
+      Thread.new do
+        logger.log(i)
+      end
+    end.each(&:join)
+    expect(lines.sort).to eq(10.times.to_a)
   end
 end

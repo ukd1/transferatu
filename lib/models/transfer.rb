@@ -103,7 +103,8 @@ EOF
       # running but has not yet processed any more data" and "it's an
       # ex-transfer, pining for the fjords".
       self.processed_bytes = bytes
-      self.save
+      self.modified! :processed_bytes
+      self.save_changes
       self.log("progress: #{bytes}", transient: true)
     end
 

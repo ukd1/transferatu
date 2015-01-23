@@ -44,18 +44,32 @@ module Transferatu
         expect(JSON.parse(last_response.body)).to eq([])
       end
 
-      it "POST /groups/:name/transfers" do
-        post "/groups/#{@group.name}/transfers", request_data
-        expect(last_response.status).to eq(201)
-        response = JSON.parse(last_response.body)
-        request_data.keys.each do |key|
-          expect(response[key.to_s]).to eq request_data[key]
+      describe "POST /groups/:name/transfers" do
+        it "creates a new transfer" do
+          post "/groups/#{@group.name}/transfers", request_data
+          expect(last_response.status).to eq(201)
+          response = JSON.parse(last_response.body)
+          request_data.keys.each do |key|
+            expect(response[key.to_s]).to eq request_data[key]
+          end
+          xfer_id = response["uuid"]
+          expect(xfer_id).to_not be_nil
+          xfer = Transferatu::Transfer[xfer_id]
+          request_data.keys.each do |key|
+            expect(xfer.public_send(key)).to eq request_data[key]
+          end
         end
-        xfer_id = response["uuid"]
-        expect(xfer_id).to_not be_nil
-        xfer = Transferatu::Transfer[xfer_id]
-        request_data.keys.each do |key|
-          expect(xfer.public_send(key)).to eq request_data[key]
+
+        it "updates the group's log_input_url if provided" do
+          new_log_url = "https://example.com/log-here"
+          post "/groups/#{@group.name}/transfers", request_data
+            .merge(log_input_url: new_log_url)
+          expect(last_response.status).to eq(201)
+          response = JSON.parse(last_response.body)
+          xfer_id = response["uuid"]
+          expect(xfer_id).to_not be_nil
+          xfer = Transferatu::Transfer[xfer_id]
+          expect(xfer.group.log_input_url).to eq(new_log_url)
         end
       end
 

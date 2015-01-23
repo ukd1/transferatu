@@ -46,6 +46,10 @@ module Transferatu::Endpoints
       end
 
       post do
+        log_input_url = data.delete("log_input_url")
+        unless log_input_url.nil?
+          @group.update(log_input_url: log_input_url)
+        end
         transfer = Transferatu::Mediators::Transfers::Creator.run(
                    group: @group,
                    from_type: data["from_type"],

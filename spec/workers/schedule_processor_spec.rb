@@ -57,6 +57,15 @@ module Transferatu
           processor.process(schedule)
           expect(schedule.last_scheduled_at).to be_nil
         end
+
+        it "updates the group's log_input_url if one is provided" do
+          new_log_url = "https://example.com/please-log-here"
+          xfer_info["log_input_url"] = new_log_url
+          allow(Transferatu::Mediators::Transfers::Creator).to receive(:run)
+          expect(schedule.group.log_input_url).not_to eq(new_log_url)
+          processor.process(schedule)
+          expect(schedule.group.log_input_url).to eq(new_log_url)
+        end
       end
 
       it "logs the failure to the group for schedules that fail to resolve" do

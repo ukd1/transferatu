@@ -14,6 +14,11 @@ module Transferatu
         schedule.destroy
         return
       end
+      log_input_url = data.delete("log_input_url")
+      unless log_input_url.nil?
+        schedule.group.update(log_input_url: log_input_url)
+      end
+
       schedule.db.transaction do
         Transferatu::Mediators::Transfers::Creator
           .run(

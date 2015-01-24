@@ -7,7 +7,27 @@ module Transferatu
 
     def perform(transfer)
       @status.update(transfer: transfer)
-      runner = RunnerFactory.runner_for(transfer)
+
+      runner = nil
+      begin
+        runner = RunnerFactory.runner_for(transfer)
+        # We don't want to make the failure messages here too
+        # explicit, since they may pertain to the internal details of
+        # the service and not be useful to end-users trying to
+        # diagnose failures. As we learn the more common specific
+        # failure modes, we should address them more directly and
+        # communicate them concretely.
+      rescue Sequel::DatabaseError => e
+        fail_transfer(transfer,
+                      "Could not connect to database to initialize transfer",
+                      e)
+      rescue StandardError => e
+        fail_transfer(transfer,
+                      "Could not initialize transfer",
+                      e)
+      end
+
+      return unless runner
 
       # Sequel model objects are not safe for concurrent access, so
       # make sure we give the progress thread its own copy
@@ -56,6 +76,17 @@ module Transferatu
       # See above: we want to make sure we show progress when there's
       # nothing to do.
       @status.save
+    end
+
+    private
+
+    def fail_transfer(transfer, message, exception)
+      transfer.fail
+      transfer.log message
+      transfer.log exception.message, level: :internal
+      exception.backtrace.each do |line|
+        transfer.log line, level: :internal
+      end
     end
   end
 end

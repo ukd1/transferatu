@@ -166,6 +166,44 @@ module Transferatu
 
         expect(status.transfer_id).to be nil
       end
+
+      it "should fail the transfer and log an error if RunnerFactory raises a StandardError" do
+        err_msg = 'oh snap!'
+        expect(RunnerFactory).to receive(:runner_for) do |t|
+          expect(t.uuid).to eq transfer.uuid
+          raise StandardError, err_msg
+        end
+        expect(transfer.logs).to be_empty
+        expect { worker.perform(transfer) }.to_not raise_error
+        line = transfer.logs(limit: -1).find { |line| line.message =~ /could not initialize/i }
+        expect(line).not_to be_nil
+        expect(line.level).to eq('info')
+        internal_line = transfer.logs(limit: -1).find { |line| line.message == err_msg }
+        expect(internal_line).not_to be_nil
+        expect(internal_line.level).to eq('internal')
+        backtrace_line = transfer.logs(limit: -1).find { |line| line.message =~ /#{__FILE__}/ }
+        expect(backtrace_line).not_to be_nil
+        expect(backtrace_line.level).to eq('internal')
+      end
+
+      it "should fail the transfer and log a slightly more specific error if RunnerFactory raises a Sequel::DatabaseError" do
+        err_msg = 'oh snap!'
+        expect(RunnerFactory).to receive(:runner_for) do |t|
+          expect(t.uuid).to eq transfer.uuid
+          raise Sequel::DatabaseError, err_msg
+        end
+        expect(transfer.logs).to be_empty
+        expect { worker.perform(transfer) }.to_not raise_error
+        line = transfer.logs(limit: -1).find { |line| line.message =~ /could not connect to database/i }
+        expect(line).not_to be_nil
+        expect(line.level).to eq('info')
+        internal_line = transfer.logs(limit: -1).find { |line| line.message == err_msg }
+        expect(internal_line).not_to be_nil
+        expect(internal_line.level).to eq('internal')
+        backtrace_line = transfer.logs(limit: -1).find { |line| line.message =~ /#{__FILE__}/ }
+        expect(backtrace_line).not_to be_nil
+        expect(backtrace_line.level).to eq('internal')
+      end
     end
 
     describe "#wait" do

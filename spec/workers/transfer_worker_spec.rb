@@ -175,12 +175,16 @@ module Transferatu
         end
         expect(transfer.logs).to be_empty
         expect { worker.perform(transfer) }.to_not raise_error
+        expect(transfer.failed?).to be true
+
         line = transfer.logs(limit: -1).find { |line| line.message =~ /could not initialize/i }
         expect(line).not_to be_nil
         expect(line.level).to eq('info')
+
         internal_line = transfer.logs(limit: -1).find { |line| line.message == err_msg }
         expect(internal_line).not_to be_nil
         expect(internal_line.level).to eq('internal')
+
         backtrace_line = transfer.logs(limit: -1).find { |line| line.message =~ /#{__FILE__}/ }
         expect(backtrace_line).not_to be_nil
         expect(backtrace_line.level).to eq('internal')
@@ -194,12 +198,16 @@ module Transferatu
         end
         expect(transfer.logs).to be_empty
         expect { worker.perform(transfer) }.to_not raise_error
+        expect(transfer.failed?).to be true
+
         line = transfer.logs(limit: -1).find { |line| line.message =~ /could not connect to database/i }
         expect(line).not_to be_nil
         expect(line.level).to eq('info')
+
         internal_line = transfer.logs(limit: -1).find { |line| line.message == err_msg }
         expect(internal_line).not_to be_nil
         expect(internal_line.level).to eq('internal')
+
         backtrace_line = transfer.logs(limit: -1).find { |line| line.message =~ /#{__FILE__}/ }
         expect(backtrace_line).not_to be_nil
         expect(backtrace_line.level).to eq('internal')

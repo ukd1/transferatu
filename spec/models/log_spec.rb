@@ -49,6 +49,33 @@ describe Transferatu::Log do
         expect(logged.message).to eq(expected.message)
       end
     end
+
+    describe "limits" do
+      before do
+        202.times do |n|
+          Transferatu::Log.create(message: "message #{n}",
+                                  level: "info",
+                                  foreign_uuid: loggable.uuid)
+        end
+      end
+
+      it "returns up to 200 logs by default" do
+        expect(loggable.logs.count).to eq(200)
+      end
+
+      it "returns less logs with an explicit limit" do
+        expect(loggable.logs(limit: 10).count).to eq(10)
+      end
+
+      it "returns more logs with an explicit limit" do
+        expect(loggable.logs(limit: 201).count).to eq(201)
+      end
+
+      it "returns all logs with negative limit" do
+        expect(loggable.logs(limit: -1).count)
+          .to eq(Transferatu::Log.where(foreign_uuid: loggable.uuid).count)
+      end
+    end
   end
 end
 

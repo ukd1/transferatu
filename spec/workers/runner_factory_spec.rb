@@ -8,11 +8,13 @@ module Transferatu
         [ 'gof3r', 'https://bucket.s3.amazonaws.com/some/key', 'pg_restore', 'postgres:///test1', true ],
         [ 'gof3r', 'https://bucket.s3.amazonaws.com/some/key', 'gof3r', 'https://bucket.s3.amazonaws.com/some/key', false ] ].each do |from_type, from, to_type, to, valid|
         context do
-          let(:from_conn)   { double(:connection) }
-          let(:from_result) { double(:result) }
-          let(:to_conn)     { double(:connection) }
-          let(:to_result)   { double(:result) }
-          let(:transfer)    { double(:transfer,
+          let(:from_conn)        { double(:connection) }
+          let(:from_size_result) { double(:size_result) }
+          let(:from_size)        { 123234345 }
+          let(:from_result)      { double(:result) }
+          let(:to_conn)          { double(:connection) }
+          let(:to_result)        { double(:result) }
+          let(:transfer)         { double(:transfer,
                                      from_type: from_type, from_url: from,
                                      to_type: to_type, to_url: to) }
           before do
@@ -28,9 +30,15 @@ module Transferatu
           ].each do |version|
             it "#{if valid; "succeeds"; "fails"; end} with transfer from #{from} (version #{version}) to #{to}" do
               if from_type == 'pg_dump'
-                expect(Sequel).to receive(:connect).with(from).and_yield(from_conn)
+                expect(Sequel).to receive(:connect).with(from).and_yield(from_conn).twice
+                expect(from_conn).to receive(:fetch)
+                  .with("SELECT pg_database_size(current_database()) AS size")
+                  .and_return(from_size_result)
+                expect(from_size_result).to receive(:get).with(:size).and_return(from_size)
                 expect(from_conn).to receive(:fetch).with("SELECT version()").and_return(from_result)
                 expect(from_result).to receive(:get).with(:version).and_return(version)
+
+                expect(transfer).to receive(:update).with(source_bytes: from_size)
               end
               if to_type == 'pg_restore'
                 expect(Sequel).to receive(:connect).with(to).and_yield(to_conn)

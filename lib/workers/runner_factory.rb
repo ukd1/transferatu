@@ -41,6 +41,10 @@ module Transferatu
                  from_version = PGVersion.parse(Sequel.connect(transfer.from_url) do |c|
                                                   c.fetch("SELECT version()").get(:version)
                                                 end)
+                 source_bytes = Sequel.connect(transfer.from_url) do |c|
+                   c.fetch("SELECT pg_database_size(current_database()) AS size").get(:size)
+                 end
+                 transfer.update(source_bytes: source_bytes)
                  pg_root = if to_version.nil? || from_version > to_version
                              "/app/bin/pg/#{from_version.major_minor}"
                            else

@@ -13,7 +13,7 @@ module Transferatu
       @mutex = Mutex.new
     end
 
-    def log(line, opts: {})
+    def log(line, opts={})
       @mutex.synchronize do
         @model.log(line, opts)
       end

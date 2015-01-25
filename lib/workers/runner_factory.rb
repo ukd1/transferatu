@@ -171,7 +171,7 @@ module Transferatu
     end
 
     def run_async
-      @logger.call "Running #{@cmd.join(' ').sub(@url, 'postgres://...')}"
+      @logger.call("Running #{@cmd.join(' ').sub(@url, 'postgres://...')}", level: :internal)
       @future = run_command(@env, @cmd)
       @future.drain_stderr(@logger)
       @future.stdout
@@ -206,7 +206,7 @@ module Transferatu
     end
 
     def run_async
-      @logger.call "Running #{@cmd.join(' ')}"
+      @logger.call("Running #{@cmd.join(' ')}", level: :internal)
       @future = run_command(@cmd)
       @future.drain_stdout(@logger)
       @future.drain_stderr(->(line) { @logger.call(line, level: :internal) })
@@ -220,7 +220,7 @@ module Transferatu
       result.success? == true
     end
   end
-  
+
   # A Sink that restores a custom-format Postgres dump into a database
   class PGRestoreSink
     include Commandable
@@ -236,7 +236,7 @@ module Transferatu
     end
 
     def run_async
-      @logger.call "Running #{@cmd.join(' ').sub(@url, 'postgres://...')}}"
+      @logger.call("Running #{@cmd.join(' ').sub(@url, 'postgres://...')}}", level: :internal)
       @future = run_command(@env, @cmd)
       # We don't expect any output from stdout. Capture it anyway, but
       # keep it internal.
@@ -308,7 +308,7 @@ module Transferatu
     end
 
     def run_async
-      @logger.call "Running #{@cmd.join(' ')}"
+      @logger.call("Running #{@cmd.join(' ')}", level: :internal)
       @future = run_command(@cmd)
       @future.drain_stderr(@logger)
       @future.stdout

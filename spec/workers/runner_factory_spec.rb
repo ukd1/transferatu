@@ -256,7 +256,8 @@ module Transferatu
     let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
     let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
 
-    let(:logger)   { ->(line, level: :info) {} }
+    let!(:logs)    { [] }
+    let(:logger)   { ->(line, level: :info) { logs << line } }
     let(:sink)     { Gof3rSink.new("https://my-bucket.s3.amazonaws.com/some/key", logger: logger) }
     let(:stdin)    { double(:stdin) }
     let(:stdout)   { double(:stdout) }
@@ -280,10 +281,12 @@ module Transferatu
       it "collects logs while running" do
         expect(future).to receive(:drain_stdout).with(logger)
         expect(future).to receive(:drain_stderr) do |logfn|
-          # TODO: we should also verify here that logger is being called
-          expect(logfn).to respond_to(:call)
+          3.times { |n| logfn.call(n) }
         end
         sink.run_async
+        allow(future).to receive(:wait).and_return(success)
+        allow(sink).to receive(:wait).and_return(true)
+        expect(logs).to include(*3.times.to_a)
       end
 
       describe "#wait" do

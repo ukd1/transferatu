@@ -101,4 +101,10 @@ describe Transferatu::ThreadSafeLogger do
     end.each(&:join)
     expect(lines.sort).to eq(10.times.to_a)
   end
+
+  it "accepts options and passes them to underlying logger" do
+    logger.log('hello', level: :internal)
+    expect(lines.count).to eq(1)
+    expect(lines).to include('hello')
+  end
 end

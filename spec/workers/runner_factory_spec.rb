@@ -256,16 +256,11 @@ module Transferatu
     let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
     let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
 
-    let(:logs)    { [] }
-    let(:logger)   do
-      Class.new do
-        def initialize(logs); @l = logs; end
-        def log(line, opts={}); @l << line; end
-      end.new(logs).method(:log)
-    end
+    let(:transfer) { create(:transfer) }
+    let(:logger)   { ThreadSafeLogger.new(transfer).method(:log) }
     let(:sink)     { Gof3rSink.new("https://my-bucket.s3.amazonaws.com/some/key", logger: logger) }
     let(:stdin)    { StringIO.new }
-    let(:stdout)   { StringIO.new }
+    let(:stdout)   { StringIO.new("some\nstandard\nout") }
     let(:stderr)   { StringIO.new("1\n2\n3\n") }
     let(:wthr)     { double(:wthr, pid: 22) }
     let(:future)   { ShellFuture.new(stdin, stdout, stderr, wthr) }
@@ -287,7 +282,7 @@ module Transferatu
         sink.run_async
         allow(wthr).to receive(:value).and_return(success)
         sink.wait
-        expect(logs).to include(*%w(1 2 3))
+        expect(transfer.logs(limit: -1).map(&:message)).to include(*%w(1 2 3))
       end
 
       describe "#wait" do

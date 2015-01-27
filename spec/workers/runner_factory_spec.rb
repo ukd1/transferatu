@@ -256,12 +256,17 @@ module Transferatu
     let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
     let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
 
-    let!(:logs)    { [] }
-    let(:logger)   { ->(line, level: :info) { logs << line } }
+    let(:logs)    { [] }
+    let(:logger)   do
+      Class.new do
+        def initialize(logs); @l = logs; end
+        def log(line, opts={}); @l << line; end
+      end.new(logs).method(:log)
+    end
     let(:sink)     { Gof3rSink.new("https://my-bucket.s3.amazonaws.com/some/key", logger: logger) }
-    let(:stdin)    { double(:stdin) }
-    let(:stdout)   { double(:stdout) }
-    let(:stderr)   { double(:stderr) }
+    let(:stdin)    { StringIO.new }
+    let(:stdout)   { StringIO.new }
+    let(:stderr)   { StringIO.new("1\n2\n3\n") }
     let(:wthr)     { double(:wthr, pid: 22) }
     let(:future)   { ShellFuture.new(stdin, stdout, stderr, wthr) }
 
@@ -279,14 +284,10 @@ module Transferatu
       end
 
       it "collects logs while running" do
-        expect(future).to receive(:drain_stdout).with(logger)
-        expect(future).to receive(:drain_stderr) do |logfn|
-          3.times { |n| logfn.call(n) }
-        end
         sink.run_async
-        allow(future).to receive(:wait).and_return(success)
-        allow(sink).to receive(:wait).and_return(true)
-        expect(logs).to include(*3.times.to_a)
+        allow(wthr).to receive(:value).and_return(success)
+        sink.wait
+        expect(logs).to include(*%w(1 2 3))
       end
 
       describe "#wait" do

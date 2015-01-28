@@ -1,3 +1,4 @@
+require 'open3'
 require 'spec_helper'
 
 module Transferatu
@@ -89,7 +90,7 @@ module Transferatu
       let(:cmd)    { double(:cmd) }
 
       it "delegates to Open3.popen3 and wraps the result in a ShellFuture" do
-        expect(Open3).to receive(:popen3).and_return([stdin, stdout, stderr, wthr])
+        expect(::Open3).to receive(:popen3).and_return([stdin, stdout, stderr, wthr])
         result = s.run_command(env, cmd)
         expect(result).to be_instance_of(ShellFuture)
         expect(result.stdin).to be stdin

@@ -20,7 +20,7 @@ GEM
       jmespath (~> 1.0)
       multi_json (~> 1.0)
       multi_xml (~> 0.5)
-    backports (3.6.0)
+    backports (3.6.4)
     bcrypt (3.1.7)
     builder (3.2.2)
     byebug (2.7.0)

@@ -40,8 +40,6 @@ module Transferatu
               )
         schedule.group.log "Created scheduled transfer for #{schedule.name}"
       end
-    rescue StandardError => e
-      schedule.group.log "Could not create scheduled transfer for #{schedule.name}: #{e.message}"
     end
   end
 end

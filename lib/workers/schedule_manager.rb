@@ -9,13 +9,29 @@ module Transferatu
       schedules = next_batch(schedule_time)
       until schedules.empty? do
         schedules.each do |s|
-          @processor.process(s)
+          process_schedule(s)
         end
         schedules = next_batch(schedule_time)
       end
     end
 
     private
+
+    def process_schedule(s)
+      retrying = false
+      begin
+        @processor.process(s)
+      rescue StandardError => e
+        if retrying
+          Rollbar.error(e, schedule_id: s.uuid)
+          s.group.log "Could not create scheduled transfer for #{s.name}"
+          s.mark_executed
+        else
+          retrying = true
+          retry
+        end
+      end
+    end
 
     def next_batch(time)
       Schedule.pending_for(time, limit: 250).all

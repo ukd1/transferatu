@@ -54,7 +54,7 @@ module Transferatu
           expect(Transferatu::Mediators::Transfers::Creator).to receive(:run)
             .and_raise(StandardError)
           expect(Transferatu::Mediators::Schedules::Expirer).to_not receive(:run)
-          processor.process(schedule)
+          expect { processor.process(schedule) }.to raise_error(StandardError)
           expect(schedule.last_scheduled_at).to be_nil
         end
 
@@ -66,14 +66,6 @@ module Transferatu
           processor.process(schedule)
           expect(schedule.group.log_input_url).to eq(new_log_url)
         end
-      end
-
-      it "logs the failure to the group for schedules that fail to resolve" do
-        expect(resolver).to receive(:resolve).with(schedule).and_raise StandardError
-        expect(Transferatu::Mediators::Transfers::Creator).to_not receive(:run)
-        expect(Transferatu::Mediators::Schedules::Expirer).to_not receive(:run)
-        expect(schedule.group).to receive(:log).with /could not create.*#{schedule.name}/i
-        processor.process(schedule)
       end
 
       it "destroys schedules that resolve to nil" do

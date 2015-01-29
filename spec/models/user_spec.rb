@@ -16,7 +16,7 @@ module Transferatu
 
     it "should not store the password in the database" do
       user.reload
-      expect(user.values.find { |k,v| v == password }).to be_nil
+      expect(user.values.find { |k,v| v.to_s == password }).to be_nil
     end
   end
 end

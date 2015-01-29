@@ -1,7 +1,7 @@
 module Transferatu
   module Mediators::Schedules
     class Expirer < Mediators::Base
-      def initialize(schedule: schedule, expire_at: expire_at)
+      def initialize(schedule:, expire_at:)
         @schedule = schedule
         @expire_at = expire_at
       end

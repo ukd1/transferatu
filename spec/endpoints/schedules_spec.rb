@@ -44,6 +44,19 @@ module Transferatu::Endpoints
                                                )
         expect(last_response.status).to eq(201)
       end
+
+      it "accepts optional retention parameters" do
+        post "/groups/#{@group.name}/schedules", JSON.generate(
+                                                 name: 'my-schedule',
+                                                 callback_url: "https://example.com/#{@group.name}/schedules/my-schedule",
+                                                 hour: 23,
+                                                 days: ['Sunday', 'Tuesday', 'Friday'],
+                                                 timezone: 'America/Los_Angeles',
+                                                 retain_weeks: 5,
+                                                 retain_months: 3
+                                               )
+        expect(last_response.status).to eq(201)
+      end
     end
 
   end

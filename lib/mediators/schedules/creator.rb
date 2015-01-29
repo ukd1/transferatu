@@ -1,13 +1,18 @@
 module Transferatu
   module Mediators::Schedules
     class Creator < Mediators::Base
-      def initialize(group:, name:, callback_url:, hour:, days:, timezone:)
+      def initialize(group:, name:, callback_url:,
+                     hour:, days:, timezone:,
+                     retain_weeks:, retain_months:)
         @group = group
         @name = name
         @callback_url = callback_url
         @hour = hour
         @days = days
         @tz = timezone
+
+        @retain_weeks = retain_weeks
+        @retain_months = retain_months
       end
 
       def call
@@ -38,8 +43,16 @@ EOF
           raise ArgumentError, "Could not parse callback_url"
         end
 
-        @group.add_schedule(name: @name, callback_url: @callback_url,
-                            hour: @hour, dows: dows, timezone: @tz)
+        sched_opts = { name: @name, callback_url: @callback_url,
+                       hour: @hour, dows: dows, timezone: @tz }
+
+        unless @retain_weeks.nil?
+          sched_opts.merge!(retain_weeks: @retain_weeks.to_i)
+        end
+        unless @retain_months.nil?
+          sched_opts.merge!(retain_months: @retain_months.to_i)
+        end
+        @group.add_schedule(sched_opts)
       end
 
       private

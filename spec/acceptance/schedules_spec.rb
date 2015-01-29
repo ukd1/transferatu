@@ -21,7 +21,9 @@ module Transferatu
        callback_url: "https://example.com/#{@group.name}/schedules/my-schedule",
        hour: 23,
        days: ['Sunday', 'Tuesday', 'Friday'],
-       timezone: 'America/Los_Angeles'
+       timezone: 'America/Los_Angeles',
+       retain_weeks: 6,
+       retain_months: 3
       }
     }
 

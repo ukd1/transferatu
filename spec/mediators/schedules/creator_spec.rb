@@ -20,10 +20,28 @@ module Transferatu
                                                     callback_url: valid_url,
                                                     hour: valid_hour,
                                                     days: valid_days,
-                                                    timezone: valid_tz)
+                                                    timezone: valid_tz,
+                                                    retain_weeks: 3,
+                                                    retain_months: 6)
         t = creator.call
         expect(t).to_not be_nil
         expect(t).to be_instance_of(Transferatu::Schedule)
+      end
+
+      it "defaults retention from the database if passed in as nil" do
+        creator = Mediators::Schedules::Creator.new(group: group,
+                                                    name: name,
+                                                    callback_url: valid_url,
+                                                    hour: valid_hour,
+                                                    days: valid_days,
+                                                    timezone: valid_tz,
+                                                    retain_weeks: nil,
+                                                    retain_months: nil)
+        t = creator.call
+        expect(t).to_not be_nil
+        expect(t).to be_instance_of(Transferatu::Schedule)
+        expect(t.retain_weeks).to eq(5)
+        expect(t.retain_months).to eq(0)
       end
 
       it "fails with a bogus timezone" do
@@ -33,7 +51,9 @@ module Transferatu
                                             callback_url: valid_url,
                                             hour: valid_hour,
                                             days: valid_days,
-                                            timezone: bogus_tz).call
+                                            timezone: bogus_tz,
+                                            retain_weeks: 3,
+                                            retain_months: 6).call
         }.to raise_error
       end
 
@@ -44,7 +64,9 @@ module Transferatu
                                             callback_url: valid_url,
                                             hour: bogus_hour,
                                             days: valid_days,
-                                            timezone: valid_tz).call
+                                            timezone: valid_tz,
+                                            retain_weeks: 3,
+                                            retain_months: 6).call
         }.to raise_error
       end
 
@@ -55,7 +77,9 @@ module Transferatu
                                             callback_url: valid_url,
                                             hour: valid_hour,
                                             days: bogus_days,
-                                            timezone: valid_tz).call
+                                            timezone: valid_tz,
+                                            retain_weeks: 3,
+                                            retain_months: 6).call
         }.to raise_error
       end
 
@@ -66,7 +90,9 @@ module Transferatu
                                             callback_url: bogus_url,
                                             hour: valid_hour,
                                             days: valid_days,
-                                            timezone: valid_tz).call
+                                            timezone: valid_tz,
+                                            retain_weeks: 3,
+                                            retain_months: 6).call
         }.to raise_error
       end
     end

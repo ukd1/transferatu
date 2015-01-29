@@ -24,7 +24,9 @@ module Transferatu::Endpoints
                    callback_url: data["callback_url"],
                    days: data["days"],
                    hour: data["hour"],
-                   timezone: data["timezone"]
+                   timezone: data["timezone"],
+                   retain_weeks: data["retain_weeks"],
+                   retain_months: data["retain_months"]
                  )
         respond serialize(schedule), status: 201
       end

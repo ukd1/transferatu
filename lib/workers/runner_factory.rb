@@ -1,3 +1,4 @@
+require 'open3'
 require 'pgversion'
 
 module Transferatu

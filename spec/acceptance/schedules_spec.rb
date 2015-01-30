@@ -15,17 +15,15 @@ module Transferatu
       @group = create(:group, user: @user)
     end
 
-    let(:request_data) {
-      {
-       name: 'my-schedule',
-       callback_url: "https://example.com/#{@group.name}/schedules/my-schedule",
-       hour: 23,
-       days: ['Sunday', 'Tuesday', 'Friday'],
-       timezone: 'America/Los_Angeles',
-       retain_weeks: 6,
-       retain_months: 3
-      }
-    }
+    let(:request_data) do
+      { name: 'my-schedule',
+        callback_url: "https://example.com/#{@group.name}/schedules/my-schedule",
+        hour: 23,
+        days: ['Sunday', 'Tuesday', 'Friday'],
+        timezone: 'America/Los_Angeles',
+        retain_weeks: 6,
+        retain_months: 3 }
+    end
 
     describe "when unauthenticated" do
       it "rejects requests" do
@@ -63,6 +61,29 @@ module Transferatu
           expect(sched.public_send(key)).to eq request_data[key]
         end
         expect(sched.dows).to eq(request_data[:days].map { |d| Date::DAYNAMES.index(d) })
+      end
+
+      it "PUT /groups/:name/schedules/:id" do
+        sched = create(:schedule, group: @group)
+        updates = { name: 'my-awesome-schedule',
+                    callback_url: "https://example.com/#{@group.name}/schedules/foo",
+                    hour: 19,
+                    days: ['Sunday', 'Friday'],
+                    timezone: 'America/Chicago',
+                    retain_weeks: 12,
+                    retain_months: 19 }
+        put "/groups/#{@group.name}/schedules/#{sched.uuid}", updates
+        expect(last_response.status).to eq(200)
+        response = JSON.parse(last_response.body)
+        updates.keys.reject { |k| k == :callback_url }.each do |key|
+          expect(response[key.to_s]).to eq updates[key]
+        end
+        expect(response["uuid"]).to eq(sched.uuid)
+        sched.reload
+        updates.keys.reject { |k| k == :days }.each do |key|
+          expect(sched.public_send(key)).to eq updates[key]
+        end
+        expect(sched.dows).to eq(updates[:days].map { |d| Date::DAYNAMES.index(d) })
       end
 
       it "GET /groups/:name/schedules/:id" do

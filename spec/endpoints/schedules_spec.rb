@@ -77,5 +77,34 @@ module Transferatu::Endpoints
       end
     end
 
+    describe "PUT /groups/:name/schedules/:id" do
+      let(:schedule) { create(:schedule, group: @group) }
+
+      before do
+        header "Content-Type", "application/json"
+      end
+
+      it "succeeds" do
+        put "/groups/#{@group.name}/schedules/#{schedule.uuid}",
+          JSON.generate(name: 'my-other-schedule',
+                        callback_url: "https://example.com/#{@group.name}/schedules/schedule-2",
+                        hour: 20,
+                        days: ['Sunday'],
+                        timezone: 'America/New_York',
+                        retain_weeks: 5,
+                        retain_months: 3)
+        expect(last_response.status).to eq(200)
+      end
+
+      it "returns 404 when the group does not exist" do
+        put "/groups/doesnotexist/schedules/#{schedule.uuid}",
+          JSON.generate(name: 'my-other-schedule',
+                        callback_url: "https://example.com/#{@group.name}/schedules/schedule-2",
+                        hour: 20,
+                        days: ['Sunday'],
+                        timezone: 'America/New_York')
+        expect(last_response.status).to eq(404)
+      end
+    end
   end
 end

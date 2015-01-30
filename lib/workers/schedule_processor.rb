@@ -21,8 +21,7 @@ module Transferatu
 
       schedule.db.transaction do
         Transferatu::Mediators::Transfers::Creator
-          .run(
-               schedule:  schedule,
+          .run(schedule:  schedule,
                group:     schedule.group,
                from_type: data["from_type"],
                from_url:  data["from_url"],
@@ -30,14 +29,11 @@ module Transferatu
                to_type:   data["to_type"],
                to_url:    data["to_url"],
                to_name:   data["to_name"],
-               options:   data["options"] || {}
-              )
+               options:   data["options"] || {})
         schedule.mark_executed
         Transferatu::Mediators::Schedules::Expirer
-          .run(
-               schedule: schedule,
-               expire_at: Time.now
-              )
+          .run(schedule: schedule, expire_at: Time.now)
+
         schedule.group.log "Created scheduled transfer for #{schedule.name}"
       end
     end

@@ -94,6 +94,19 @@ module Transferatu::Endpoints
                         to_name:   'esther')
         expect(last_response.status).to eq(201)
       end
+
+
+      it "accepts optional num_keep value" do
+        post "/groups/#{@group.name}/transfers",
+          JSON.generate(from_type: 'pg_dump',
+                        from_url:  'postgres:///test1',
+                        from_name: 'arthur',
+                        to_type:   'pg_restore',
+                        to_url:    'postgres:///test2',
+                        to_name:   'esther',
+                        num_keep:  666)
+        expect(last_response.status).to eq(201)
+      end
     end
 
     describe "DELETE /groups/:name/transfers/:id" do

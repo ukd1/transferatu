@@ -23,6 +23,20 @@ module Transferatu
         expect(t).to be_instance_of(Transferatu::Transfer)
       end
 
+      it "accepts optional num_keep parameter" do
+        creator = Mediators::Transfers::Creator.new(group: group,
+                                                    from_type: from_type,
+                                                    from_url: from_url,
+                                                    to_type: to_type,
+                                                    to_url: to_url,
+                                                    options: opts,
+                                                    num_keep: 7)
+        t = creator.call
+        expect(t).to_not be_nil
+        expect(t).to be_instance_of(Transferatu::Transfer)
+        expect(t.num_keep).to be 7
+      end
+
       it "sets optional transfer from_name and to_name" do
         from_name = "my favorite database"
         to_name = "some backup"

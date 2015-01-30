@@ -4,9 +4,9 @@ module Transferatu
 
     class Creator < Mediators::Base
       def initialize(group:,
-                          from_type:, from_url:, from_name: nil,
-                          to_type:, to_url:, to_name: nil,
-                          options:, schedule: nil)
+                     from_type:, from_url:, from_name: nil,
+                     to_type:, to_url:, to_name: nil,
+                     options:, schedule: nil, num_keep: nil)
         @group = group
         @from_type = from_type
         @from_url = from_url
@@ -16,6 +16,7 @@ module Transferatu
         @to_name = to_name
         @options = options
         @schedule = schedule
+        @num_keep = num_keep
       end
 
       def call
@@ -57,10 +58,14 @@ module Transferatu
           end
         end
         begin
-          Transfer.create(group: @group,
+          create_opts = { group: @group,
                           from_type: @from_type, from_url: @from_url, from_name: @from_name,
                           to_type: @to_type, to_url: @to_url, to_name: @to_name,
-                          options: @options, schedule: @schedule)
+                          options: @options, schedule: @schedule }
+          unless @num_keep.nil?
+            create_opts.merge!(num_keep: @num_keep)
+          end
+          Transfer.create(create_opts)
         rescue StandardError => e
           puts e.inspect
         end

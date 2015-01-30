@@ -43,7 +43,9 @@ module Transferatu::Serializers
         updated_at:  transfer.updated_at,
         finished_at: transfer.finished_at,
         deleted_at:  transfer.deleted_at,
-        purged_at:   transfer.purged_at
+        purged_at:   transfer.purged_at,
+
+        num_keep: transfer.num_keep
       }
     end
   end

@@ -9,12 +9,10 @@ module Transferatu
       Routes
     end
 
-    let(:request_data) {
-      {
-        from_url: 'postgres:///test1', from_type: 'pg_dump', from_name: 'ezra',
-        to_url: 'postgres:///test2', to_type: 'pg_restore', to_name: 'george'
-      }
-    }
+    let(:request_data) do
+      { from_url: 'postgres:///test1', from_type: 'pg_dump', from_name: 'ezra',
+        to_url: 'postgres:///test2', to_type: 'pg_restore', to_name: 'george' }
+    end
 
     before do
       @password = 'hunter2'
@@ -58,6 +56,19 @@ module Transferatu
           request_data.keys.each do |key|
             expect(xfer.public_send(key)).to eq request_data[key]
           end
+        end
+
+        it "takes an optional num_keep argument" do
+          num_keep = 23
+          post "/groups/#{@group.name}/transfers", request_data.merge(num_keep: num_keep)
+          expect(last_response.status).to eq(201)
+          response = JSON.parse(last_response.body)
+          expect(response['num_keep']).to eq num_keep
+
+          xfer_id = response["uuid"]
+          expect(xfer_id).to_not be_nil
+          xfer = Transferatu::Transfer[xfer_id]
+          expect(xfer.num_keep).to eq num_keep
         end
 
         it "updates the group's log_input_url if provided" do

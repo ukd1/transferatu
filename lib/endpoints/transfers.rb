@@ -50,16 +50,17 @@ module Transferatu::Endpoints
         unless log_input_url.nil?
           @group.update(log_input_url: log_input_url)
         end
-        transfer = Transferatu::Mediators::Transfers::Creator.run(
-                   group: @group,
-                   from_type: data["from_type"],
-                   from_url: data["from_url"],
-                   from_name: data["from_name"],
-                   to_type: data["to_type"],
-                   to_url: data["to_url"],
-                   to_name: data["to_name"],
-                   options: data["options"] || {}
-                 )
+
+        transfer = Transferatu::Mediators::Transfers::Creator
+          .run(group: @group,
+               from_type: data["from_type"],
+               from_url: data["from_url"],
+               from_name: data["from_name"],
+               to_type: data["to_type"],
+               to_url: data["to_url"],
+               to_name: data["to_name"],
+               options: data["options"] || {},
+               num_keep: data["num_keep"])
         respond serialize(transfer), status: 201
       end
 

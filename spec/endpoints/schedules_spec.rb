@@ -19,6 +19,11 @@ module Transferatu::Endpoints
         get "/groups/#{@group.name}/schedules"
         expect(last_response.status).to eq(200)
       end
+
+      it "returns 404 when the group does not exist" do
+        get "/groups/doesnotexist/schedules"
+        expect(last_response.status).to eq(404)
+      end
     end
 
     describe "GET /groups/:name/schedules/:id" do
@@ -28,6 +33,11 @@ module Transferatu::Endpoints
         get "/groups/#{@group.name}/schedules/#{schedule.uuid}"
         expect(last_response.status).to eq(200)
       end
+
+      it "returns 404 when the group does not exist" do
+        get "/groups/doesnotexist/schedules#{schedule.uuid}"
+        expect(last_response.status).to eq(404)
+      end
     end
 
     describe "POST /groups/:name/schedules" do
@@ -35,27 +45,35 @@ module Transferatu::Endpoints
         header "Content-Type", "application/json"
       end
       it "succeeds" do
-        post "/groups/#{@group.name}/schedules", JSON.generate(
-                                                 name: 'my-schedule',
-                                                 callback_url: "https://example.com/#{@group.name}/schedules/my-schedule",
-                                                 hour: 23,
-                                                 days: ['Sunday', 'Tuesday', 'Friday'],
-                                                 timezone: 'America/Los_Angeles'
-                                               )
+        post "/groups/#{@group.name}/schedules",
+          JSON.generate(name: 'my-schedule',
+                        callback_url: "https://example.com/#{@group.name}/schedules/my-schedule",
+                        hour: 23,
+                        days: ['Sunday', 'Tuesday', 'Friday'],
+                        timezone: 'America/Los_Angeles')
         expect(last_response.status).to eq(201)
       end
 
       it "accepts optional retention parameters" do
-        post "/groups/#{@group.name}/schedules", JSON.generate(
-                                                 name: 'my-schedule',
-                                                 callback_url: "https://example.com/#{@group.name}/schedules/my-schedule",
-                                                 hour: 23,
-                                                 days: ['Sunday', 'Tuesday', 'Friday'],
-                                                 timezone: 'America/Los_Angeles',
-                                                 retain_weeks: 5,
-                                                 retain_months: 3
-                                               )
+        post "/groups/#{@group.name}/schedules",
+          JSON.generate(name: 'my-schedule',
+                        callback_url: "https://example.com/#{@group.name}/schedules/my-schedule",
+                        hour: 23,
+                        days: ['Sunday', 'Tuesday', 'Friday'],
+                        timezone: 'America/Los_Angeles',
+                        retain_weeks: 5,
+                        retain_months: 3)
         expect(last_response.status).to eq(201)
+      end
+
+      it "returns 404 when the group does not exist" do
+        post "/groups/doesnotexist/schedules",
+          JSON.generate(name: 'my-schedule',
+                        callback_url: "https://example.com/#{@group.name}/schedules/my-schedule",
+                        hour: 23,
+                        days: ['Sunday', 'Tuesday', 'Friday'],
+                        timezone: 'America/Los_Angeles')
+        expect(last_response.status).to eq(404)
       end
     end
 

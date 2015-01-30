@@ -3,6 +3,7 @@ require_relative 'helpers'
 module Transferatu::Endpoints
   class Transfers < Base
     include Serializer
+    include GroupFinder
 
     serialize_with Transferatu::Serializers::Transfer
 
@@ -13,15 +14,6 @@ module Transferatu::Endpoints
       end
 
       helpers do
-        def find_group(name)
-          group = current_user.groups_dataset.present.where(name: name).first
-          if group.nil?
-            raise Pliny::Errors::NotFound, "group #{name} does not exist"
-          else
-            group
-          end
-        end
-
         def find_transfer(group, id)
           xfer = if id =~ /\A\d+\z/
                    group.transfers_dataset.where(transfer_num: id.to_i)

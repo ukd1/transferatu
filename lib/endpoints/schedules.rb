@@ -3,13 +3,14 @@ require_relative 'helpers'
 module Transferatu::Endpoints
   class Schedules < Base
     include Serializer
+    include GroupFinder
 
     serialize_with Transferatu::Serializers::Schedule
 
     namespace "/groups/:group/schedules" do
       before do
         content_type :json, charset: 'utf-8'
-        @group = current_user.groups_dataset.present.where(name: params[:group]).first
+        @group = find_group(params[:group])
       end
 
       get do

@@ -30,22 +30,9 @@ module Transferatu::Endpoints
       end
 
       post do
-        schedule = Transferatu::Mediators::Schedules::Creator
-          .run(group: @group,
-               name: data["name"],
-               callback_url: data["callback_url"],
-               days: data["days"],
-               hour: data["hour"],
-               timezone: data["timezone"],
-               retain_weeks: data["retain_weeks"],
-               retain_months: data["retain_months"])
-        respond serialize(schedule), status: 201
-      end
-
-      put "/:id" do
-        with_schedule(params[:id]) do |s|
-          schedule = Transferatu::Mediators::Schedules::Updator
-            .run(schedule: s,
+        begin
+          schedule = Transferatu::Mediators::Schedules::Creator
+            .run(group: @group,
                  name: data["name"],
                  callback_url: data["callback_url"],
                  days: data["days"],
@@ -53,7 +40,32 @@ module Transferatu::Endpoints
                  timezone: data["timezone"],
                  retain_weeks: data["retain_weeks"],
                  retain_months: data["retain_months"])
-          respond serialize(schedule), status: 200
+          respond serialize(schedule), status: 201
+        rescue ArgumentError => e
+          raise Pliny::Errors::BadRequest, e.message
+        rescue Sequel::UniqueConstraintViolation
+          existing = @group.schedules_dataset.present
+            .where(group: @group, name: data['name']).first
+          respond serialize(existing), status: 409
+        end
+      end
+
+      put "/:id" do
+        with_schedule(params[:id]) do |s|
+          begin
+            schedule = Transferatu::Mediators::Schedules::Updator
+              .run(schedule: s,
+                   name: data["name"],
+                   callback_url: data["callback_url"],
+                   days: data["days"],
+                   hour: data["hour"],
+                   timezone: data["timezone"],
+                   retain_weeks: data["retain_weeks"],
+                   retain_months: data["retain_months"])
+            respond serialize(schedule), status: 200
+          rescue ArgumentError => e
+            raise Pliny::Errors::BadRequest, e.message
+          end
         end
       end
 

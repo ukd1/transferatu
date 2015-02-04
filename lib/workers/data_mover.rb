@@ -39,7 +39,7 @@ module Transferatu
   # expose progress, and propagate cancelations.
   class DataMover
 
-    CHUNK_SIZE = 8 * 1024 * 1024
+    CHUNK_SIZE = 8 * 1024
 
     attr_reader :processed_bytes
 

@@ -165,14 +165,18 @@ module Transferatu
     def_delegators :@future, :cancel
 
     def initialize(url, opts: {}, logger:, root:)
-      @url = url
-      @env = { "LD_LIBRARY_PATH" =>  "#{root}/lib" }
-      @cmd = command("#{root}/bin/pg_dump", opts, @url)
+      uri = URI.parse(url)
+      dbname = uri.path[1..-1]
+      @env = { "LD_LIBRARY_PATH" => "#{root}/lib", "PGPASSWORD" => uri.password }
+      @cmd = command("#{root}/bin/pg_dump",
+                     opts.merge(username: uri.user,
+                                host: uri.host,
+                                port: uri.port || 5432), dbname)
       @logger = logger
     end
 
     def run_async
-      @logger.call("Running #{@cmd.join(' ').sub(@url, 'postgres://...')}", level: :internal)
+      @logger.call("Running #{@cmd.join(' ')}", level: :internal)
       @future = run_command(@env, @cmd)
       @future.drain_stderr(@logger)
       @future.stdout
@@ -230,14 +234,19 @@ module Transferatu
     def_delegators :@future, :cancel
 
     def initialize(url, opts: {}, logger:, root:)
-      @url = url
-      @env = { "LD_LIBRARY_PATH" =>  "#{root}/lib" }
-      @cmd = command("#{root}/bin/pg_restore", opts.merge(dbname: @url))
+      uri = URI.parse(url)
+      dbname = uri.path[1..-1]
+      @env = { "LD_LIBRARY_PATH" => "#{root}/lib", "PGPASSWORD" => uri.password }
+      @cmd = command("#{root}/bin/pg_restore",
+                     opts.merge(username: uri.user,
+                                host: uri.host,
+                                port: uri.port || 5432,
+                                dbame: dbname))
       @logger = logger
     end
 
     def run_async
-      @logger.call("Running #{@cmd.join(' ').sub(@url, 'postgres://...')}}", level: :internal)
+      @logger.call("Running #{@cmd.join(' ')}}", level: :internal)
       @future = run_command(@env, @cmd)
       # We don't expect any output from stdout. Capture it anyway, but
       # keep it internal.

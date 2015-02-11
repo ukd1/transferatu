@@ -191,7 +191,12 @@ module Transferatu
     let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
 
     let(:root)     { "/app/bin/pg/9.2" }
-    let(:url)      { "postgres:///test" }
+    let(:user)     { "bob" }
+    let(:password) { "hunter2" }
+    let(:host)     { "example.com" }
+    let(:port)     { 667 }
+    let(:dbname)   { "adatabaseofmurders" }
+    let(:url)      { "postgres://#{user}:#{password}@#{host}:#{port}/#{dbname}" }
     let(:logger)   { ->(line, level: :info) {} }
     let(:stdin)    { double(:stdin) }
     let(:stdout)   { double(:stdout) }
@@ -204,10 +209,12 @@ module Transferatu
 
     describe "#run_async" do
       before do
-        expect(source).to receive(:run_command) { |env, command|
-          expect(command).to include("#{root}/bin/pg_dump", url)
+        expect(source).to receive(:run_command) do |env, command|
+          expect(command).to include("#{root}/bin/pg_dump", user, host, port.to_s, dbname)
+          expect(command).not_to include(password)
           expect(env["LD_LIBRARY_PATH"]).to eq("#{root}/lib")
-        }.and_return(future)
+          expect(env["PGPASSWORD"]).to eq(password)
+        end.and_return(future)
       end
 
       it "returns stdout" do
@@ -382,7 +389,12 @@ module Transferatu
     let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
 
     let(:root)     { "/app/bin/pg/9.2" }
-    let(:url)      { "postgres:///test" }
+    let(:user)     { "bob" }
+    let(:password) { "hunter2" }
+    let(:host)     { "example.com" }
+    let(:port)     { 667 }
+    let(:dbname)   { "adatabaseofmurders" }
+    let(:url)      { "postgres://#{user}:#{password}@#{host}:#{port}/#{dbname}" }
     let(:logs)     { [] }
     let(:logger)   { ->(line, level: :info) { logs << line } }
     let(:stdin)    { double(:stdin) }
@@ -397,8 +409,10 @@ module Transferatu
     describe "#run_async" do
       before do
         expect(sink).to receive(:run_command) { |env, command|
-          expect(command).to include("#{root}/bin/pg_restore", url)
+          expect(command).to include("#{root}/bin/pg_restore", user, host, port.to_s, dbname)
+          expect(command).not_to include(password)
           expect(env["LD_LIBRARY_PATH"]).to eq("#{root}/lib")
+          expect(env["PGPASSWORD"]).to eq(password)
         }.and_return(future)
       end
 

@@ -14,8 +14,20 @@ module Transferatu::Endpoints
       end
 
       helpers do
+        def find_schedule(id)
+          # if the id doesn't look like a uuid, don't submit it since postgres will freak out
+          is_uuid = id && id.match(/[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}/)
+          dataset = @group.schedules_dataset.present
+          if is_uuid
+            dataset = dataset.where(Sequel.|({uuid: id}, {name: id}))
+          else
+            dataset = dataset.where(name: id)
+          end
+          dataset.first
+        end
+
         def with_schedule(id)
-          schedule = @group.schedules_dataset.present.where(uuid: id).first
+          schedule = find_schedule(id)
           if schedule.nil?
             raise Pliny::Errors::NotFound, "schedule #{id} does not exist"
           else
@@ -44,28 +56,32 @@ module Transferatu::Endpoints
         rescue ArgumentError => e
           raise Pliny::Errors::BadRequest, e.message
         rescue Sequel::UniqueConstraintViolation
-          existing = @group.schedules_dataset.present
-            .where(group: @group, name: data['name']).first
+          existing = find_schedule(data['name'])
           respond serialize(existing), status: 409
         end
       end
 
       put "/:id" do
-        with_schedule(params[:id]) do |s|
-          begin
-            schedule = Transferatu::Mediators::Schedules::Updator
-              .run(schedule: s,
-                   name: data["name"],
+        begin
+          sched = find_schedule(params[:id])
+          opts = { name: data["name"],
                    callback_url: data["callback_url"],
                    days: data["days"],
                    hour: data["hour"],
                    timezone: data["timezone"],
                    retain_weeks: data["retain_weeks"],
-                   retain_months: data["retain_months"])
+                   retain_months: data["retain_months"] }
+          if sched
+            schedule = Transferatu::Mediators::Schedules::Updator
+              .run(opts.merge(schedule: sched))
             respond serialize(schedule), status: 200
-          rescue ArgumentError => e
-            raise Pliny::Errors::BadRequest, e.message
+          else
+            schedule = Transferatu::Mediators::Schedules::Creator
+              .run(opts.merge(group: @group))
+            respond serialize(schedule), status: 201
           end
+        rescue ArgumentError => e
+          raise Pliny::Errors::BadRequest, e.message
         end
       end
 

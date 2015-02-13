@@ -41,9 +41,8 @@ module Transferatu
 
     CHUNK_SIZE = 8 * 1024
 
-    attr_reader :processed_bytes
-
     def initialize(source, sink)
+      @lock = Mutex.new
       @source = source
       @sink = sink
       @processed_bytes = 0
@@ -51,7 +50,7 @@ module Transferatu
 
     # Number of bytes read from the Source and written to the Sink
     def processed_bytes
-      @processed_bytes
+      @lock.synchronize { @processed_bytes }
     end
 
     # Cancel a transfer
@@ -72,7 +71,8 @@ module Transferatu
 
         begin
           until source_stream.eof?
-            @processed_bytes += IO.copy_stream(source_stream, sink_stream, CHUNK_SIZE)
+            copied = IO.copy_stream(source_stream, sink_stream, CHUNK_SIZE)
+            @lock.synchronize { @processed_bytes += copied }
           end
         rescue Errno::EPIPE
           # Writing failed because the sink died: we trust the sink to

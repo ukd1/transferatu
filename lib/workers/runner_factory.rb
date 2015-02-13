@@ -241,7 +241,7 @@ module Transferatu
                      opts.merge(username: uri.user,
                                 host: uri.host,
                                 port: uri.port || 5432,
-                                dbame: dbname))
+                                dbname: dbname))
       @logger = logger
     end
 

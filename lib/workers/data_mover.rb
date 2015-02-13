@@ -14,6 +14,10 @@ module Transferatu
   #                  #wait returns. Should return true iff the
   #                  Source drained all its data to the source
   #                  stream.
+  # #alive?        - Check if process is still running, by checking
+  #                  if the monitor thread is still running.
+  #                  Note: this thread is a just a c function which
+  #                  calls wait(2).
   # #cancel        - Cancel producing data (but do not close the
   #                  source). Note that #wait will still be called
   #                  after #cancel, and should return as promptly
@@ -30,6 +34,10 @@ module Transferatu
   #                  called after the input stream is closed. Should
   #                  return true iff the Sink read and processed all
   #                  data from the stream.
+  # #alive?        - Check if process is still running, by checking
+  #                  if the monitor thread is still running.
+  #                  Note: this thread is a just a c function which
+  #                  calls wait(2).
   # #cancel        - Cancel consuming data (but do not close the
   #                  Sink). Note that #wait will still be called
   #                  after #cancel. If #cancel is called, #wait must
@@ -70,7 +78,7 @@ module Transferatu
         sink_stream = @sink.run_async
 
         begin
-          until source_stream.eof?
+          until source_stream.eof? || !@source.alive? || !@sink.alive?
             copied = IO.copy_stream(source_stream, sink_stream, CHUNK_SIZE)
             @lock.synchronize { @processed_bytes += copied }
           end

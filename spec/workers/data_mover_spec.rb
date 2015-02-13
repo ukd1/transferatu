@@ -13,6 +13,9 @@ module Transferatu
       expect(source).to receive(:run_async).and_return(short_source)
       expect(sink).to receive(:run_async).and_return(sink_stream)
 
+      expect(source).to receive(:alive?).and_return(true)
+      expect(sink).to receive(:alive?).and_return(true)
+
       expect(source).to receive(:wait).and_return(true)
       expect(sink).to receive(:wait).and_return(true)
 
@@ -25,6 +28,9 @@ module Transferatu
     it "should run transfers larger than chunk size" do
       expect(source).to receive(:run_async).and_return(long_source)
       expect(sink).to receive(:run_async).and_return(sink_stream)
+
+      expect(source).to receive(:alive?).twice.and_return(true)
+      expect(sink).to receive(:alive?).twice.and_return(true)
 
       expect(source).to receive(:wait).and_return(true)
       expect(sink).to receive(:wait).and_return(true)
@@ -43,6 +49,9 @@ module Transferatu
       expect(source).to receive(:run_async).and_return(long_source)
       expect(sink).to receive(:run_async).and_return(sink_stream)
 
+      expect(source).to receive(:alive?).and_return(true)
+      expect(sink).to receive(:alive?).and_return(true)
+
       expect(sink_stream).to receive(:write).and_raise(Errno::EPIPE)
 
       expect(source).to receive(:wait).and_return(true)
@@ -56,6 +65,9 @@ module Transferatu
       err = StandardError.new("oh snap")
       expect(sink).to receive(:run_async).and_return(sink_stream)
       expect(IO).to receive(:copy_stream).and_raise(err)
+
+      expect(source).to receive(:alive?).and_return(true)
+      expect(sink).to receive(:alive?).and_return(true)
 
       expect(source).to receive(:wait).and_return(true)
       expect(sink).to receive(:wait).and_return(true)

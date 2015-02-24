@@ -64,7 +64,22 @@ module Transferatu
       end
 
       it "PUT /groups/:name/schedules/:id" do
-        sched = create(:schedule, group: @group)
+        verify_response = ->(data, expected_status: 200, expected_uuid: nil) do
+          expect(last_response.status).to eq(expected_status)
+          response = JSON.parse(last_response.body)
+          data.keys.reject { |k| k == :callback_url }.each do |key|
+            expect(response[key.to_s]).to eq data[key]
+          end
+          expect(response["uuid"]).not_to be_nil
+          expect(response["uuid"]).to eq(expected_uuid) unless expected_uuid.nil?
+          sched = Schedule[response["uuid"]]
+          data.keys.reject { |k| k == :days }.each do |key|
+            expect(sched.public_send(key)).to eq data[key]
+          end
+          expect(sched.dows).to eq(data[:days].map { |d| Date::DAYNAMES.index(d) })
+        end
+        put "/groups/#{@group.name}/schedules/#{request_data[:name]}", request_data
+        verify_response.call(request_data, expected_status: 201)
         updates = { name: 'my-awesome-schedule',
                     callback_url: "https://example.com/#{@group.name}/schedules/foo",
                     hour: 19,
@@ -72,18 +87,9 @@ module Transferatu
                     timezone: 'America/Chicago',
                     retain_weeks: 12,
                     retain_months: 19 }
-        put "/groups/#{@group.name}/schedules/#{sched.uuid}", updates
-        expect(last_response.status).to eq(200)
-        response = JSON.parse(last_response.body)
-        updates.keys.reject { |k| k == :callback_url }.each do |key|
-          expect(response[key.to_s]).to eq updates[key]
-        end
-        expect(response["uuid"]).to eq(sched.uuid)
-        sched.reload
-        updates.keys.reject { |k| k == :days }.each do |key|
-          expect(sched.public_send(key)).to eq updates[key]
-        end
-        expect(sched.dows).to eq(updates[:days].map { |d| Date::DAYNAMES.index(d) })
+        expected_uuid = Schedule.first.uuid
+        put "/groups/#{@group.name}/schedules/#{request_data[:name]}", updates
+        verify_response.call(updates)
       end
 
       it "GET /groups/:name/schedules/:id" do

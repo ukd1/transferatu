@@ -1,6 +1,6 @@
 Sequel.migration do
   change do
-    create_table(:exec_infos) do
+    create_table(:resource_usages) do
       timestamptz  :created_at, default: Sequel.function(:now), null: false
       uuid         :worker_id, null: false
       uuid         :foreign_uuid, null: false

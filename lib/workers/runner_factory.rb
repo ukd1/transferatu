@@ -62,6 +62,8 @@ module Transferatu
                                   logger: logger)
                when 'gof3r'
                  Gof3rSource.new(transfer.from_url, logger: logger)
+               when 'htcat'
+                 HtcatSource.new(transfer.from_url, logger: logger)
                else
                  raise ArgumentError, "Unkown transfer source type: #{from_type}"
                end
@@ -297,7 +299,7 @@ module Transferatu
     end
   end
 
-  # A source that runs Gof3r to fetch from an S3 URL
+  # A source that runs Gof3r to fetch from an S3 URL we have access to
   class Gof3rSource
     include Commandable
     extend Forwardable
@@ -319,6 +321,35 @@ module Transferatu
 
     def run_async
       @logger.call("Running #{@cmd.join(' ')}", level: :internal)
+      @future = run_command(@cmd)
+      @future.drain_stderr(@logger)
+      @future.stdout
+    end
+
+    def wait
+      @logger.call "waiting for download to complete"
+      result = @future.wait
+      @logger.call "download done"
+      result.success? == true
+    end
+  end
+
+  # A source that runs htcat to fetch from any URL
+  class HtcatSource
+    include Commandable
+    extend Forwardable
+
+    def_delegators :@future, :cancel
+
+    def initialize(url, opts: {}, logger:)
+      # htcat $url
+      @cmd = command('htcat', {}, url)
+      @uri = URI.parse(url)
+      @logger = logger
+    end
+
+    def run_async
+      @logger.call("Running htcat #{@uri.scheme} ...", level: :internal)
       @future = run_command(@cmd)
       @future.drain_stderr(@logger)
       @future.stdout

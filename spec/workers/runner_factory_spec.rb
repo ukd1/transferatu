@@ -6,7 +6,8 @@ module Transferatu
       [ [ 'pg_dump', 'postgres:///test1', 'pg_restore', 'postgres:///test2', true ],
         [ 'pg_dump', 'postgres:///test1', 'gof3r', 'https://bucket.s3.amazonaws.com/some/key', true ],
         [ 'gof3r', 'https://bucket.s3.amazonaws.com/some/key', 'pg_restore', 'postgres:///test1', true ],
-        [ 'gof3r', 'https://bucket.s3.amazonaws.com/some/key', 'gof3r', 'https://bucket.s3.amazonaws.com/some/key', false ] ].each do |from_type, from, to_type, to, valid|
+        [ 'gof3r', 'https://bucket.s3.amazonaws.com/some/key', 'gof3r', 'https://bucket.s3.amazonaws.com/some/key', false ],
+        [ 'htcat', 'https://example.com/my-backup', 'pg_restore', 'postgres:///test1', true ] ].each do |from_type, from, to_type, to, valid|
         context do
           let(:from_conn)        { double(:connection) }
           let(:from_size_result) { double(:size_result) }
@@ -339,6 +340,67 @@ module Transferatu
       before do
         expect(source).to receive(:run_command) { |command|
           expect(command).to include('gof3r', 'my-bucket', 'some/key')
+        }.and_return(future)
+      end
+
+      it "returns the target process' stdin" do
+        stream = source.run_async
+        expect(stream).to be(stdout)
+        expect(stream).to_not be_closed
+      end
+
+      it "collects logs while running" do
+        expect(future).to receive(:drain_stderr).with(logger)
+        source.run_async
+      end
+
+      describe "#wait" do
+        before do
+          source.run_async
+        end
+        it "returns true when the process succeeds" do
+          expect(future).to receive(:wait).and_return(success)
+          expect(source.wait).to be true
+        end
+        it "returns false when the process fails" do
+          expect(future).to receive(:wait).and_return(failure)
+          expect(source.wait).to be false
+        end
+        it "returns false when the process is signaled" do
+          expect(future).to receive(:wait).and_return(signaled)
+          expect(source.wait).to be false
+        end
+      end
+
+      describe "#cancel" do
+        before do
+          source.run_async
+        end
+        it "delegates to ShellProcess#cancel" do
+          expect(future).to receive(:cancel)
+          source.cancel
+        end
+      end
+    end
+  end
+
+  describe HtcatSource do
+    let(:success)  { double(:process_status, exitstatus: 0, termsig: nil, success?: true) }
+    let(:failure)  { double(:process_status, exitstatus: 1, termsig: nil, success?: false) }
+    let(:signaled) { double(:process_status, exitstatus: nil, termsig: 14, success?: nil) }
+
+    let(:logger)   { ->(line, level: :info) {} }
+    let(:source)   { HtcatSource.new("https://example.com/my-backup", logger: logger) }
+    let(:stdin)    { double(:stdin) }
+    let(:stdout)   { double(:stdout) }
+    let(:stderr)   { double(:stderr) }
+    let(:wthr)     { double(:wthr, pid: 22) }
+    let(:future)   { ShellFuture.new(stdin, stdout, stderr, wthr) }
+
+    describe "#run_async" do
+      before do
+        expect(source).to receive(:run_command) { |command|
+          expect(command).to include('htcat', 'https://example.com/my-backup')
         }.and_return(future)
       end
 

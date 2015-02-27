@@ -69,6 +69,20 @@ module Transferatu
         expect(t).to be_instance_of(Transferatu::Transfer)
       end
 
+      it "automatically uses htcat instead of gof3r for external source URLs" do
+        creator = Mediators::Transfers::Creator.new(group: group,
+                                                    from_type: 'gof3r',
+                                                    from_url: 'https://example.com/my-backup',
+                                                    to_type: 'pg_restore',
+                                                    to_url: to_url,
+                                                    options: opts)
+        t = creator.call
+        expect(t).to_not be_nil
+        expect(t).to be_instance_of(Transferatu::Transfer)
+        expect(t.from_url).to eq('https://example.com/my-backup')
+        expect(t.from_type).to eq 'htcat'
+      end
+
       it "rejects a new transfer with an explicit gof3r target url" do
         creator = Mediators::Transfers::Creator.new(group: group,
                                                     from_type: 'pg_dump',

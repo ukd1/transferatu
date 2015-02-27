@@ -57,6 +57,11 @@ module Transferatu
             raise InvalidTransferError, "invalid from_url for pg_dump"
           end
         end
+        # hack: gopher can't deal with public signed S3 URLs or other
+        # sources; we just rewrite here to make it easy on the clients
+        if @from_type == 'gof3r' && !internal_url?(@from_url)
+          @from_type = 'htcat'
+        end
         begin
           create_opts = { group: @group,
                           from_type: @from_type, from_url: @from_url, from_name: @from_name,
@@ -69,6 +74,12 @@ module Transferatu
         rescue StandardError => e
           puts e.inspect
         end
+      end
+
+      private
+
+      def internal_url?(url)
+        url =~ %r{\Ahttps://#{Config.s3_bucket_name}.s3.amazonaws.com}
       end
     end
   end

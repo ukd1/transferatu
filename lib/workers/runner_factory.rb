@@ -311,7 +311,7 @@ module Transferatu
       uri = URI.parse(url)
       hostname = uri.hostname
       bucket = hostname.split('.').shift
-      key = uri.path.sub(/\A\//, '')
+      key = URI.decode(uri.path.sub(/\A\//, ''))
       # gof3r get -b $bucket -k $key; we assume the S3 keys are in the
       # environment.
       @cmd = command(%W(gof3r get), { b: bucket, k: key})

@@ -84,10 +84,6 @@ module Transferatu
         t.update(canceled_at: Time.now)
         expect(t.canceled?).to be true
       end
-      it "is true when the transfer is canceled out of band" do
-        t.db.run "UPDATE transfers SET canceled_at = now() WHERE uuid = '#{t.uuid}'"
-        expect(t.canceled?).to be true
-      end
     end
 
     describe "#started?" do

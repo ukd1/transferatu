@@ -45,9 +45,7 @@ EOF
     # Has this transfer been flag to be canceled? Note that the
     # cancelation is in progress until finished_at is non-nil
     def canceled?
-      # Always load the latest value, since cancelations will come in
-      # through the database.
-      !self.this.get(:canceled_at).nil?
+      !self.canceled_at.nil?
     end
 
     # Transfer has started processing

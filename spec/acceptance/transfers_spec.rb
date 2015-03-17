@@ -145,6 +145,7 @@ module Transferatu
         expect(canceled_at).to be_within(1.second).of(before)
         expect(canceled_at).to be <= after
 
+        xfer.reload
         expect(xfer.canceled?).to be true
       end
     end

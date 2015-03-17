@@ -92,6 +92,20 @@ module Transferatu
         verify_response.call(updates)
       end
 
+      context "it allows replacing a deleted schedule" do
+        it "PUT /groups/:name/schedules/:id" do
+          sched = create(:schedule, group: @group)
+          sched.delete
+
+          put "/groups/#{@group.name}/schedules/#{request_data[:name]}", request_data
+          expect(last_response.status).to eq(201)
+          response = JSON.parse(last_response.body)
+          request_data.keys.reject { |k| k == :callback_url }.each do |key|
+            expect(response[key.to_s]).to eq request_data[key]
+          end
+        end
+      end
+
       it "GET /groups/:name/schedules/:id" do
         sched = create(:schedule, group: @group)
         get "/groups/#{@group.name}/schedules/#{sched.uuid}"

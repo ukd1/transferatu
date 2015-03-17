@@ -8,6 +8,8 @@ module Transferatu
     def perform(transfer)
       @status.update(transfer: transfer)
 
+      # TODO: break this out into an Executor mediator?
+
       runner = nil
       begin
         runner = RunnerFactory.runner_for(transfer)
@@ -65,6 +67,9 @@ module Transferatu
       end
 
       progress_thr.join
+
+      Transferatu::Mediators::Transfers::Evictor
+        .run(transfer: transfer)
     ensure
       @status.update(transfer: nil)
     end

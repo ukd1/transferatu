@@ -34,6 +34,8 @@ module Transferatu
 
       before do
         allow(worker).to receive(:sleep) { |time| sleep 0.05 }
+        allow(Transferatu::Mediators::Transfers::Evictor).to receive(:run)
+          .with(transfer: transfer)
       end
 
       it "should record success in case of a successful transfer" do

@@ -39,7 +39,7 @@ EOF
     # Flag transfer as canceled. A canceled transfer will be flagged
     # as failed as soon as possible.
     def cancel
-      self.update(canceled_at: Time.now)
+      self.update(canceled_at: Time.now) unless canceled?
     end
 
     # Has this transfer been flag to be canceled? Note that the

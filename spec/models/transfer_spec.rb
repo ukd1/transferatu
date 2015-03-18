@@ -74,6 +74,16 @@ module Transferatu
         t.cancel
         expect(t.canceled_at).to be > before_cancel
       end
+
+      it "does not update the canceled time for an already-canceled transfer" do
+        expect(t.canceled_at).to be_nil
+        before_cancel = Time.now
+        t.cancel
+        after_first_cancel = Time.now
+        t.cancel
+        expect(t.canceled_at).to be > before_cancel
+        expect(t.canceled_at).to be < after_first_cancel
+      end
     end
 
     describe "#canceled?" do

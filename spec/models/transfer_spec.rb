@@ -136,12 +136,28 @@ module Transferatu
         expect(t.finished_at).to_not be_nil
         expect(t.succeeded).to be true
       end
+
+      it "does not update the finished_at if previously completed" do
+        t.complete
+        first_completion_before = Time.now
+        expect(t.finished_at).to be < first_completion_before
+        expect(t.succeeded).to be true
+        t.complete
+        expect(t.finished_at).to be < first_completion_before
+        expect(t.succeeded).to be true
+      end
+
+      it "raises if trying to complete an already-failed transfer" do
+        t.fail
+        expect { t.complete }.to raise_error(Transferatu::Transfer::AlreadyFailed)
+      end
     end
 
     describe "#failed?" do
       it "is false if a transfer has not failed" do
         expect(t.failed?).to be false
       end
+
       it "is true if a transfer has failed" do
         t.update(finished_at: Time.now, succeeded: false)
         expect(t.failed?).to be true
@@ -153,6 +169,21 @@ module Transferatu
         t.fail
         expect(t.finished_at).to_not be_nil
         expect(t.succeeded).to be false
+      end
+
+      it "does not update the finished_at if previously failed" do
+        t.fail
+        first_failure_before = Time.now
+        expect(t.finished_at).to be < first_failure_before
+        expect(t.succeeded).to be false
+        t.fail
+        expect(t.finished_at).to be < first_failure_before
+        expect(t.succeeded).to be false
+      end
+
+      it "raises if trying to fail an already-completed transfer" do
+        t.complete
+        expect { t.fail }.to raise_error(Transferatu::Transfer::AlreadySucceeded)
       end
     end
 

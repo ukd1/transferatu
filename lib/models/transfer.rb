@@ -1,5 +1,12 @@
 module Transferatu
   class Transfer < Sequel::Model
+    class AlreadyFailed < StandardError
+      def initialize(xfer); super("Transfer #{xfer.uuid} already failed"); end
+    end
+    class AlreadySucceeded < StandardError
+      def initialize(xfer); super("Transfer #{xfer.uuid} already succeeded"); end
+    end
+
     include Transferatu::Loggable
 
     plugin :timestamps
@@ -71,7 +78,13 @@ EOF
 
     # Flag transfer as successfully completed
     def complete
-      self.update(finished_at: Time.now, succeeded: true)
+      if succeeded?
+        # do nothing
+      elsif failed?
+        raise AlreadyFailed, self
+      else
+        self.update(finished_at: Time.now, succeeded: true)
+      end
     end
 
     # Transfer has finished unsuccessfully
@@ -81,7 +94,13 @@ EOF
 
     # Flag transfer as unsusccessfully completed
     def fail
-      self.update(finished_at: Time.now, succeeded: false)
+      if failed?
+        # do nothing
+      elsif succeeded?
+        raise AlreadySucceeded, self
+      else
+        self.update(finished_at: Time.now, succeeded: false)
+      end
     end
 
     # Mark transfer as deleted, and cancel it if it is in progress

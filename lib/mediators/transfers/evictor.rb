@@ -1,7 +1,7 @@
 module Transferatu
   module Mediators::Transfers
     class Evictor < Mediators::Base
-      def initialize(transfer: transfer)
+      def initialize(transfer:)
         @transfer = transfer
       end
 

@@ -43,14 +43,14 @@ EOF
       self.where(started_at: nil, canceled_at: nil, finished_at: nil)
     end
 
-    # Flag transfer as canceled. A canceled transfer will be flagged
-    # as failed as soon as possible.
+    # Flag transfer as canceled. Do nothing if the transfer has already finished.
     def cancel
-      self.update(canceled_at: Time.now) unless canceled?
+      unless finished? || canceled?
+        self.update(canceled_at: Time.now, finished_at: Time.now, succeeded: false)
+      end
     end
 
-    # Has this transfer been flag to be canceled? Note that the
-    # cancelation is in progress until finished_at is non-nil
+    # Has this transfer been flag to be canceled?
     def canceled?
       !self.canceled_at.nil?
     end

@@ -36,12 +36,7 @@ module Transferatu
       xfer_id = transfer.uuid
       progress_thr = Thread.new do
         xfer = Transfer[xfer_id]
-        loop do
-          break unless xfer.in_progress?
-          if xfer.canceled?
-            runner.cancel
-            break
-          end
+        while xfer.in_progress? do
           xfer.mark_progress(runner.processed_bytes)
           # Nothing to change, but we want to update updated_at to
           # report in
@@ -49,7 +44,12 @@ module Transferatu
           sleep 5
           xfer.reload
         end
-        xfer.mark_progress(runner.processed_bytes)
+        if xfer.canceled?
+          runner.cancel
+        else
+          # Flag final progress
+          xfer.mark_progress(runner.processed_bytes)
+        end
       end
 
       begin
@@ -59,6 +59,9 @@ module Transferatu
         else
           transfer.fail
         end
+      rescue AlreadyFailed
+        # ignore; if the transfer was canceled or otherwise failed
+        # out of band, there's not much for us to do
       rescue StandardError => e
         transfer.log("Transfer failed for unexpected reason: #{e.message}\n #{e.backtrace.join("\n")}
 ", level: :internal)

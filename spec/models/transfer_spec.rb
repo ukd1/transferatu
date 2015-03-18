@@ -68,11 +68,13 @@ module Transferatu
     end
 
     describe "#cancel" do
-      it "flags a transfer as canceled" do
+      it "flags a transfer as canceled, finished, and failed" do
         expect(t.canceled_at).to be_nil
         before_cancel = Time.now
         t.cancel
         expect(t.canceled_at).to be > before_cancel
+        expect(t.finished_at).to be > before_cancel
+        expect(t.succeeded).to be false
       end
 
       it "does not update the canceled time for an already-canceled transfer" do
@@ -83,6 +85,15 @@ module Transferatu
         t.cancel
         expect(t.canceled_at).to be > before_cancel
         expect(t.canceled_at).to be < after_first_cancel
+      end
+
+      it "does not do anything for an already-finished transfer" do
+        t.complete
+        before_cancel = Time.now
+        t.cancel
+        expect(t.canceled?).to be false
+        expect(t.succeeded?).to be true
+        expect(t.finished_at).to be < before_cancel
       end
     end
 

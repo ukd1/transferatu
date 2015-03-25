@@ -32,6 +32,7 @@ module Transferatu
           sched_opts.merge!(retain_months: @retain_months.to_i)
         end
         @schedule.update(sched_opts)
+        @schedule
       end
     end
   end

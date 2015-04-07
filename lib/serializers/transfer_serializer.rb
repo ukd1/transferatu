@@ -45,6 +45,8 @@ module Transferatu::Serializers
         deleted_at:  transfer.deleted_at,
         purged_at:   transfer.purged_at,
 
+        schedule: { uuid: transfer.schedule_id },
+
         num_keep: transfer.num_keep
       }
     end

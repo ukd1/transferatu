@@ -16,7 +16,7 @@ describe Transferatu::ResourceUsage do
       expect(exec_info.all? { |info| info.foreign_uuid == execution_id }).to be true
       expect(exec_info.all? { |info| info.process_type == 'sleep' }).to be true
       expect(exec_info.all? { |info| info.rss_kb > 0 && info.rss_kb < 10000 }).to be true
-      expect(exec_info.all? { |info| info.vsz_kb > 0 && info.vsz_kb < 10000 }).to be true
+      expect(exec_info.all? { |info| info.vsz_kb > 0 && info.vsz_kb < 20000 }).to be true
       expect(exec_info.all? { |info| info.pcpu >= 0 && info.pcpu <= 100 }).to be true
     end
   end

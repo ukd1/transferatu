@@ -10,7 +10,9 @@ module Transferatu
         # transfers for expiration here; ideally we should have
         # better-defined semantics
         to_delete = @transfer.group.transfers_dataset.present
-          .where(from_name: @transfer.from_name, to_type: 'gof3r', succeeded: true)
+          .where(from_name: @transfer.from_name,
+                 to_type: 'gof3r', schedule_id: nil,
+                 succeeded: true)
           .order_by(Sequel.desc(:created_at))
           .offset(@transfer.num_keep)
         to_delete.each do |evicted|

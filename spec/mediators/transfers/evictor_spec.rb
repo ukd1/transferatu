@@ -50,4 +50,18 @@ describe Transferatu::Mediators::Transfers::Evictor do
     end
     expect(failed_xfer.deleted?).to be false
   end
+
+  it "does not count scheduled transfers against limit" do
+    schedule = create(:schedule)
+    scheduled_xfer = create(:transfer, group: xfer.group,
+                            from_name: dbname, to_type: 'gof3r',
+                            succeeded: true, schedule: schedule)
+    Transferatu::Mediators::Transfers::Evictor.run(transfer: xfer)
+    group.transfers_dataset
+      .where(schedule_id: nil, from_name: dbname, to_type: 'gof3r')
+      .present.order_by(Sequel.desc(:created_at)).all.each_with_index do |xfer, i|
+      expect(xfer.deleted?).to be (i > num_keep)
+    end
+    expect(scheduled_xfer.deleted?).to be false
+  end
 end

@@ -23,7 +23,16 @@ module Transferatu
     def self.run_next(worker)
       transfer = Transfer.begin_next_pending
       if transfer
-        worker.perform(transfer)
+        if transfer.options["trace"]
+          Transferatu::ResourceUsage.tracking(transfer.uuid,
+                                              transfer.from_type,
+                                              transfer.to_type,
+                                              'ruby') do
+            worker.perform(transfer)
+          end
+        else
+          worker.perform(transfer)
+        end
       else
         worker.wait
       end

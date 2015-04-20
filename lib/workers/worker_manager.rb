@@ -18,7 +18,7 @@ module Transferatu
       #  - the worker was updated or created recently
       #  - if the worker has a transfer, that transfer has been updated recently
       failed = existing_statuses.select do |status|
-        expect_progress_since = Time.now - 5.minutes
+        expect_progress_since = Time.now - 15.minutes
         worker_last_progress_at = status.updated_at || status.created_at
         transfer = status.transfer
         (worker_last_progress_at < expect_progress_since) ||

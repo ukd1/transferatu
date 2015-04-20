@@ -198,6 +198,40 @@ module Transferatu
       end
     end
 
+    describe "#retry" do
+      it "flags a completed transfer as not started" do
+        t.complete
+        t.retry
+        expect(t.succeeded?).to be false
+        expect(t.finished?).to be false
+        expect(t.in_progress?).to be false
+      end
+
+      it "flags a canceled transfer as not started" do
+        t.cancel
+        t.retry
+        expect(t.succeeded?).to be false
+        expect(t.finished?).to be false
+        expect(t.in_progress?).to be false
+      end
+
+      it "flags an in-progress transfer as not started" do
+        t.update(started_at: Time.now)
+        t.retry
+        expect(t.succeeded?).to be false
+        expect(t.finished?).to be false
+        expect(t.in_progress?).to be false
+      end
+
+      it "flags a failed transfer as not started" do
+        t.fail
+        t.retry
+        expect(t.succeeded?).to be false
+        expect(t.finished?).to be false
+        expect(t.in_progress?).to be false
+      end
+    end
+
     describe "#in_progress?" do
       it "is false when a transfer has not started" do
         expect(t.in_progress?).to be false

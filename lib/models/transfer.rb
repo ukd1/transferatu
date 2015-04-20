@@ -103,6 +103,12 @@ EOF
       end
     end
 
+    def retry
+      self.update(finished_at: nil, succeeded: nil, started_at: nil,
+                  deleted_at: nil, purged_at: nil, canceled_at: nil,
+                  processed_bytes: 0, source_bytes: 0)
+    end
+
     # Mark transfer as deleted, and cancel it if it is in progress
     def after_destroy
       cancel if in_progress?

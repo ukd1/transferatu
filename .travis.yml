@@ -1,7 +1,7 @@
 language: ruby
 cache: bundler
 rvm:
-  - 2.2.0
+  - 2.2.2
 bundler_args: --without development
 before_script:
   - while read line; do export $line; done < .env.test

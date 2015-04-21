@@ -59,7 +59,7 @@ module Transferatu
         else
           transfer.fail
         end
-      rescue AlreadyFailed
+      rescue Transfer::AlreadyFailed
         # ignore; if the transfer was canceled or otherwise failed
         # out of band, there's not much for us to do
       rescue StandardError => e

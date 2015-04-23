@@ -21,7 +21,7 @@ module Transferatu::Serializers
     private
 
     def self.basic_structure(transfer)
-      {
+      response = {
         uuid: transfer.uuid,
         num:  transfer.transfer_num,
 
@@ -45,10 +45,14 @@ module Transferatu::Serializers
         deleted_at:  transfer.deleted_at,
         purged_at:   transfer.purged_at,
 
-        schedule: { uuid: transfer.schedule_id },
-
         num_keep: transfer.num_keep
       }
+
+      unless transfer.schedule_id.nil?
+        response[:schedule] = { uuid: transfer.schedule_id }
+      end
+
+      response
     end
   end
 end

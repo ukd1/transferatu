@@ -39,7 +39,7 @@ module Transferatu
   # expose progress, and propagate cancelations.
   class DataMover
 
-    CHUNK_SIZE = 8 * 1024
+    CHUNK_SIZE = 512 * 1024
 
     def initialize(source, sink)
       @lock = Mutex.new

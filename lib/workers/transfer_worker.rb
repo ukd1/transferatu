@@ -24,6 +24,7 @@ module Transferatu
                       "Could not connect to database to initialize transfer",
                       e)
       rescue StandardError => e
+        Rollbar.error(e, transfer_id: transfer.uuid)
         fail_transfer(transfer,
                       "Could not initialize transfer",
                       e)

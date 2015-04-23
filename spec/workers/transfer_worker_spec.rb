@@ -169,11 +169,15 @@ module Transferatu
         expect(status.transfer_id).to be nil
       end
 
-      it "should fail the transfer and log an error if RunnerFactory raises a StandardError" do
+      it "should fail the transfer, report to Rollbar, and log an error if RunnerFactory raises a StandardError" do
         err_msg = 'oh snap!'
         expect(RunnerFactory).to receive(:runner_for) do |t|
           expect(t.uuid).to eq transfer.uuid
           raise StandardError, err_msg
+        end
+        expect(Rollbar).to receive(:error) do |err, opts|
+          expect(err).to be_kind_of(StandardError)
+          expect(opts[:transfer_id]).to eq(transfer.uuid)
         end
         expect(transfer.logs).to be_empty
         expect { worker.perform(transfer) }.to_not raise_error

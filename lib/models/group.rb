@@ -14,12 +14,10 @@ module Transferatu
     end
 
     def log(message)
-      # N.B.: we leak two threads per logplex endpoint here due to
-      # the structure of lpxc, but given the low number of endpoints,
-      # this is tolerable
-      unless log_input_url.nil?
-        Lpxc.puts(message, log_input_url, procid: Config.logplex_procid)
-      end
+      # TODO: restore sending logs to logplex: we've had issues with
+      # this stalling progress when it can't reach logplex. Logs are
+      # already available in the database and exposed through the transfer
+      # API, so just rely on that for now.
     end
   end
 end

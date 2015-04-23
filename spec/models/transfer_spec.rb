@@ -261,23 +261,23 @@ module Transferatu
 
     describe "#log" do
       it "stores non-transient log messages" do
-        allow(Lpxc).to receive(:puts)
+        allow(t.group).to receive(:log)
         t.log "hello", transient: false
         expect(t.logs).to satisfy { |logs| logs.find { |entry| entry.message == 'hello' } }
       end
       it "does not store transient log messages" do
-        allow(Lpxc).to receive(:puts)
+        allow(t.group).to receive(:log)
         t.log "hello", transient: true
         expect(t.logs).to be_empty
       end
       %i(info warning error).each do |level|
         it "logs #{level} messages to its group" do
-          expect(Lpxc).to receive(:puts)
+          expect(t.group).to receive(:log)
           t.log "hello", level: level
         end
       end
       it "does not log internal messages to its group" do
-        expect(Lpxc).to_not receive(:puts)
+        expect(t.group).to_not receive(:puts)
         t.log "hello", level: :internal
       end
     end

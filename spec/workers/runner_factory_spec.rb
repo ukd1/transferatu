@@ -526,6 +526,15 @@ module Transferatu
           sink.run_async
           expect(sink.wait).to be true
         end
+        it "returns true when process fails with alternate PL/pgSQL failure matching warning count" do
+          expect(future).to receive(:wait).and_return(failure)
+          expect(future).to receive(:drain_stderr) do |l|
+            l.call "Command was: CREATE PROCEDURAL LANGUAGE plpgsql;"
+            l.call "WARNING: errors ignored on restore: 1"
+          end
+          sink.run_async
+          expect(sink.wait).to be true
+        end
         it "returns false when process fails with PL/pgSQL failure not matching warning count" do
           expect(future).to receive(:wait).and_return(failure)
           expect(future).to receive(:drain_stderr) do |l|

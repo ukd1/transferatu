@@ -267,7 +267,7 @@ module Transferatu
       @future.drain_stderr(->(line) do
                              if line =~ /\ACommand was: COMMENT ON EXTENSION /
                                @failed_extension_comment_count += 1
-                             elsif line == 'Command was: CREATE OR REPLACE PROCEDURAL LANGUAGE plpgsql;'
+                             elsif line =~ /\ACommand was: CREATE(?: OR REPLACE)? PROCEDURAL LANGUAGE plpgsql;/
                                # N.B.: we do a boolean flag here instead of a count so that
                                # if for whatever crazy reason we see this multiple tiimes, it
                                # should fail to match the error count and the overall transfer

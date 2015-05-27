@@ -127,7 +127,7 @@ GEM
     rspec-mocks (3.1.3)
       rspec-support (~> 3.1.0)
     rspec-support (3.1.2)
-    sequel (4.18.0)
+    sequel (4.21.0)
     sequel-paranoid (0.4.3)
       sequel
     sequel_pg (1.6.11)
@@ -189,7 +189,7 @@ DEPENDENCIES
   rest-client
   rollbar
   rspec
-  sequel
+  sequel (~> 4.21.0)
   sequel-paranoid
   sequel_pg
   sinatra

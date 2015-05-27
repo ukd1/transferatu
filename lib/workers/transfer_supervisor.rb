@@ -21,7 +21,11 @@ module Transferatu
     end
 
     def self.run_next(worker)
-      transfer = Transfer.begin_next_pending
+      transfer = begin
+                   Transfer.begin_next_pending
+                 rescue Sequel::SerializationFailure
+                   # ignore; wait and try again
+                 end
       if transfer
         if transfer.options["trace"]
           Transferatu::ResourceUsage.tracking(transfer.uuid,

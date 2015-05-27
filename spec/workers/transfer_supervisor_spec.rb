@@ -27,6 +27,13 @@ module Transferatu
         expect(worker).to receive(:wait)
         TransferSupervisor.run_next(worker)
       end
+
+      it "asks the worker to wait if starting the next transfer yields a serialization failure" do
+        expect(Transfer).to receive(:begin_next_pending)
+          .and_raise(Sequel::SerializationFailure)
+        expect(worker).to receive(:wait)
+        TransferSupervisor.run_next(worker)
+      end
     end
   end
 end

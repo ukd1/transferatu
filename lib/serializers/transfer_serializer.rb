@@ -6,7 +6,7 @@ module Transferatu::Serializers
 
     structure(:verbose) do |transfer|
       response = basic_structure(transfer)
-      response[:logs] = transfer.logs.reject do |item|
+      response[:logs] = transfer.logs(limit: nil).reject do |item|
         item.level == 'internal'
       end.sort_by(&:created_at).map do |item|
         {

@@ -75,6 +75,11 @@ describe Transferatu::Log do
         expect(loggable.logs(limit: -1).count)
           .to eq(Transferatu::Log.where(foreign_uuid: loggable.uuid).count)
       end
+
+      it "returns all logs with a nil limit" do
+        expect(loggable.logs(limit: nil).count)
+          .to eq(Transferatu::Log.where(foreign_uuid: loggable.uuid).count)
+      end
     end
   end
 end

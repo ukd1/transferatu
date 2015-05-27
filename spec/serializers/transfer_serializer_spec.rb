@@ -18,4 +18,33 @@ describe Transferatu::Serializers::Transfer do
     result = serializer.serialize(xfer)
     expect(result[:schedule]).to_not be_nil
   end
+
+  context "verbose representation" do
+    let(:serializer) { Transferatu::Serializers::Transfer.new(:verbose) }
+    let(:message)    { 'hello world' }
+
+    it "includes logs" do
+      xfer.log(message)
+      result = serializer.serialize(xfer)
+      expect(result[:logs].count).to eq(1)
+      log_item = result[:logs].first
+      expect(log_item[:created_at]).not_to be_nil
+      expect(log_item[:level]).to eq('info')
+      expect(log_item[:message]).to eq(message)
+    end
+
+    it "excludes internal log lines" do
+      xfer.log(message)
+      xfer.log("some internal note", level: :internal)
+      result = serializer.serialize(xfer)
+      expect(result[:logs].count).to eq(1)
+      expect(result[:logs].first[:message]).to eq(message)
+    end
+
+    it "includes all logs" do
+      201.times { xfer.log(message) }
+      result = serializer.serialize(xfer)
+      expect(result[:logs].count).to eq(201)
+    end
+  end
 end

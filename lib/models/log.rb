@@ -43,7 +43,7 @@ module Transferatu
       logs_dataset = Log.select(:level, :created_at, :message)
         .where(foreign_uuid: self.uuid)
         .order_by(Sequel.desc(:created_at))
-      if limit > 0
+      if limit && limit >= 0
         logs_dataset = logs_dataset.limit(limit)
       end
       logs_dataset.all

@@ -22,7 +22,8 @@ module Transferatu
       self.db.transaction(isolation: :serializable) do
         Transfer.with_sql(<<-EOF).first
 WITH oldest_pending AS (
-  SELECT uuid FROM transfers WHERE started_at IS NULL ORDER BY created_at LIMIT 1
+  SELECT uuid FROM transfers WHERE started_at IS NULL
+  ORDER BY schedule_id IS NULL DESC, created_at LIMIT 1
 )
 UPDATE
   transfers SET started_at = now()

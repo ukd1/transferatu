@@ -23,6 +23,12 @@ module Transferatu
         t1.update(started_at: Time.now)
         expect(Transfer.begin_next_pending).to be_nil
       end
+      it "prioritizes non-scheduled transfers" do
+        create(:transfer,
+               created_at: t0.created_at - 10.minutes,
+               schedule: create(:schedule))
+        expect(Transfer.begin_next_pending.uuid).to eq(t0.uuid)
+      end
     end
 
     describe ".in_progress" do

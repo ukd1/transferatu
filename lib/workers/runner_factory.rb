@@ -188,6 +188,8 @@ module Transferatu
       @logger.call "waiting for pg_dump to complete"
       result = @future.wait
       @logger.call "pg_dump done"
+      @logger.call("exit status details: #{result.inspect}", level: :internal)
+
       result.success? == true
     end
   end
@@ -223,7 +225,9 @@ module Transferatu
     def wait
       @logger.call "waiting for upload to complete"
       result = @future.wait
-      @logger.call "upload done: #{result.inspect}"
+      @logger.call "upload done"
+      @logger.call("exit status details: #{result.inspect}", level: :internal)
+
       result.success? == true
     end
   end

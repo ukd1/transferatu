@@ -223,7 +223,7 @@ module Transferatu
     def wait
       @logger.call "waiting for upload to complete"
       result = @future.wait
-      @logger.call "upload done"
+      @logger.call "upload done: #{result.inspect}"
       result.success? == true
     end
   end

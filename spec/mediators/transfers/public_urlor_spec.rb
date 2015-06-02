@@ -8,7 +8,7 @@ module Transferatu
       let(:transfer)   { create(:transfer,
                                 to_type: 'gof3r',
                                 to_url: "https://#{bucket}.s3.amazonaws.com/#{object_id}") }
-      let(:ttl)        { 10.minutes }
+      let(:ttl)        { 60.minutes }
       let(:s3_client)  { double(:s3_client) }
       let(:presigner)  { double(:s3_presigner) }
       let(:signed_url) { "https://#{bucket}.s3.amazonaws.com/#{object_id}?signature=totally_valid" }

@@ -78,7 +78,7 @@ module Transferatu
         sink_stream = @sink.run_async
 
         begin
-          until source_stream.eof? || !@source.alive? || !@sink.alive?
+          while !source_stream.eof? && @source.alive? && @sink.alive?
             copied = IO.copy_stream(source_stream, sink_stream, CHUNK_SIZE)
             @lock.synchronize { @processed_bytes += copied }
           end
@@ -89,10 +89,16 @@ module Transferatu
           # normally (due to the source stream eof), but the source will
           # notice it failed and log and update transfer status
           # accordingly.
-        ensure
-          sink_stream.close
         end
       ensure
+        finished_first = [ @source, @sink ].reject(&:alive?).first
+        unless finished_first.nil?
+          first_result = finished_first.wait
+          unless first_result
+            other =  [ @source, @sink ].reject { |p| p == finished_first }
+            other.cancel if other && other.alive?
+          end
+        end
         source_result = @source.wait if source_stream
         sink_result = @sink.wait if sink_stream
       end

@@ -78,7 +78,7 @@ module Transferatu::Endpoints
         ttl = if data.has_key? 'ttl'
                 data["ttl"].to_i
               else
-                10.minutes
+                60.minutes
               end
         # Technically we'll have a few seconds longer, but the
         # underlying API takes a TTL too, and not a duration, so

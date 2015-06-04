@@ -13,11 +13,11 @@ module Transferatu
       expect(source).to receive(:run_async).and_return(short_source)
       expect(sink).to receive(:run_async).and_return(sink_stream)
 
-      expect(source).to receive(:alive?).and_return(true)
-      expect(sink).to receive(:alive?).and_return(true)
+      allow(sink).to receive(:alive?).and_return(true, false)
+      allow(source).to receive(:alive?).and_return(false)
 
-      expect(source).to receive(:wait).and_return(true)
-      expect(sink).to receive(:wait).and_return(true)
+      allow(source).to receive(:wait).and_return(true)
+      allow(sink).to receive(:wait).and_return(true)
 
       expect(mover.run_transfer).to be true
 
@@ -29,11 +29,11 @@ module Transferatu
       expect(source).to receive(:run_async).and_return(long_source)
       expect(sink).to receive(:run_async).and_return(sink_stream)
 
-      expect(source).to receive(:alive?).twice.and_return(true)
-      expect(sink).to receive(:alive?).twice.and_return(true)
+      allow(sink).to receive(:alive?).and_return(true, true, false)
+      allow(source).to receive(:alive?).and_return(false)
 
-      expect(source).to receive(:wait).and_return(true)
-      expect(sink).to receive(:wait).and_return(true)
+      allow(source).to receive(:wait).and_return(true)
+      allow(sink).to receive(:wait).and_return(true)
 
       expect(mover.run_transfer).to be true
 
@@ -41,61 +41,92 @@ module Transferatu
       expect(sink_stream.length).to eq(long_source.length)
     end
 
-    it "should stop the transfer if the source fails" do
-      
+    it "should stop the transfer if reading from source raises" do
+      expect(source).to receive(:run_async).and_return(long_source)
+      expect(sink).to receive(:run_async).and_return(sink_stream)
+
+      allow(source).to receive(:alive?).and_return(true)
+      allow(sink).to receive(:alive?).and_return(true)
+
+      err = StandardError.new("oh snap")
+      expect(long_source).to receive(:read).and_raise(err)
+      expect(source).to receive(:cancel)
+      expect(sink).to receive(:cancel)
+      expect(Rollbar).to receive(:error).with(err)
+
+      expect(source).to receive(:wait).and_return(false)
+      expect(sink).to receive(:wait).and_return(false)
+
+      expect(mover.run_transfer).to be false
     end
 
     it "should stop the transfer if the sink fails" do
       expect(source).to receive(:run_async).and_return(long_source)
       expect(sink).to receive(:run_async).and_return(sink_stream)
 
-      expect(source).to receive(:alive?).and_return(true)
-      expect(sink).to receive(:alive?).and_return(true)
+      allow(source).to receive(:alive?).and_return(true)
+      allow(sink).to receive(:alive?).and_return(true)
+
+      expect(source).to receive(:cancel).at_least(1).times
+      expect(sink).to receive(:cancel).at_least(1).times
 
       expect(sink_stream).to receive(:write).and_raise(Errno::EPIPE)
 
-      expect(source).to receive(:wait).and_return(true)
+      expect(source).to receive(:wait).and_return(true, false)
+      expect(sink).to receive(:wait).and_return(false, false)
+
+      expect(mover.run_transfer).to be false
+    end
+
+    it "should stop the transfer and report to Rollbar if copying data fails" do
+      expect(source).to receive(:run_async).and_return(long_source)
+      err = StandardError.new("oh snap")
+      expect(sink).to receive(:run_async).and_return(sink_stream)
+      expect(IO).to receive(:copy_stream).and_raise(err)
+      expect(Rollbar).to receive(:error).with(err)
+
+      allow(source).to receive(:alive?).and_return(true, true, false)
+      allow(sink).to receive(:alive?).and_return(true, true, false)
+
+      expect(source).to receive(:cancel)
+      expect(sink).to receive(:cancel)
+
+      expect(source).to receive(:wait).and_return(false)
       expect(sink).to receive(:wait).and_return(false)
 
       expect(mover.run_transfer).to be false
     end
 
-    it "should stop the transfer and raise if copying data fails" do
-      expect(source).to receive(:run_async).and_return(long_source)
-      err = StandardError.new("oh snap")
-      expect(sink).to receive(:run_async).and_return(sink_stream)
-      expect(IO).to receive(:copy_stream).and_raise(err)
-
-      expect(source).to receive(:alive?).and_return(true)
-      expect(sink).to receive(:alive?).and_return(true)
-
-      expect(source).to receive(:wait).and_return(true)
-      expect(sink).to receive(:wait).and_return(true)
-
-      expect { mover.run_transfer }.to raise_error(err)
-    end
-
-    it "should raise if source fails to run" do
+    it "should report to Rollbar if source fails to run" do
       err = StandardError.new("oh snap")
       expect(source).to receive(:run_async).and_raise(err)
+      expect(Rollbar).to receive(:error).with(err)
 
-      expect(source).not_to receive(:wait)
-      expect(sink).not_to receive(:wait)
+      allow(source).to receive(:alive?).and_return(false)
+      allow(sink).to receive(:alive?).and_return(false)
 
-      expect { mover.run_transfer }.to raise_error(err)
+      expect(source).to receive(:wait)
+      expect(sink).to receive(:wait)
+
+      expect(mover.run_transfer).to be false
     end
 
-    it "should clean up source and raise if sink fails to run" do
+    it "should clean up source and report to Rollbar if sink fails to run" do
       expect(source).to receive(:run_async).and_return(long_source)
       err = StandardError.new("oh snap")
       expect(sink).to receive(:run_async).and_raise(err)
+      expect(Rollbar).to receive(:error).with(err)
 
-      expect(source).to receive(:wait).and_return(true)
-      expect(sink).not_to receive(:wait)
+      allow(source).to receive(:alive?).and_return(true)
+      allow(sink).to receive(:alive?).and_return(false)
 
-      expect { mover.run_transfer }.to raise_error(err)
+      expect(source).to receive(:cancel)
+      expect(source).to receive(:wait).and_return(false)
+      expect(sink).to receive(:wait)
+
+      expect(mover.run_transfer).to be false
     end
-    
+
     it "should cancel the source and sink when cancelled externally" do
       expect(source).to receive(:cancel)
       expect(sink).to receive(:cancel)

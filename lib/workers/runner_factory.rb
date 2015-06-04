@@ -191,16 +191,18 @@ module Transferatu
     end
 
     def wait
+      return @succeeded unless @succeeded.nil?
+
       @logger.call "waiting for pg_dump to complete"
       result = @future.wait
       @logger.call "pg_dump done"
       @logger.call("exit status details: #{result.inspect}", level: :internal)
 
-      result.success? == true
+      @succeeded = result.success? == true
     end
 
     def alive?
-      @future.alive?
+      @future && @future.alive?
     end
   end
 
@@ -233,12 +235,14 @@ module Transferatu
     end
 
     def wait
+      return @succeeded unless @succeeded.nil?
+
       @logger.call "waiting for upload to complete"
       result = @future.wait
       @logger.call "upload done"
       @logger.call("exit status details: #{result.inspect}", level: :internal)
 
-      result.success? == true
+      @succeeded = result.success? == true
     end
 
     def alive?
@@ -300,20 +304,22 @@ module Transferatu
     end
 
     def wait
+      return @succeeded unless @succeeded.nil?
+
       @logger.call "waiting for restore to complete"
       result = @future.wait
       @logger.call "restore done"
-      return true if result.success? == true
+      @succeeded = result.success? == true
 
       if result.exitstatus == 1
         expected_err_count = @failed_extension_comment_count
         if @failed_plpgsql_create
           expected_err_count += 1
         end
-        return expected_err_count == @pg_restore_error_count
-      else
-        return false
+        @succeeded = expected_err_count == @pg_restore_error_count
       end
+
+      return @succeeded
     end
 
     def alive?
@@ -349,10 +355,12 @@ module Transferatu
     end
 
     def wait
+      return @succeeded unless @succeeded.nil?
+
       @logger.call "waiting for download to complete"
       result = @future.wait
       @logger.call "download done"
-      result.success? == true
+      @succeeded = result.success? == true
     end
 
     def alive?
@@ -382,10 +390,12 @@ module Transferatu
     end
 
     def wait
+      return @succeeded unless @succeeded.nil?
+
       @logger.call "waiting for download to complete"
-      result = @future.wait
+      @result = @future.wait
       @logger.call "download done"
-      result.success? == true
+      @succeeded = @result.success? == true
     end
   end
 end

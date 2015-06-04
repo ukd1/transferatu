@@ -59,20 +59,17 @@ module Transferatu
       end
 
       begin
-        result = runner.run_transfer
-        if result
-          transfer.complete
-        else
-          transfer.fail
+        Rollbar.scoped(transfer_id: xfer_id) do
+          result = runner.run_transfer
+          if result
+            transfer.complete
+          else
+            transfer.fail
+          end
         end
       rescue Transfer::AlreadyFailed
         # ignore; if the transfer was canceled or otherwise failed
         # out of band, there's not much for us to do
-      rescue StandardError => e
-        transfer.log("Transfer failed for unexpected reason: #{e.message}\n #{e.backtrace.join("\n")}
-", level: :internal)
-        transfer.fail unless transfer.failed?
-        raise
       end
 
       progress_thr.join

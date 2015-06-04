@@ -71,14 +71,14 @@ module Transferatu
     # if the transfer completes successfully, and false if it fails or
     # if it is canceled.
     def run_transfer
-      source_result = nil
-      sink_result = nil
+      source_succeeded = false
+      sink_succeeded = false
       begin
         source_stream = @source.run_async
         sink_stream = @sink.run_async
 
         begin
-          while !source_stream.eof? && @source.alive? && @sink.alive?
+          while !source_stream.eof? && @sink.alive?
             copied = IO.copy_stream(source_stream, sink_stream, CHUNK_SIZE)
             @lock.synchronize { @processed_bytes += copied }
           end
@@ -89,20 +89,33 @@ module Transferatu
           # normally (due to the source stream eof), but the source will
           # notice it failed and log and update transfer status
           # accordingly.
+          @sink.cancel
+          @source.cancel
+        ensure
+          sink_stream.close unless sink_stream.closed?
+          source_stream.close unless source_stream.closed?
         end
+
+        sink_succeeded = @sink.wait if sink_stream
+
+        if @source.alive?
+          @source.cancel
+          # N.B.: we don't care if the source succeeded
+          @source.wait if source_stream
+        else
+          source_succeeded = @source.wait if source_stream
+        end
+      rescue StandardError => e
+        # report any unexpected errors; the ensure below will fail the transfer
+        Rollbar.error(e)
       ensure
-        finished_first = [ @source, @sink ].reject(&:alive?).first
-        unless finished_first.nil?
-          first_result = finished_first.wait
-          unless first_result
-            other =  [ @source, @sink ].reject { |p| p == finished_first }
-            other.cancel if other && other.alive?
-          end
-        end
-        source_result = @source.wait if source_stream
-        sink_result = @sink.wait if sink_stream
+        @source.cancel if @source.alive?
+        @sink.cancel if @sink.alive?
+        # make sure we wait to avoid zombies
+        @source.wait
+        @sink.wait
       end
-      source_result && sink_result
+      source_succeeded && sink_succeeded
     end
   end
 end

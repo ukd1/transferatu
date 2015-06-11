@@ -83,10 +83,10 @@ module Transferatu
       @status.update(transfer: nil)
     end
 
-    def wait
+    def wait(count: 0)
       # randomize sleep to avoid lock-stepping workers into a single
       # sequence
-      sleep 1 + 4 * rand
+      sleep [2**count, 60].min + 4 * rand
       # See above: we want to make sure we show progress when there's
       # nothing to do.
       @status.save

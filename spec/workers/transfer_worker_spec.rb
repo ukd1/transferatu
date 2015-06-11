@@ -227,7 +227,7 @@ module Transferatu
           expect(naptime).to be >= 1
           expect(naptime).to be <= 5
         end
-        worker.wait
+        worker.wait count:0
         expect(status.updated_at).to be > start
       end
     end

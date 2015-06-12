@@ -397,5 +397,9 @@ module Transferatu
       @logger.call "download done"
       @succeeded = @result.success? == true
     end
+
+    def alive?
+      @future && @future.alive?
+    end
   end
 end

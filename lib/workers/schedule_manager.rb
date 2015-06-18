@@ -8,7 +8,7 @@ module Transferatu
       # limit the work to batches to avoid huge queries
       schedules = next_batch(schedule_time)
       until schedules.empty? do
-        schedules.each do |s|
+        Parallel.each(schedules, in_threads: 4) do |s|
           process_schedule(s)
         end
         schedules = next_batch(schedule_time)

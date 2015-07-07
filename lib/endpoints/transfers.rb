@@ -84,10 +84,13 @@ module Transferatu::Endpoints
         # underlying API takes a TTL too, and not a duration, so
         # there's no easy way to get around that.
         expires_at = Time.now + ttl
-        url = Transferatu::Mediators::Transfers::PublicUrlor
-          .run(transfer: transfer, ttl: ttl)
-        # TODO: figure out how this fits in with proper serialization
-        respond({ expires_at: expires_at, url: url }, status: 201)
+        begin
+          url = Transferatu::Mediators::Transfers::PublicUrlor
+                .run(transfer: transfer, ttl: ttl)
+          respond({ expires_at: expires_at, url: url }, status: 201)
+        rescue ArgumentError => e
+          raise Pliny::Errors::BadRequest, e.message
+        end
       end
 
       post "/:id/actions/cancel" do

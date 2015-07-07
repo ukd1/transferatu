@@ -8,7 +8,7 @@ module Transferatu
 
       def call
         unless @transfer.to_type == 'gof3r'
-          raise ArgumentError, "Can only generate public URL for gof3r transfers"
+          raise ArgumentError, "Can only generate public URL for backup transfers"
         end
         unless @transfer.succeeded?
           raise ArgumentError, "Can only generate public URL for completed transfers"

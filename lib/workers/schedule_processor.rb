@@ -31,8 +31,8 @@ module Transferatu
                to_name:   data["to_name"],
                options:   data["options"] || {})
         schedule.mark_executed
-        Transferatu::Mediators::Schedules::Expirer
-          .run(schedule: schedule, expire_at: Time.now)
+        # Transferatu::Mediators::Schedules::Expirer
+        #   .run(schedule: schedule, expire_at: Time.now)
 
         schedule.group.log "Created scheduled transfer for #{schedule.name}"
       end

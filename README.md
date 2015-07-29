@@ -65,7 +65,8 @@ $ heroku config:set HEROKU_API_TOKEN=<your-token> \
   HEROKU_APP_NAME=<your-app-name> \
   AWS_ACCESS_KEY_ID=<your-role-id> \
   AWS_SECRET_ACCESS_KEY=<your-role-key> \
-  S3_BUCKET_NAME=<your-transferatu-bucket>
+  S3_BUCKET_NAME=<your-transferatu-bucket> \
+  AT_REST_FERNET_SECRET=`ruby -e 'require "securerandom";puts SecureRandom.urlsafe_base64(32)'`
 Setting config vars and restarting <your-app-name>... done, v56
 ```
 

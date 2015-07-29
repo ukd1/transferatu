@@ -28,7 +28,7 @@ credentials to access S3. The best way to create the API token is with
 the [oauth plugin](https://github.com/heroku/heroku-oauth).
 
 ```console
-$ heroku authorizations:create --description transferatu ----scope read-protected,write-protected
+$ heroku authorizations:create --description transferatu --scope write-protected
 Created OAuth authorization.
   ID:          105a7bfa-34c3-476e-873a-b1ac3fdc12fb
   Description: transferatu

@@ -72,7 +72,7 @@ Setting config vars and restarting <your-app-name>... done, v56
 Transferatu also needs a Postgres database:
 
 ```console
-$ heroku addons:add heroku-postgresql:premium-yanari
+$ heroku addons:create heroku-postgresql:standard-0
 ```
 
 Once everything is set up, you can deploy, run a schema migration to

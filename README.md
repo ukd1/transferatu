@@ -69,10 +69,11 @@ $ heroku config:set HEROKU_API_TOKEN=<your-token> \
 Setting config vars and restarting <your-app-name>... done, v56
 ```
 
-Transferatu also needs a Postgres database:
+Transferatu also needs a Postgres database and Rollbar:
 
 ```console
 $ heroku addons:add heroku-postgresql:premium-yanari
+$ heroku addons:create rollbar:free
 ```
 
 Once everything is set up, you can deploy, run a schema migration to

@@ -65,14 +65,16 @@ $ heroku config:set HEROKU_API_TOKEN=<your-token> \
   HEROKU_APP_NAME=<your-app-name> \
   AWS_ACCESS_KEY_ID=<your-role-id> \
   AWS_SECRET_ACCESS_KEY=<your-role-key> \
-  S3_BUCKET_NAME=<your-transferatu-bucket>
+  S3_BUCKET_NAME=<your-transferatu-bucket> \
+  AT_REST_FERNET_SECRET=`ruby -e 'require "securerandom";puts SecureRandom.hex(16)'`
 Setting config vars and restarting <your-app-name>... done, v56
 ```
 
-Transferatu also needs a Postgres database:
+Transferatu also needs a Postgres database and the Rollbar addon:
 
 ```console
-$ heroku addons:add heroku-postgresql:premium-yanari
+$ heroku addons:create heroku-postgresql:standard-0
+$ heroku addons:create rollbar:free
 ```
 
 Once everything is set up, you can deploy, run a schema migration to
@@ -85,6 +87,24 @@ $ heroku run bundle exec rake db:migrate
 $ heroku ps:scale clock=1
 ```
 
+## Usage
+### Creating a user
+
+```console
+$ heroku run bundle exec rake users:create[<some_user_name>]
+```
+
+This will output a new password and callback password for the username you asked for:
+
+```
+Running `rake users:create[test_user]` attached to terminal... up, run.2693
+Created user test_user with
+  password: BK47f+N9xrSP7Wz+EApopCgwzaVfFqbYTD9/syN1RO4Ss3NdoaWJrvA1DszkoVchrx6RAZaEWbazthPdh0y1sI5tjrOrYIlyEQXDnWKE+scgL6H3BfX7tOoPrmZDjoA/S5j8CxVob/qSh2YlMy9YQzTft1FSiR15oSflmRPnQT4=
+  callback password: mM18KD8l6zCh4wMfASOf+tMmfBwtaquD3qpJuudveV4748FlDK5+ro4Y1H7rvhx6/KW3PblkNEf6Gam9Q0COAGmiI03IBZpiuXglt8DzT8Eew2knpyamyh0awG/MFD4uN1XC3niUx2g5R/UUxlEDEPNV0sPdy4/cMc3GvhI4C2w=
+```
+
+### API
+You can then use the xtrtuc client to interact with the API: https://github.com/heroku/xfrtuc
 
 ## Quiescence
 
